@@ -1,0 +1,442 @@
+﻿<Component>
+  <Id>tcm:1133-20965</Id>
+  <Title>STG: Big Flavor</Title>
+  <Publication>
+    <Id>tcm:0-1133-1</Id>
+    <Title>100 - MNState Dining Mobile EN</Title>
+  </Publication>
+  <OwningPublication>
+    <Id>tcm:0-25-1</Id>
+    <Title>050 - SMW Campus Content EN</Title>
+  </OwningPublication>
+  <LastPublishedDate>0001-01-01T00:00:00</LastPublishedDate>
+  <RevisionDate>2014-10-01T18:12:54.21</RevisionDate>
+  <Schema>
+    <Id>tcm:1133-12491-8</Id>
+    <Title>Dynamic_Content</Title>
+    <Publication>
+      <Id>tcm:0-1133-1</Id>
+      <Title>100 - MNState Dining Mobile EN</Title>
+    </Publication>
+    <Folder>
+      <Id>tcm:1133-56-2</Id>
+      <Title>Content schemas</Title>
+      <PublicationId>tcm:0-1133-1</PublicationId>
+    </Folder>
+    <RootElementName>Content</RootElementName>
+  </Schema>
+  <Fields>
+    <item>
+      <key>
+        <string>Title</string>
+      </key>
+      <value>
+        <Field xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" FieldType="Text" XPath="tcm:Content/custom:Content/custom:Title">
+          <Name>Title</Name>
+          <Values>
+            <string>Simply To Go</string>
+          </Values>
+          <NumericValues />
+          <DateTimeValues />
+          <LinkedComponentValues />
+          <EmbeddedValues />
+          <Keywords />
+        </Field>
+      </value>
+    </item>
+    <item>
+      <key>
+        <string>SmallImage</string>
+      </key>
+      <value>
+        <Field xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" FieldType="MultiMediaLink" XPath="tcm:Content/custom:Content/custom:SmallImage">
+          <Name>SmallImage</Name>
+          <Values>
+            <string>tcm:1133-35133</string>
+          </Values>
+          <NumericValues />
+          <DateTimeValues />
+          <LinkedComponentValues>
+            <Component>
+              <Id>tcm:1133-35133</Id>
+              <Title>STG Big Flavor SM</Title>
+              <Publication>
+                <Id>tcm:0-1133-1</Id>
+                <Title>100 - MNState Dining Mobile EN</Title>
+              </Publication>
+              <OwningPublication>
+                <Id>tcm:0-25-1</Id>
+                <Title>050 - SMW Campus Content EN</Title>
+              </OwningPublication>
+              <LastPublishedDate>0001-01-01T00:00:00</LastPublishedDate>
+              <RevisionDate>2014-10-01T18:03:16.123</RevisionDate>
+              <Schema>
+                <Id>tcm:1133-415-8</Id>
+                <Title>Image</Title>
+                <Publication>
+                  <Id>tcm:0-1133-1</Id>
+                  <Title>100 - MNState Dining Mobile EN</Title>
+                </Publication>
+                <Folder>
+                  <Id>tcm:1133-57-2</Id>
+                  <Title>Multimedia schemas</Title>
+                  <PublicationId>tcm:0-1133-1</PublicationId>
+                </Folder>
+                <RootElementName>undefined</RootElementName>
+              </Schema>
+              <Fields />
+              <MetadataFields />
+              <ComponentType>Multimedia</ComponentType>
+              <Multimedia>
+                <Url>/images/STG_Mindful_Brick_190x115_tcm1133-35133.png</Url>
+                <MimeType>image/png</MimeType>
+                <FileName>STG_Mindful_Brick_190x115.png</FileName>
+                <FileExtension>png</FileExtension>
+                <Size>20550</Size>
+                <Width>0</Width>
+                <Height>0</Height>
+              </Multimedia>
+              <Folder>
+                <Id>tcm:1133-3426-2</Id>
+                <Title>Fall 2014</Title>
+                <PublicationId>tcm:0-1133-1</PublicationId>
+              </Folder>
+              <Categories />
+              <Version>2</Version>
+            </Component>
+          </LinkedComponentValues>
+          <EmbeddedValues />
+          <Keywords />
+        </Field>
+      </value>
+    </item>
+    <item>
+      <key>
+        <string>MediumImage</string>
+      </key>
+      <value>
+        <Field xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" FieldType="MultiMediaLink" XPath="tcm:Content/custom:Content/custom:MediumImage">
+          <Name>MediumImage</Name>
+          <Values>
+            <string>tcm:1133-35134</string>
+          </Values>
+          <NumericValues />
+          <DateTimeValues />
+          <LinkedComponentValues>
+            <Component>
+              <Id>tcm:1133-35134</Id>
+              <Title>STG Big Flavor LG</Title>
+              <Publication>
+                <Id>tcm:0-1133-1</Id>
+                <Title>100 - MNState Dining Mobile EN</Title>
+              </Publication>
+              <OwningPublication>
+                <Id>tcm:0-25-1</Id>
+                <Title>050 - SMW Campus Content EN</Title>
+              </OwningPublication>
+              <LastPublishedDate>0001-01-01T00:00:00</LastPublishedDate>
+              <RevisionDate>2014-10-01T18:02:41.303</RevisionDate>
+              <Schema>
+                <Id>tcm:1133-415-8</Id>
+                <Title>Image</Title>
+                <Publication>
+                  <Id>tcm:0-1133-1</Id>
+                  <Title>100 - MNState Dining Mobile EN</Title>
+                </Publication>
+                <Folder>
+                  <Id>tcm:1133-57-2</Id>
+                  <Title>Multimedia schemas</Title>
+                  <PublicationId>tcm:0-1133-1</PublicationId>
+                </Folder>
+                <RootElementName>undefined</RootElementName>
+              </Schema>
+              <Fields />
+              <MetadataFields />
+              <ComponentType>Multimedia</ComponentType>
+              <Multimedia>
+                <Url>/images/STG_Mindful_Brick_400x220_tcm1133-35134.png</Url>
+                <MimeType>image/png</MimeType>
+                <FileName>STG_Mindful_Brick_400x220.png</FileName>
+                <FileExtension>png</FileExtension>
+                <Size>62362</Size>
+                <Width>0</Width>
+                <Height>0</Height>
+              </Multimedia>
+              <Folder>
+                <Id>tcm:1133-3426-2</Id>
+                <Title>Fall 2014</Title>
+                <PublicationId>tcm:0-1133-1</PublicationId>
+              </Folder>
+              <Categories />
+              <Version>1</Version>
+            </Component>
+          </LinkedComponentValues>
+          <EmbeddedValues />
+          <Keywords />
+        </Field>
+      </value>
+    </item>
+    <item>
+      <key>
+        <string>LargeImage</string>
+      </key>
+      <value>
+        <Field xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" FieldType="MultiMediaLink" XPath="tcm:Content/custom:Content/custom:LargeImage">
+          <Name>LargeImage</Name>
+          <Values>
+            <string>tcm:1133-35135</string>
+          </Values>
+          <NumericValues />
+          <DateTimeValues />
+          <LinkedComponentValues>
+            <Component>
+              <Id>tcm:1133-35135</Id>
+              <Title>STG Big Flavor Banner</Title>
+              <Publication>
+                <Id>tcm:0-1133-1</Id>
+                <Title>100 - MNState Dining Mobile EN</Title>
+              </Publication>
+              <OwningPublication>
+                <Id>tcm:0-25-1</Id>
+                <Title>050 - SMW Campus Content EN</Title>
+              </OwningPublication>
+              <LastPublishedDate>0001-01-01T00:00:00</LastPublishedDate>
+              <RevisionDate>2014-10-01T18:03:08.323</RevisionDate>
+              <Schema>
+                <Id>tcm:1133-415-8</Id>
+                <Title>Image</Title>
+                <Publication>
+                  <Id>tcm:0-1133-1</Id>
+                  <Title>100 - MNState Dining Mobile EN</Title>
+                </Publication>
+                <Folder>
+                  <Id>tcm:1133-57-2</Id>
+                  <Title>Multimedia schemas</Title>
+                  <PublicationId>tcm:0-1133-1</PublicationId>
+                </Folder>
+                <RootElementName>undefined</RootElementName>
+              </Schema>
+              <Fields />
+              <MetadataFields />
+              <ComponentType>Multimedia</ComponentType>
+              <Multimedia>
+                <Url>/images/STG_Mindful_SMW_940x246_tcm1133-35135.jpg</Url>
+                <MimeType>image/jpeg</MimeType>
+                <FileName>STG_Mindful_SMW_940x246.jpg</FileName>
+                <FileExtension>jpg</FileExtension>
+                <Size>59105</Size>
+                <Width>0</Width>
+                <Height>0</Height>
+              </Multimedia>
+              <Folder>
+                <Id>tcm:1133-3426-2</Id>
+                <Title>Fall 2014</Title>
+                <PublicationId>tcm:0-1133-1</PublicationId>
+              </Folder>
+              <Categories />
+              <Version>1</Version>
+            </Component>
+          </LinkedComponentValues>
+          <EmbeddedValues />
+          <Keywords />
+        </Field>
+      </value>
+    </item>
+  </Fields>
+  <MetadataFields>
+    <item>
+      <key>
+        <string>ContentType</string>
+      </key>
+      <value>
+        <Field xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" FieldType="Keyword" CategoryName="Dynamic Content Type" CategoryId="tcm:1133-1748-512" XPath="tcm:Metadata/custom:Metadata/custom:ContentType">
+          <Name>ContentType</Name>
+          <Values>
+            <string>Banner Slide</string>
+          </Values>
+          <NumericValues />
+          <DateTimeValues />
+          <LinkedComponentValues />
+          <EmbeddedValues />
+          <Keywords>
+            <Keyword Description="Banner Slide" Key="" TaxonomyId="tcm:1133-1748-512" Path="\Dynamic Content Type\Banner Slide">
+              <Id>tcm:1133-12486-1024</Id>
+              <Title>Banner Slide</Title>
+              <MetadataFields />
+            </Keyword>
+          </Keywords>
+        </Field>
+      </value>
+    </item>
+    <item>
+      <key>
+        <string>Authenticated</string>
+      </key>
+      <value>
+        <Field xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" FieldType="Keyword" CategoryName="Authenticated Content (yes/no)" CategoryId="tcm:1133-61-512" XPath="tcm:Metadata/custom:Metadata/custom:Authenticated">
+          <Name>Authenticated</Name>
+          <Values>
+            <string>no</string>
+          </Values>
+          <NumericValues />
+          <DateTimeValues />
+          <LinkedComponentValues />
+          <EmbeddedValues />
+          <Keywords>
+            <Keyword Description="If the user is not logged in this content will not be displayed" Key="default_no" TaxonomyId="tcm:1133-61-512" Path="\Authenticated Content (yes/no)\no">
+              <Id>tcm:1133-410-1024</Id>
+              <Title>no</Title>
+              <MetadataFields />
+            </Keyword>
+          </Keywords>
+        </Field>
+      </value>
+    </item>
+    <item>
+      <key>
+        <string>Startdate</string>
+      </key>
+      <value>
+        <Field xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" FieldType="Date" XPath="tcm:Metadata/custom:Metadata/custom:Startdate">
+          <Name>Startdate</Name>
+          <Values>
+            <string>5/31/2014 5:10:57 PM</string>
+          </Values>
+          <NumericValues />
+          <DateTimeValues>
+            <dateTime>2014-05-31T17:10:57</dateTime>
+          </DateTimeValues>
+          <LinkedComponentValues />
+          <EmbeddedValues />
+          <Keywords />
+        </Field>
+      </value>
+    </item>
+    <item>
+      <key>
+        <string>Enddate</string>
+      </key>
+      <value>
+        <Field xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" FieldType="Date" XPath="tcm:Metadata/custom:Metadata/custom:Enddate">
+          <Name>Enddate</Name>
+          <Values>
+            <string>10/31/2014 11:59:59 PM</string>
+          </Values>
+          <NumericValues />
+          <DateTimeValues>
+            <dateTime>2014-10-31T23:59:59</dateTime>
+          </DateTimeValues>
+          <LinkedComponentValues />
+          <EmbeddedValues />
+          <Keywords />
+        </Field>
+      </value>
+    </item>
+    <item>
+      <key>
+        <string>ContentOrigin</string>
+      </key>
+      <value>
+        <Field xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" FieldType="Keyword" CategoryName="Content Origin (Local, Division, Region...)" CategoryId="tcm:1133-62-512" XPath="tcm:Metadata/custom:Metadata/custom:ContentOrigin">
+          <Name>ContentOrigin</Name>
+          <Values>
+            <string>division</string>
+          </Values>
+          <NumericValues />
+          <DateTimeValues />
+          <LinkedComponentValues />
+          <EmbeddedValues />
+          <Keywords>
+            <Keyword Description="Content created at the division level" Key="division_content" TaxonomyId="tcm:1133-62-512" Path="\Content Origin (Local, Division, Region...)\division">
+              <Id>tcm:1133-1116-1024</Id>
+              <Title>division</Title>
+              <MetadataFields />
+            </Keyword>
+          </Keywords>
+        </Field>
+      </value>
+    </item>
+    <item>
+      <key>
+        <string>ProfileQuestions</string>
+      </key>
+      <value>
+        <Field xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" FieldType="Keyword" CategoryName="Subscription Profile Questions" CategoryId="tcm:1133-65-512" XPath="tcm:Metadata/custom:Metadata/custom:ProfileQuestions">
+          <Name>ProfileQuestions</Name>
+          <Values>
+            <string>All Subscription</string>
+          </Values>
+          <NumericValues />
+          <DateTimeValues />
+          <LinkedComponentValues />
+          <EmbeddedValues />
+          <Keywords>
+            <Keyword Description="Content will be displayed to all users" Key="all_subscription" TaxonomyId="tcm:1133-65-512" Path="\Subscription Profile Questions\All Subscription">
+              <Id>tcm:1133-1269-1024</Id>
+              <Title>All Subscription</Title>
+              <MetadataFields />
+            </Keyword>
+          </Keywords>
+        </Field>
+      </value>
+    </item>
+  </MetadataFields>
+  <ComponentType>Normal</ComponentType>
+  <Folder>
+    <Id>tcm:1133-4072-2</Id>
+    <Title>October 2014</Title>
+    <PublicationId>tcm:0-1133-1</PublicationId>
+  </Folder>
+  <Categories>
+    <Category>
+      <Id>tcm:1133-1748-512</Id>
+      <Title>Dynamic Content Type</Title>
+      <Keywords>
+        <Keyword Description="Banner Slide" Key="" TaxonomyId="tcm:1133-1748-512" Path="\Dynamic Content Type\Banner Slide">
+          <Id>tcm:1133-12486-1024</Id>
+          <Title>Banner Slide</Title>
+          <MetadataFields />
+        </Keyword>
+      </Keywords>
+    </Category>
+    <Category>
+      <Id>tcm:1133-61-512</Id>
+      <Title>Authenticated Content (yes/no)</Title>
+      <Keywords>
+        <Keyword Description="If the user is not logged in this content will not be displayed" Key="default_no" TaxonomyId="tcm:1133-61-512" Path="\Authenticated Content (yes/no)\no">
+          <Id>tcm:1133-410-1024</Id>
+          <Title>no</Title>
+          <MetadataFields />
+        </Keyword>
+      </Keywords>
+    </Category>
+    <Category>
+      <Id>tcm:1133-62-512</Id>
+      <Title>Content Origin (Local, Division, Region...)</Title>
+      <Keywords>
+        <Keyword Description="Content created at the division level" Key="division_content" TaxonomyId="tcm:1133-62-512" Path="\Content Origin (Local, Division, Region...)\division">
+          <Id>tcm:1133-1116-1024</Id>
+          <Title>division</Title>
+          <MetadataFields />
+        </Keyword>
+      </Keywords>
+    </Category>
+    <Category>
+      <Id>tcm:1133-65-512</Id>
+      <Title>Subscription Profile Questions</Title>
+      <Keywords>
+        <Keyword Description="Content will be displayed to all users" Key="all_subscription" TaxonomyId="tcm:1133-65-512" Path="\Subscription Profile Questions\All Subscription">
+          <Id>tcm:1133-1269-1024</Id>
+          <Title>All Subscription</Title>
+          <MetadataFields />
+        </Keyword>
+      </Keywords>
+    </Category>
+    <Category>
+      <Id>tcm:1133-131-512</Id>
+      <Title>Product and Services</Title>
+      <Keywords />
+    </Category>
+  </Categories>
+  <Version>15</Version>
+</Component>
