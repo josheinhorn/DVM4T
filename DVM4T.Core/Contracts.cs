@@ -97,7 +97,7 @@ namespace DVM4T.Contracts
     #endregion
 
     /// <summary>
-    /// A DD4T View Model
+    /// A View Model
     /// </summary>
     public interface IViewModel
     {
@@ -192,7 +192,7 @@ namespace DVM4T.Contracts
         /// <summary>
         /// Renders the XPM Markup for a field
         /// </summary>
-        /// <param name="field">DD4T Field</param>
+        /// <param name="field">Tridion Field</param>
         /// <param name="index">Optional index for multi value fields</param>
         /// <returns>XPM Markup</returns>
         string RenderXpmMarkupForField(IField field, int index = -1);
@@ -217,7 +217,7 @@ namespace DVM4T.Contracts
         bool IsSiteEditEnabled(int publicationId);
     }
 
-    //TODO: Instantiate and add these to the IDD4TViewModel using System.Reflection's MakeGenericType
+    //TODO: Instantiate and add these to the IViewModel using System.Reflection's MakeGenericType
     public interface IXpmRenderer<TModel> where TModel : IViewModel
     {
         /// <summary>

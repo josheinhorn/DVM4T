@@ -11,7 +11,7 @@ using DVM4T.Exceptions;
 namespace DVM4T.Attributes
 {
     /// <summary>
-    /// The Base class for all DD4T Field Attributes. Inherit this class to create custom attributes for decorating Domain View Models.
+    /// The Base class for all Field Attributes. Inherit this class to create custom attributes for decorating Domain View Models.
     /// </summary>
     public abstract class FieldAttributeBase : Attribute
     {
@@ -29,9 +29,9 @@ namespace DVM4T.Attributes
             this.fieldName = fieldName;
         }
         /// <summary>
-        /// When overriden in a derived class, this method should return the value of the View Model property from a DD4T Field object
+        /// When overriden in a derived class, this method should return the value of the View Model property from a Field object
         /// </summary>
-        /// <param name="field">The DD4T Field</param>
+        /// <param name="field">The Field</param>
         /// <param name="propertyType">The concrete type of the view model property for this attribute</param>
         /// <param name="template">The Component Template to use</param>
         /// <param name="builder">The View Model Builder</param>
@@ -96,7 +96,7 @@ namespace DVM4T.Attributes
         }
     }
     /// <summary>
-    /// A DD4T View Model.
+    /// A View Model.
     /// </summary>
     public class ViewModelAttribute : Attribute
     {
@@ -106,7 +106,7 @@ namespace DVM4T.Attributes
         private string componentTemplateName;
         private string[] viewModelKeys;
         /// <summary>
-        /// DD4T View Model
+        /// View Model
         /// </summary>
         /// <param name="schemaName">Tridion schema name for component type for this View Model</param>
         /// <param name="isDefault">Is this the default View Model for this schema. If true, Components

@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("DVM4T")]
-[assembly: AssemblyDescription("DD4T Domain View Model Framework")]
+[assembly: AssemblyDescription("Domain View Models For Tridion")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("DVM4T")]
