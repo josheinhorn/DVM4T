@@ -1,4 +1,5 @@
 ﻿using DVM4T.Attributes;
+using DVM4T.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,13 +10,22 @@ using System.Text;
 
 namespace DVM4T.Reflection
 {
-    public class ReflectionCache
+    public static class ReflectionUtility
     {
-        private static Dictionary<Type, List<FieldAttributeProperty>> fieldProperties = new Dictionary<Type, List<FieldAttributeProperty>>();
-        private static Dictionary<Type, Func<object>> constructors = new Dictionary<Type, Func<object>>();
-        private static Dictionary<Type, ViewModelAttribute> viewModelAttributes = new Dictionary<Type, ViewModelAttribute>();
+        private static IReflectionHelper reflectionCache = new ReflectionOptimizer();
+        public static IReflectionHelper ReflectionCache { get { return reflectionCache; } }
+    }
 
-        public static List<FieldAttributeProperty> GetFieldProperties(Type type)
+    public class ReflectionOptimizer : IReflectionHelper
+    {
+        private Dictionary<Type, List<FieldAttributeProperty>> fieldProperties = new Dictionary<Type, List<FieldAttributeProperty>>();
+        private Dictionary<Type, Func<object>> constructors = new Dictionary<Type, Func<object>>();
+        //private Dictionary<Type, ViewModelAttribute> viewModelAttributes = new Dictionary<Type, ViewModelAttribute>();
+        private Dictionary<Type, Attribute> modelAttributes = new Dictionary<Type, Attribute>();
+
+        internal ReflectionOptimizer() { }
+
+        public List<FieldAttributeProperty> GetFieldProperties(Type type)
         {
             List<FieldAttributeProperty> result;
             if (!fieldProperties.TryGetValue(type, out result))
@@ -47,25 +57,24 @@ namespace DVM4T.Reflection
             }
             return result;
         }
-
-        public static ViewModelAttribute GetViewModelAttribute(Type type)
+        public T GetCustomAttribute<T>(Type type) where T : Attribute
         {
-            ViewModelAttribute result;
-            if (!viewModelAttributes.TryGetValue(type, out result))
+            Attribute result;
+            if (!modelAttributes.TryGetValue(type, out result))
             {
-                lock (viewModelAttributes)
+                lock (modelAttributes)
                 {
-                    if (!viewModelAttributes.TryGetValue(type, out result))
+                    if (!modelAttributes.TryGetValue(type, out result))
                     {
-                        result = type.GetCustomAttributes(typeof(ViewModelAttribute), true).FirstOrDefault() as ViewModelAttribute;
-                        viewModelAttributes.Add(type, result);
+                        result = type.GetCustomAttributes(typeof(T), true).FirstOrDefault() as Attribute;
+                        modelAttributes.Add(type, result);
                     }
                 }
             }
-            return result;
+            return result as T;
         }
 
-        public static object CreateInstance(Type objectType)
+        public object CreateInstance(Type objectType)
         {
             Func<object> result = null;
             if (!constructors.TryGetValue(objectType, out result))
@@ -94,12 +103,12 @@ namespace DVM4T.Reflection
             }
             return result.Invoke();
         }
-        public static T CreateInstance<T>() where T : class
+        public T CreateInstance<T>() where T : class, new()
         {
             return CreateInstance(typeof(T)) as T;   
         }
 
-        private static Action<object, object> BuildSetter(PropertyInfo propertyInfo)
+        public Action<object, object> BuildSetter(PropertyInfo propertyInfo)
         {
             //Equivalent to:
             /*delegate (object i, object a)
@@ -113,7 +122,7 @@ namespace DVM4T.Reflection
                                 Expression.Convert(argument, propertyInfo.PropertyType));
             return Expression.Lambda<Action<object, object>>(setterCall, instance, argument).Compile();
         }
-        private static Func<object, object> BuildGetter(PropertyInfo propertyInfo)
+        public Func<object, object> BuildGetter(PropertyInfo propertyInfo)
         {
             //Equivalent to:
             /*delegate (object obj)
@@ -127,7 +136,7 @@ namespace DVM4T.Reflection
                             typeof(object));
             return Expression.Lambda<Func<object, object>>(getterCall, obj).Compile();
         }
-        public static PropertyInfo GetPropertyInfo<TSource, TProperty>(Expression<Func<TSource, TProperty>> propertyLambda)
+        public PropertyInfo GetPropertyInfo<TSource, TProperty>(Expression<Func<TSource, TProperty>> propertyLambda)
         {
             //Type type = typeof(TSource);
 
@@ -153,19 +162,11 @@ namespace DVM4T.Reflection
 
             return propInfo;
         }
-        public static PropertyInfo GetPropertyInfo<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda)
+        public PropertyInfo GetPropertyInfo<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda)
         {
             return GetPropertyInfo<TSource, TProperty>(propertyLambda);
         }
     }
 
-    public struct FieldAttributeProperty
-    {
-        public string Name { get; set; }
-        public Action<object, object> Set { get; set; }
-        public Func<object, object> Get { get; set; }
-        public FieldAttributeBase FieldAttribute { get; set; }
-        public Type PropertyType { get; set; }
-    }
 
 }

@@ -42,7 +42,7 @@ namespace DVM4T.Core
                 ViewModelAttribute viewModelAttr;
                 foreach (var type in assembly.GetTypes())
                 {
-                    viewModelAttr = ReflectionCache.GetViewModelAttribute(type);
+                    viewModelAttr = ReflectionUtility.ReflectionCache.GetCustomAttribute<ViewModelAttribute>(type);
                     if (viewModelAttr != null)
                     {
                         if (!viewModels.ContainsKey(viewModelAttr)) viewModels.Add(viewModelAttr, type); //TODO: Change this, it's wrong
@@ -53,7 +53,7 @@ namespace DVM4T.Core
         public IComponentPresentationViewModel BuildCPViewModel(Type type, IComponentPresentation cp)
         {
             IComponentPresentationViewModel viewModel = null;
-            viewModel = (IComponentPresentationViewModel)ReflectionCache.CreateInstance(type);
+            viewModel = (IComponentPresentationViewModel)ReflectionUtility.ReflectionCache.CreateInstance(type);
             viewModel.ComponentPresentation = cp;
             viewModel.Builder = this;
             IFieldSet fields = cp.Component.Fields;
@@ -114,7 +114,7 @@ namespace DVM4T.Core
         }
         public IEmbeddedSchemaViewModel BuildEmbeddedViewModel(Type type, IFieldSet embeddedFields, IComponentTemplate template)
         {
-            IEmbeddedSchemaViewModel viewModel = (IEmbeddedSchemaViewModel)ReflectionCache.CreateInstance(type);
+            IEmbeddedSchemaViewModel viewModel = (IEmbeddedSchemaViewModel)ReflectionUtility.ReflectionCache.CreateInstance(type);
             viewModel.Fields = embeddedFields;
             viewModel.ComponentTemplate = template;
             viewModel.Builder = this;
@@ -127,11 +127,11 @@ namespace DVM4T.Core
         private void ProcessFields(IFieldSet contentFields, object viewModel, Type type, IComponentTemplate template, IFieldSet metadataFields = null)
         {
             //PropertyInfo[] props = type.GetProperties();
-            var props = ReflectionCache.GetFieldProperties(type);
+            var props = ReflectionUtility.ReflectionCache.GetFieldProperties(type);
             IField field;
             IFieldSet fields;
             string fieldName;
-            FieldAttributeBase fieldAttribute;
+            IFieldAttribute fieldAttribute;
             object fieldValue = null;
             foreach (var prop in props)
             {

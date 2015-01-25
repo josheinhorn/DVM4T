@@ -166,7 +166,7 @@ namespace DVM4T.XPM
         }
         private FieldAttributeProperty GetFieldProperty<TProp>(Expression<Func<TModel, TProp>> propertyLambda)
         {
-            PropertyInfo property = ReflectionCache.GetPropertyInfo(propertyLambda);
+            PropertyInfo property = ReflectionUtility.ReflectionCache.GetPropertyInfo(propertyLambda);
             return GetFieldProperty(typeof(TModel), property);
         }
         private HtmlString SiteEditable<TProp>(IViewModel model, IFieldSet fields, FieldAttributeProperty fieldProp, int index)
@@ -200,7 +200,7 @@ namespace DVM4T.XPM
 
         private FieldAttributeProperty GetFieldProperty(Type type, PropertyInfo property)
         {
-            var props = ReflectionCache.GetFieldProperties(type);
+            var props = ReflectionUtility.ReflectionCache.GetFieldProperties(type);
             return props.FirstOrDefault(x => x.Name == property.Name);
         }
 

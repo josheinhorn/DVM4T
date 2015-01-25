@@ -303,4 +303,44 @@ namespace DVM4T.Contracts
         bool IsBooleanValue { get; set; }
     }
    
+    public interface IReflectionHelper
+    {
+        List<FieldAttributeProperty> GetFieldProperties(Type type);
+        T GetCustomAttribute<T>(Type type) where T : Attribute;
+        object CreateInstance(Type objectType);
+        T CreateInstance<T>() where T : class, new();
+        Action<object, object> BuildSetter(PropertyInfo propertyInfo);
+        Func<object, object> BuildGetter(PropertyInfo propertyInfo);
+        PropertyInfo GetPropertyInfo<TSource, TProperty>(Expression<Func<TSource, TProperty>> propertyLambda);
+        PropertyInfo GetPropertyInfo<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda);
+    }
+    /// <summary>
+    /// Data structure for efficient use of Properties marking with a Field Custom Attribute
+    /// </summary>
+    public struct FieldAttributeProperty
+    {
+        public string Name { get; set; }
+        public Action<object, object> Set { get; set; }
+        public Func<object, object> Get { get; set; }
+        public IFieldAttribute FieldAttribute { get; set; }
+        public Type PropertyType { get; set; }
+    }
+    public interface IFieldAttribute
+    {
+        object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null);
+        Type ExpectedReturnType { get; }
+        string FieldName { get; }
+        bool AllowMultipleValues { get; set; }
+        bool InlineEditable { get; set; }
+        bool Mandatory { get; set; }
+        bool IsMetadata { get; set; }
+    }
+    public interface IViewModelAttribute
+    {
+        string SchemaName { get; }
+        string ComponentTemplateName { get; set; }
+        string[] ViewModelKeys { get; set; }
+        bool InlineEditable { get; set; }
+        bool IsDefault { get; }
+    }
 }

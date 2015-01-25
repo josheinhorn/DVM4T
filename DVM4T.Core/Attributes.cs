@@ -13,7 +13,7 @@ namespace DVM4T.Attributes
     /// <summary>
     /// The Base class for all Field Attributes. Inherit this class to create custom attributes for decorating Domain View Models.
     /// </summary>
-    public abstract class FieldAttributeBase : Attribute
+    public abstract class FieldAttributeBase : Attribute, IFieldAttribute
     {
         protected readonly string fieldName;
         protected bool allowMultipleValues = false;
@@ -98,7 +98,7 @@ namespace DVM4T.Attributes
     /// <summary>
     /// A View Model.
     /// </summary>
-    public class ViewModelAttribute : Attribute
+    public class ViewModelAttribute : Attribute, IViewModelAttribute
     {
         private string schemaName;
         private bool inlineEditable = false;
@@ -196,4 +196,6 @@ namespace DVM4T.Attributes
             return false;
         }
     }
+
+
 }

@@ -65,7 +65,7 @@ namespace DVM4T.DD4T.Attributes
                         var linkedComps = linkedComponentValues.Select(x => new Component(x));
                         //Property must implement IList<IComponentPresentationViewModel> -- use ComponentViewModelList<T>
                         IList<IViewModel> list =
-                            (IList<IViewModel>)ReflectionCache.CreateInstance(propertyType);
+                            (IList<IViewModel>)ReflectionUtility.ReflectionCache.CreateInstance(propertyType);
 
                         foreach (var component in linkedComps)
                         {
@@ -123,7 +123,7 @@ namespace DVM4T.DD4T.Attributes
             };
             foreach (var type in LinkedComponentTypes)
             {
-                ViewModelAttribute modelAttr = ReflectionCache.GetViewModelAttribute(type);
+                ViewModelAttribute modelAttr = ReflectionUtility.ReflectionCache.GetCustomAttribute<ViewModelAttribute>(type);
 
                 if (modelAttr != null && key.Equals(modelAttr))
                     return type;
@@ -166,7 +166,7 @@ namespace DVM4T.DD4T.Attributes
                 if (AllowMultipleValues)
                 {
                     //Property must implement IList<IEmbeddedSchemaViewModel> -- use EmbeddedViewModelList<T>
-                    IList<IViewModel> list = (IList<IViewModel>)ReflectionCache.CreateInstance(propertyType);
+                    IList<IViewModel> list = (IList<IViewModel>)ReflectionUtility.ReflectionCache.CreateInstance(propertyType);
                     foreach (var fieldSet in embeddedValues)
                     {
                         list.Add(builder.BuildEmbeddedViewModel(
