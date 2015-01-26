@@ -74,7 +74,7 @@ namespace DVM4T.Testing
                 Dynamic.IComponentPresentation cp = GetMockCp(GetMockModel());
                 model = builder.BuildCPViewModel<ContentContainerViewModel>(new ComponentPresentation(cp));
             }
-            Assert.IsNotNull(model);
+            Assert.IsNotNull(model); //Any better Assertions to make?
         }
         [TestMethod]
         public void TestBuildCPViewModelLoadedAssemblies()
@@ -88,7 +88,7 @@ namespace DVM4T.Testing
                 builder.LoadViewModels(Assembly.GetAssembly(typeof(ContentContainerViewModel)));
                 model = (ContentContainerViewModel)builder.BuildCPViewModel(new ComponentPresentation(cp));
             }
-            Assert.IsNotNull(model);
+            Assert.IsNotNull(model); //Any better Assertions to make?
         }
 
         [TestMethod]

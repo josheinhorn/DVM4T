@@ -46,9 +46,9 @@ namespace DVM4T.Core
                 foreach (var type in assembly.GetTypes())
                 {
                     viewModelAttr = ReflectionUtility.ReflectionCache.GetCustomAttribute<ViewModelAttribute>(type);
-                    if (viewModelAttr != null)
+                    if (viewModelAttr != null && !viewModels.ContainsKey(viewModelAttr))
                     {
-                        if (!viewModels.ContainsKey(viewModelAttr)) viewModels.Add(viewModelAttr, type);
+                        viewModels.Add(viewModelAttr, type);
                     }
                 }
             }
@@ -73,7 +73,7 @@ namespace DVM4T.Core
             if (cp == null) throw new ArgumentNullException("cp");
             var key = new ViewModelAttribute(cp.Component.Schema.Title, false)
             {
-                ViewModelKeys = GetViewModelId(cp.ComponentTemplate)
+                ViewModelKeys = GetViewModelKey(cp.ComponentTemplate)
             };
             IComponentPresentationViewModel result = null;
             //var type = viewModels.Where(x => x.Key.Equals(key)).Select(x => x.Value).FirstOrDefault();
@@ -100,7 +100,7 @@ namespace DVM4T.Core
             if (template == null) throw new ArgumentNullException("template");
             var key = new ViewModelAttribute(schema.Title, false)
             {
-                ViewModelKeys = GetViewModelId(template)
+                ViewModelKeys = GetViewModelKey(template)
             };
             IEmbeddedSchemaViewModel result = null;
             //var type = viewModels.Where(x => x.Key.Equals(key)).Select(x => x.Value).FirstOrDefault();
@@ -162,7 +162,7 @@ namespace DVM4T.Core
                 }
             }
         }
-        private string[] GetViewModelId(IComponentTemplate template)
+        private string[] GetViewModelKey(IComponentTemplate template)
         {
             string key = keyProvider.GetViewModelKey(template);
             return String.IsNullOrEmpty(key) ? null : new string[] { key };

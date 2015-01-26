@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using DM = DVM4T.Contracts;
+using DVM = DVM4T.Contracts;
 using DD4T.ContentModel;
 using System.Collections;
 namespace DVM4T.DD4T
 {
-    public abstract class TridionItemBase : DM.ITridionItem
+    public abstract class TridionItemBase : DVM.ITridionItem
     {
         protected abstract IItem Item { get; }
 
@@ -37,7 +37,7 @@ namespace DVM4T.DD4T
 
     }
 
-    public class Schema : TridionItemBase, DM.ISchema
+    public class Schema : TridionItemBase, DVM.ISchema
     {
         private ISchema schema;
         protected override IItem Item
@@ -55,10 +55,10 @@ namespace DVM4T.DD4T
             get { return schema.RootElementName; }
         }
     }
-    public class Field : DM.IField
+    public class Field : DVM.IField
     {
         private IField field;
-        private DM.ISchema embeddedSchema;
+        private DVM.ISchema embeddedSchema;
         private string fieldType;
         private string xpath;
         private string name;
@@ -116,7 +116,7 @@ namespace DVM4T.DD4T
             }
         }
 
-        public DM.ISchema EmbeddedSchema
+        public DVM.ISchema EmbeddedSchema
         {
             get { return embeddedSchema; }
         }
@@ -142,7 +142,7 @@ namespace DVM4T.DD4T
         }
 
         //How the hell to implement this for DD4T?
-        public DM.IXPathableNode Node
+        public DVM.IXPathableNode Node
         {
             get
             {
@@ -155,20 +155,20 @@ namespace DVM4T.DD4T
         }
     }
 
-    public class FieldSet : DM.IFieldSet
+    public class FieldSet : DVM.IFieldSet
     {
-        private IDictionary<string, DM.IField> fields;
-        private DM.IField CreateField(IField field)
+        private IDictionary<string, DVM.IField> fields;
+        private DVM.IField CreateField(IField field)
         {
             return new Field(field);
         }
         public FieldSet(IFieldSet fieldset)
         {
             if (fieldset == null)
-                fields = new Dictionary<string, DM.IField>();
+                fields = new Dictionary<string, DVM.IField>();
             else fields = fieldset.ToDictionary(x => x.Key, y => CreateField(y.Value));
         }
-        public DM.IField this[string key]
+        public DVM.IField this[string key]
         {
             get { return fields[key]; }
         }
@@ -178,12 +178,12 @@ namespace DVM4T.DD4T
             return fields.ContainsKey(key);
         }
     }
-    public class Component : TridionItemBase, DM.IComponent
+    public class Component : TridionItemBase, DVM.IComponent
     {
-        private DM.IFieldSet fields;
-        private DM.IFieldSet metadataFields;
+        private DVM.IFieldSet fields;
+        private DVM.IFieldSet metadataFields;
         protected IComponent dd4t;
-        private DM.ISchema schema;
+        private DVM.ISchema schema;
         protected override IItem Item
         {
             get { return dd4t; }
@@ -196,12 +196,12 @@ namespace DVM4T.DD4T
             this.metadataFields = new FieldSet(dd4t.MetadataFields);
         }
 
-        public DM.IFieldSet Fields
+        public DVM.IFieldSet Fields
         {
             get { return fields; }
         }
 
-        public DM.IFieldSet MetadataFields
+        public DVM.IFieldSet MetadataFields
         {
             get
             {
@@ -209,7 +209,7 @@ namespace DVM4T.DD4T
             }
         }
 
-        public DM.ISchema Schema
+        public DVM.ISchema Schema
         {
             get
             {
@@ -218,10 +218,10 @@ namespace DVM4T.DD4T
         }
     }
 
-    public class ComponentTemplate : TridionItemBase, DM.IComponentTemplate
+    public class ComponentTemplate : TridionItemBase, DVM.IComponentTemplate
     {
         private readonly IComponentTemplate template;
-        private readonly DM.IFieldSet metadataFields;
+        private readonly DVM.IFieldSet metadataFields;
         protected override IItem Item
         {
             get { return template; }
@@ -231,7 +231,7 @@ namespace DVM4T.DD4T
             this.template = template;
             this.metadataFields = new FieldSet(template.MetadataFields);
         }
-        public DM.IFieldSet MetadataFields
+        public DVM.IFieldSet MetadataFields
         {
             get
             {
@@ -246,27 +246,27 @@ namespace DVM4T.DD4T
         }
     }
 
-    public class ComponentPresentation : DM.IComponentPresentation
+    public class ComponentPresentation : DVM.IComponentPresentation
     {
-        private DM.IComponent component;
-        private DM.IComponentTemplate template;
+        private DVM.IComponent component;
+        private DVM.IComponentTemplate template;
 
         public ComponentPresentation(IComponentPresentation cp)
         {
             component = new Component(cp.Component);
             template = new ComponentTemplate(cp.ComponentTemplate);
         }
-        public ComponentPresentation(DM.IComponent component, DM.IComponentTemplate template)
+        public ComponentPresentation(DVM.IComponent component, DVM.IComponentTemplate template)
         {
             this.component = component;
             this.template = template;
         }
-        public DM.IComponent Component
+        public DVM.IComponent Component
         {
             get { return component; }
         }
 
-        public DM.IComponentTemplate ComponentTemplate
+        public DVM.IComponentTemplate ComponentTemplate
         {
             get { return template; }
         }

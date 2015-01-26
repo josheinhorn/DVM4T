@@ -197,5 +197,5 @@ namespace DVM4T.Attributes
         }
     }
 
-
+    //Consider adding abstract classes for common Fields? Would this work?
 }

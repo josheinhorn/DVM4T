@@ -69,7 +69,9 @@ namespace DVM4T.DD4T.Attributes
 
                         foreach (var component in linkedComps)
                         {
-                            list.Add(BuildLinkedComponent(component, template, builder));
+                            var model = BuildLinkedComponent(component, template, builder);
+                            if (model != null)
+                                list.Add(model);
                         }
                         fieldValue = list;
                     }

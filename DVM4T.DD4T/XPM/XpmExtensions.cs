@@ -19,7 +19,7 @@ namespace DVM4T.DD4T.XPM
     /// </summary>
     public static class XpmExtensions
     {
-        private static IXpmMarkupService xpmMarkupService = new XpmMarkupService(); //This is null to start with since there's no default implementation right now, the current one is DD4T's
+        private static IXpmMarkupService xpmMarkupService = new XpmMarkupService();
         /// <summary>
         /// Gets or sets the XPM Markup Service used to render the XPM Markup for the XPM extension methods
         /// </summary>
