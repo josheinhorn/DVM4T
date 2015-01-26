@@ -11,8 +11,11 @@ using System.Text;
 namespace DVM4T.Core
 {
     /// <summary>
-    /// Implementation of View Model Builder. If using View Model Type inference, this 
-    /// should be used as a singleton due to the reflection overhead involved in LoadViewModels.
+    /// Core implementation of View Model Builder 
+    /// <remarks>
+    /// If using View Model Type inference, this should be used as a singleton due to the reflection overhead 
+    /// involved in LoadViewModels.
+    /// </remarks>
     /// </summary>
     public class ViewModelBuilder : IViewModelBuilder
     {
@@ -45,7 +48,7 @@ namespace DVM4T.Core
                     viewModelAttr = ReflectionUtility.ReflectionCache.GetCustomAttribute<ViewModelAttribute>(type);
                     if (viewModelAttr != null)
                     {
-                        if (!viewModels.ContainsKey(viewModelAttr)) viewModels.Add(viewModelAttr, type); //TODO: Change this, it's wrong
+                        if (!viewModels.ContainsKey(viewModelAttr)) viewModels.Add(viewModelAttr, type);
                     }
                 }
             }
@@ -152,9 +155,7 @@ namespace DVM4T.Core
                         catch (Exception e)
                         {
                             if (e is TargetException || e is InvalidCastException)
-                                throw new FieldTypeMismatchException(
-                                    String.Format("Type mismatch for property {0}. Expected type for {1} is {2}. Property is of type {3}."
-                                    , prop.Name, fieldAttribute.GetType().Name, fieldAttribute.ExpectedReturnType.FullName, prop.PropertyType.FullName));
+                                throw new FieldTypeMismatchException(prop, fieldAttribute, fieldValue);
                             else throw e;
                         }
                     }

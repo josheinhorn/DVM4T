@@ -65,4 +65,23 @@ namespace DVM4T.Testing.Models
         [KeywordKeyField("openInNewWindow", AllowMultipleValues = false)]
         public string Target { get; set; }
     }
+
+    [ViewModel("GeneralContent", false, ViewModelKeys = new string[] { "Broken" })]
+    public class BrokenViewModel : ComponentPresentationViewModelBase
+    {
+        [TextField("title")]
+        public double BrokenTitle { get; set; }
+
+        [TextField("sutTitle", InlineEditable = true)]
+        public string SubTitle { get; set; }
+
+        [RichTextField("body", InlineEditable = true)]
+        public MvcHtmlString Body { get; set; }
+
+        [KeywordKeyField("showOnTop", IsBooleanValue = true)]
+        public bool ShowOnTop { get; set; }
+
+        [NumberField("someNumber")]
+        public double NumberFieldExample { get; set; }
+    }
 }
