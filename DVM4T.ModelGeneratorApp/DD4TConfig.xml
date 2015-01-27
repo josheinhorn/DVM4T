@@ -5,7 +5,7 @@
     <FieldAttribute fieldType="Date" name="DateField" singleType="DateTime" multiType="IList&lt;DateTime&gt;"/>
     <FieldAttribute fieldType="Embedded" name="EmbeddedSchemaField" singleType="IEmbeddedSchemaViewModel" multiType="ViewModelList&lt;IEmbeddedSchemaViewModel&gt;"/>
     <FieldAttribute fieldType="Keyword" name="KeywordField" singleType="IKeyword" multiType="IList&lt;IKeyword&gt;"/>
-    <FieldAttribute fieldType="Linked" name="LinkedComponentField" singleType="IComponentPresentationViewModel" multiType="ViewModelList&lt;IComponentPresentationViewModel&gt;"/>
+    <FieldAttribute fieldType="Linked" name="LinkedComponentField" singleType="ComponentPresentationViewModelBase" multiType="ViewModelList&lt;ComponentPresentationViewModelBase&gt;"/>
     <FieldAttribute fieldType="MultilineText" name="TextField" singleType="String" multiType="IList&lt;String&gt;"/>
     <FieldAttribute fieldType="Multimedia" name="MultimediaField" singleType="IMultimedia" multiType="IList&lt;IMultimedia&gt;"/>
     <FieldAttribute fieldType="Number" name="NumberField" singleType="Double" multiType="IList&lt;Double&gt;"/>
