@@ -24,7 +24,10 @@ using DVM4T.Exceptions;
 
 namespace DVM4T.Testing
 {
+    //TODO: Clean up the tests, make them only test 1 thing at a time
+    //TODO: Create multiple Tests files, this one is too long
 
+    
     //TODO: Remove or change the DD4T.ViewModels.Mocking stuff - it's super confusing
 
     [TestClass]

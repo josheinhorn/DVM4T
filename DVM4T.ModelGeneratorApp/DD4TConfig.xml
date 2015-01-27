@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<config>
+  <!--Use upper case for the primitives i.e. String, Double, Int, etc.-->
+  <FieldAttributeTypes>
+    <FieldAttribute fieldType="Date" name="DateField" singleType="DateTime" multiType="IList&lt;DateTime&gt;"/>
+    <FieldAttribute fieldType="Embedded" name="EmbeddedSchemaField" singleType="IEmbeddedSchemaViewModel" multiType="ViewModelList&lt;IEmbeddedSchemaViewModel&gt;"/>
+    <FieldAttribute fieldType="Keyword" name="KeywordField" singleType="IKeyword" multiType="IList&lt;IKeyword&gt;"/>
+    <FieldAttribute fieldType="Linked" name="LinkedComponentField" singleType="IComponentPresentationViewModel" multiType="ViewModelList&lt;IComponentPresentationViewModel&gt;"/>
+    <FieldAttribute fieldType="MultilineText" name="TextField" singleType="String" multiType="IList&lt;String&gt;"/>
+    <FieldAttribute fieldType="Multimedia" name="MultimediaField" singleType="IMultimedia" multiType="IList&lt;IMultimedia&gt;"/>
+    <FieldAttribute fieldType="Number" name="NumberField" singleType="Double" multiType="IList&lt;Double&gt;"/>
+    <FieldAttribute fieldType="RichText" name="RichTextField" singleType="MvcHtmlString" multiType="IList&lt;MvcHtmlString&gt;"/>
+    <FieldAttribute fieldType="Text" name="TextField" singleType="String" multiType="IList&lt;String&gt;"/>
+    <FieldAttribute fieldType="ExternalLink" name="TextField" singleType="String" multiType="IList&lt;String&gt;"/>
+  </FieldAttributeTypes>
+  <Namespaces>
+    <Namespace value="System"/>
+    <Namespace value="System.Web.Mvc"/>
+    <Namespace value="DD4T.ContentModel"/>
+    <Namespace value="DVM4T.Attributes"/>
+    <Namespace value="DVM4T.Base"/>
+    <Namespace value="DVM4T.DD4T.Attributes"/>
+    <Namespace value="DVM4T.Core"/>
+  </Namespaces>
+  <EmbeddedSchemaTypeAttributeParameterName value="EmbeddedSchemaType"/>
+  <LinkedComponentTypesAttributeParameterName value="LinkedComponentTypes"/>
+</config>
