@@ -21,6 +21,7 @@
     <Namespace value="DVM4T.Base"/>
     <Namespace value="DVM4T.DD4T.Attributes"/>
     <Namespace value="DVM4T.Core"/>
+    <Namespace value="System.Collections.Generic"/>
   </Namespaces>
   <EmbeddedSchemaTypeAttributeParameterName value="EmbeddedSchemaType"/>
   <LinkedComponentTypesAttributeParameterName value="LinkedComponentTypes"/>

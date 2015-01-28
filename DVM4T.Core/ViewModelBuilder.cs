@@ -21,7 +21,7 @@ namespace DVM4T.Core
     {
         private IDictionary<ViewModelAttribute, Type> viewModels = new Dictionary<ViewModelAttribute, Type>();
         private IList<Assembly> loadedAssemblies = new List<Assembly>();
-        public  IViewModelKeyProvider keyProvider;
+        public IViewModelKeyProvider keyProvider;
         /// <summary>
         /// New View Model Builder
         /// </summary>
@@ -147,16 +147,22 @@ namespace DVM4T.Core
                     {
                         //TODO: Check the property type and make sure it matches expected return type or throw an exception -- not sure this is worth it
                         field = fields[fieldName];
-                        fieldValue = fieldAttribute.GetFieldValue(field, prop.PropertyType, template, this); //delegate all the real work to the Field Attribute object itself. Allows for custom attribute types to easily be added
-                        try
+                        if (fields != null)
                         {
-                            prop.Set(viewModel, fieldValue);
-                        }
-                        catch (Exception e)
-                        {
-                            if (e is TargetException || e is InvalidCastException)
-                                throw new FieldTypeMismatchException(prop, fieldAttribute, fieldValue);
-                            else throw e;
+                            fieldValue = fieldAttribute.GetFieldValue(field, prop.PropertyType, template, this); //delegate all the real work to the Field Attribute object itself. Allows for custom attribute types to easily be added
+                            if (fieldValue != null)
+                            {
+                                try
+                                {
+                                    prop.Set(viewModel, fieldValue);
+                                }
+                                catch (Exception e)
+                                {
+                                    if (e is TargetException || e is InvalidCastException)
+                                        throw new FieldTypeMismatchException(prop, fieldAttribute, fieldValue);
+                                    else throw e;
+                                }
+                            }
                         }
                     }
                 }
