@@ -14,9 +14,9 @@ namespace DVM4T.Exceptions
         { }
     }
 
-    public class FieldTypeMismatchException : Exception
+    public class PropertyTypeMismatchException : Exception
     {
-        public FieldTypeMismatchException(FieldAttributeProperty fieldProperty, IFieldAttribute fieldAttribute, object fieldValue) : 
+        public PropertyTypeMismatchException(ModelAttributeProperty fieldProperty, IPropertyAttribute fieldAttribute, object fieldValue) : 
             base(String.Format("Type mismatch for property '{0}'. Expected type for '{1}' is {2}. Model Property is of type {3}. Field value is of type {4}."
             , fieldProperty.Name, fieldAttribute.GetType().Name, fieldAttribute.ExpectedReturnType.FullName, fieldProperty.PropertyType.FullName,
             fieldValue.GetType().FullName)) { }

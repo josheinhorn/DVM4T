@@ -9,7 +9,7 @@ using System.Web;
 
 namespace DVM4T.Contracts
 {
-    #region XPathable Data
+    #region XPathable Data - probably won't use
     public interface IXPathableNode
     {
         IXPathableNode SelectSingleNode(string xpath);
@@ -21,14 +21,17 @@ namespace DVM4T.Contracts
         IXPathableNode[] GetAllChildNodes(); //necessary?
         string GetAsXmlString();
     }
+    //Need to be able to retrieve Attributes via XPath as well
     public interface IAttribute
     {
         string Key { get; set; }
         string Value { get; set; }
     }
-    #endregion
 
-    #region Tridion interfaces
+    public interface IHaveNode
+    {
+        IXPathableNode Node { get; set; }
+    }
     //Is this interface necessary for this implementation? Seems to be connected to specifically an XML implementation
     public interface ITridionXPathProvider
     {
@@ -41,43 +44,55 @@ namespace DVM4T.Contracts
         string GetSchemaXPath();
     }
 
-    public interface IHaveNode
+    #endregion
+
+    #region Tridion interfaces
+
+
+    public interface IHaveData //consider making this generic i.e. IHaveData<T> { T BaseData { get; } } -- would require a lot of refactoring
     {
-        IXPathableNode Node { get; set; }
+        object BaseData { get; }
     }
-    public interface ITridionItem
+    public interface ITridionItemData : IHaveData
     {
         string TcmUri { get; }
         string Title { get; }
         int PublicationId { get; }
     }
 
-    public interface IComponentPresentation
+    public interface IComponentPresentationData : IHaveData
     {
-        IComponent Component { get; }
-        IComponentTemplate ComponentTemplate { get; }
+        IComponentData Component { get; }
+        IComponentTemplateData ComponentTemplate { get; }
     }
 
-    public interface IComponent : ITridionItem
+    public interface IComponentData : ITridionItemData
     {
-        IFieldSet Fields { get; }
-        IFieldSet MetadataFields { get; }
-        ISchema Schema { get; }
+        IFieldsData Fields { get; }
+        IFieldsData MetadataFields { get; }
+        ISchemaData Schema { get; }
+        IMultimediaData MultimediaData { get; }
     }
     
-    public interface IComponentTemplate : ITridionItem
+    public interface IComponentTemplateData : ITridionItemData
     {
-        IFieldSet MetadataFields { get; }
+        IFieldsData MetadataFields { get; }
         DateTime RevisionDate { get; }
     }
-
-    public interface IFieldSet
+    public interface IMultimediaData : IHaveData
     {
-        IField this[string key] { get; } //Convert this to xpath
+        string Url { get; }
+        string FileName { get; }
+        string MimeType { get; }
+    }
+
+    public interface IFieldsData : IHaveData
+    {
+        IFieldData this[string key] { get; } //Convert this to xpath
         bool ContainsKey(string key); //check if the XPath exists
     }
 
-    public interface ISchema : ITridionItem
+    public interface ISchemaData : ITridionItemData
     {
         string RootElementName { get; }
     }
@@ -87,11 +102,11 @@ namespace DVM4T.Contracts
         string Name { get; }
         string RootElementName { get; }
     }
-    public interface IField : ICanUseXpm, IHaveNode
+    public interface IFieldData : ICanUseXpm, IHaveData
     {
         //The object Value is the most powerful thing about this entire framework -- this object will be retrieved based on the FieldAttribute's overrided method. Question is, should it be implemented here.
-        IEnumerable Value { get; } //can/should I do this?
-        ISchema EmbeddedSchema { get; }
+        IEnumerable Values { get; } //can/should I do this?
+        ISchemaData EmbeddedSchema { get; }
         string FieldTypeString { get; } //maybe make an enum?? meh
     }
     #endregion
@@ -101,20 +116,27 @@ namespace DVM4T.Contracts
     /// </summary>
     public interface IViewModel
     {
-        IViewModelBuilder Builder { get; set; }
-        IFieldSet Fields { get; set; } 
-        IFieldSet MetadataFields { get; }
-        IComponentTemplate ComponentTemplate { get; set; } //we required Component Template here in order to generate Site Edit markup for any linked components in the embedded fields
+        IViewModelData ModelData { get; set; }
+    }
+
+    public interface IViewModelData //Should this extend IHaveData?
+    {
+        /// <summary>
+        /// The underlying data object that the View Model represents
+        /// </summary>
+        IViewModelBuilder Builder { get; }
+        IFieldsData Fields { get;  }
+        IFieldsData MetadataFields { get; }
+        IComponentTemplateData ComponentTemplate { get; } //we required Component Template here in order to generate Site Edit markup for any linked components in the embedded fields
         /// <summary>
         /// Publication ID of the underlying Tridion item
         /// </summary>
         int PublicationId { get; }
     }
 
-
     public interface IComponentPresentationViewModel : IViewModel
     {
-        IComponentPresentation ComponentPresentation { get; set; }
+        IComponentPresentationData ComponentPresentation { get; set; }
     }
     //TODO: Consider removing this interface, holding on to template is not actually necessary after building is done
     public interface IEmbeddedSchemaViewModel : IViewModel
@@ -133,7 +155,7 @@ namespace DVM4T.Contracts
         /// The LoadViewModels method must be called with the desired View Model Types in order for this to return a valid object.
         /// </remarks>
         /// <returns>Component Presentation View Model</returns>
-        IComponentPresentationViewModel BuildCPViewModel(IComponentPresentation componentPresentation); //A way to build view model without passing type -- type is inferred using loaded assemblies
+        IComponentPresentationViewModel BuildCPViewModel(IComponentPresentationData componentPresentation); //A way to build view model without passing type -- type is inferred using loaded assemblies
         /// <summary>
         /// Builds a View Model from a FieldSet using the schema determine the View Model class to use.
         /// </summary>
@@ -141,14 +163,14 @@ namespace DVM4T.Contracts
         /// <param name="embeddedSchema">Embedded Schema</param>
         /// <param name="template">Component Template to use for generating XPM Markup for any linked components</param>
         /// <returns>Embedded Schema View Model</returns>
-        IEmbeddedSchemaViewModel BuildEmbeddedViewModel(IFieldSet embeddedFields, ISchema embeddedSchemaTitle, IComponentTemplate template);
+        IEmbeddedSchemaViewModel BuildEmbeddedViewModel(IFieldsData embeddedFields, ISchemaData embeddedSchemaTitle, IComponentTemplateData template);
         /// <summary>
         /// Builds a View Model from a Component Presentation using the type parameter to determine the View Model class to use.
         /// </summary>
         /// <param name="type">Type of View Model class to return</param>
         /// <param name="cp">Component Presentation</param>
         /// <returns>Component Presentation View Model</returns>
-        IComponentPresentationViewModel BuildCPViewModel(Type type, IComponentPresentation componentPresentation);
+        IComponentPresentationViewModel BuildCPViewModel(Type type, IComponentPresentationData componentPresentation);
         /// <summary>
         /// Builds a View Model from a FieldSet using the generic type to determine the View Model class to use.
         /// </summary>
@@ -156,14 +178,14 @@ namespace DVM4T.Contracts
         /// <param name="embeddedFields">Embedded FieldSet</param>
         /// <param name="template">Component Template to use for generating XPM Markup for any linked components</param>
         /// <returns>Embedded Schema View Model</returns>
-        IEmbeddedSchemaViewModel BuildEmbeddedViewModel(Type type, IFieldSet embeddedFields, IComponentTemplate template);
+        IEmbeddedSchemaViewModel BuildEmbeddedViewModel(Type type, IFieldsData embeddedFields, IComponentTemplateData template);
         /// <summary>
         /// Builds a View Model from a Component Presentation using the generic type to determine the View Model class to use.
         /// </summary>
         /// <typeparam name="T">Type of View Model class to return</typeparam>
         /// <param name="cp">Component Presentation</param>
         /// <returns>Component Presentation View Model</returns>
-        T BuildCPViewModel<T>(IComponentPresentation componentPresentation) where T : class, IComponentPresentationViewModel;
+        T BuildCPViewModel<T>(IComponentPresentationData componentPresentation) where T : class, IComponentPresentationViewModel;
         /// <summary>
         /// Builds a View Model from a FieldSet using the generic type to determine the View Model class to use.
         /// </summary>
@@ -171,7 +193,7 @@ namespace DVM4T.Contracts
         /// <param name="embeddedFields">Embedded FieldSet</param>
         /// <param name="template">Component Template to use for generating XPM Markup for any linked components</param>
         /// <returns>Embedded Schema View Model</returns>
-        T BuildEmbeddedViewModel<T>(IFieldSet embeddedFields, IComponentTemplate template) where T : class, IEmbeddedSchemaViewModel;
+        T BuildEmbeddedViewModel<T>(IFieldsData embeddedFields, IComponentTemplateData template) where T : class, IEmbeddedSchemaViewModel;
         /// <summary>
         /// The View Model Key Provider for this Builder
         /// </summary>
@@ -195,20 +217,20 @@ namespace DVM4T.Contracts
         /// <param name="field">Tridion Field</param>
         /// <param name="index">Optional index for multi value fields</param>
         /// <returns>XPM Markup</returns>
-        string RenderXpmMarkupForField(IField field, int index = -1);
+        string RenderXpmMarkupForField(IFieldData field, int index = -1);
         /// <summary>
         /// Renders the XPM Markup for a Component Presentation
         /// </summary>
         /// <param name="cp">Component Presentation</param>
         /// <param name="region">Optional region</param>
         /// <returns>XPM Markup</returns>
-        string RenderXpmMarkupForComponent(IComponentPresentation cp, string region = null);
+        string RenderXpmMarkupForComponent(IComponentPresentationData cp, string region = null);
         /// <summary>
         /// Determines if Site Edit is enabled for a particular item
         /// </summary>
         /// <param name="item">Item</param>
         /// <returns></returns>
-        bool IsSiteEditEnabled(ITridionItem item);
+        bool IsSiteEditEnabled(ITridionItemData item);
         /// <summary>
         /// Determines if Site Edit is enabeld for a publication
         /// </summary>
@@ -295,7 +317,7 @@ namespace DVM4T.Contracts
         /// </summary>
         /// <param name="template">Component Template</param>
         /// <returns>View Model Key</returns>
-        string GetViewModelKey(IComponentTemplate template);
+        string GetViewModelKey(IComponentTemplateData template);
     }
 
     public interface ICanBeBoolean
@@ -305,7 +327,7 @@ namespace DVM4T.Contracts
    
     public interface IReflectionHelper
     {
-        List<FieldAttributeProperty> GetFieldProperties(Type type);
+        List<ModelAttributeProperty> GetModelProperties(Type type);
         T GetCustomAttribute<T>(Type type) where T : Attribute;
         object CreateInstance(Type objectType);
         T CreateInstance<T>() where T : class, new();
@@ -315,25 +337,40 @@ namespace DVM4T.Contracts
         PropertyInfo GetPropertyInfo<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda);
     }
     /// <summary>
-    /// Data structure for efficient use of Properties marking with a Field Custom Attribute
+    /// Data structure for efficient use of Properties marked with a Field Custom Attribute
     /// </summary>
-    public struct FieldAttributeProperty
+    public struct ModelAttributeProperty
     {
         public string Name { get; set; }
         public Action<object, object> Set { get; set; }
         public Func<object, object> Get { get; set; }
-        public IFieldAttribute FieldAttribute { get; set; }
+        public IPropertyAttribute PropertyAttribute { get; set; }
         public Type PropertyType { get; set; }
     }
-    public interface IFieldAttribute
+    public interface IPropertyAttribute
     {
-        object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null);
         Type ExpectedReturnType { get; }
+        object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null);
+    }
+    public interface IFieldAttribute : IPropertyAttribute
+    {
+        object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null);
         string FieldName { get; }
         bool AllowMultipleValues { get; set; }
         bool InlineEditable { get; set; }
         bool Mandatory { get; set; }
         bool IsMetadata { get; set; }
+    }
+
+    //TODO: Anyway to merge all three interfaces into one? They're so similar
+    //TODO: Use these interfaces in the builder
+    public interface IComponentAttribute : IPropertyAttribute
+    {
+        object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null);
+    }
+    public interface IComponentTemplateAttribute : IPropertyAttribute
+    {
+        object GetPropertyValue(IComponentTemplateData template, Type propertyType, IViewModelBuilder builder = null);
     }
     public interface IViewModelAttribute
     {

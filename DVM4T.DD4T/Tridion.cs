@@ -2,14 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using DVM = DVM4T.Contracts;
+using DVM4T.Contracts;
 using DD4T.ContentModel;
 using System.Collections;
 namespace DVM4T.DD4T
 {
-    public abstract class TridionItemBase : DVM.ITridionItem
+    //TODO: Consider creating Factory or Provider to create these, especially ComponentPresentation
+    public abstract class TridionItemBase : ITridionItemData
     {
         protected abstract IItem Item { get; }
+        private int? pubId = null;
 
         public string TcmUri
         {
@@ -31,13 +33,25 @@ namespace DVM4T.DD4T
         {
             get
             {
-                return new TcmUri(Item.Id).PublicationId;
+                if (pubId == null)
+                {
+                    try
+                    {
+                        pubId =  new TcmUri(Item.Id).PublicationId;
+                    }
+                    catch (Exception)
+                    {
+                        pubId = 0;
+                    }
+                }
+                return (int)pubId;
             }
         }
 
+        public abstract object BaseData { get; }
     }
 
-    public class Schema : TridionItemBase, DVM.ISchema
+    public class Schema : TridionItemBase, ISchemaData
     {
         private ISchema schema;
         protected override IItem Item
@@ -54,11 +68,16 @@ namespace DVM4T.DD4T
         {
             get { return schema.RootElementName; }
         }
+
+        public override object BaseData
+        {
+            get { return schema; }
+        }
     }
-    public class Field : DVM.IField
+    public class Field : IFieldData
     {
         private IField field;
-        private DVM.ISchema embeddedSchema;
+        private ISchemaData embeddedSchema;
         private string fieldType;
         private string xpath;
         private string name;
@@ -72,7 +91,7 @@ namespace DVM4T.DD4T
             this.xpath = field.XPath;
             this.name = field.Name;
         }
-        public IEnumerable Value
+        public IEnumerable Values
         {
             get
             {
@@ -116,7 +135,7 @@ namespace DVM4T.DD4T
             }
         }
 
-        public DVM.ISchema EmbeddedSchema
+        public ISchemaData EmbeddedSchema
         {
             get { return embeddedSchema; }
         }
@@ -141,34 +160,28 @@ namespace DVM4T.DD4T
             get { return this.embeddedSchema.RootElementName; }
         }
 
-        //How the hell to implement this for DD4T?
-        public DVM.IXPathableNode Node
+        public object BaseData
         {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
+            get { return field; }
         }
     }
 
-    public class FieldSet : DVM.IFieldSet
+    public class FieldSet : IFieldsData
     {
-        private IDictionary<string, DVM.IField> fields;
-        private DVM.IField CreateField(IField field)
+        private IDictionary<string, IFieldData> fields;
+        private IFieldSet fieldset;
+        private IFieldData CreateField(IField field)
         {
             return new Field(field);
         }
         public FieldSet(IFieldSet fieldset)
         {
+            this.fieldset = fieldset;
             if (fieldset == null)
-                fields = new Dictionary<string, DVM.IField>();
+                fields = new Dictionary<string, IFieldData>();
             else fields = fieldset.ToDictionary(x => x.Key, y => CreateField(y.Value));
         }
-        public DVM.IField this[string key]
+        public IFieldData this[string key]
         {
             get { return fields[key]; }
         }
@@ -177,13 +190,49 @@ namespace DVM4T.DD4T
         {
             return fields.ContainsKey(key);
         }
+
+        public object BaseData
+        {
+            get { return fieldset; }
+        }
     }
-    public class Component : TridionItemBase, DVM.IComponent
+    public class MultimediaData : IMultimediaData
     {
-        private DVM.IFieldSet fields;
-        private DVM.IFieldSet metadataFields;
+        private IMultimedia multimedia;
+        public MultimediaData(IMultimedia multimedia)
+        {
+            //This can and will often be null
+            this.multimedia = multimedia;
+        }
+        public string Url
+        {
+            get { return multimedia.Url; }
+        }
+
+        public string FileName
+        {
+            get { return multimedia.FileName; }
+        }
+
+        public string MimeType
+        {
+            get { return multimedia.MimeType; }
+        }
+
+        public IMultimedia DD4TMultimedia { get { return multimedia; } }
+
+        public object BaseData
+        {
+            get { return multimedia; }
+        }
+    }
+    public class Component : TridionItemBase, IComponentData
+    {
+        private IFieldsData fields;
+        private IFieldsData metadataFields;
         protected IComponent dd4t;
-        private DVM.ISchema schema;
+        private ISchemaData schema;
+        private IMultimediaData multimedia;
         protected override IItem Item
         {
             get { return dd4t; }
@@ -194,14 +243,15 @@ namespace DVM4T.DD4T
             this.schema = new Schema(dd4t.Schema);
             this.fields = new FieldSet(dd4t.Fields);
             this.metadataFields = new FieldSet(dd4t.MetadataFields);
+            this.multimedia = new MultimediaData(dd4t.Multimedia);
         }
 
-        public DVM.IFieldSet Fields
+        public IFieldsData Fields
         {
             get { return fields; }
         }
 
-        public DVM.IFieldSet MetadataFields
+        public IFieldsData MetadataFields
         {
             get
             {
@@ -209,19 +259,29 @@ namespace DVM4T.DD4T
             }
         }
 
-        public DVM.ISchema Schema
+        public ISchemaData Schema
         {
             get
             {
                 return schema;
             }
         }
+
+        public IMultimediaData MultimediaData
+        {
+            get { return multimedia; }
+        }
+
+        public override object BaseData
+        {
+            get { return dd4t; }
+        }
     }
 
-    public class ComponentTemplate : TridionItemBase, DVM.IComponentTemplate
+    public class ComponentTemplate : TridionItemBase, IComponentTemplateData
     {
         private readonly IComponentTemplate template;
-        private readonly DVM.IFieldSet metadataFields;
+        private readonly IFieldsData metadataFields;
         protected override IItem Item
         {
             get { return template; }
@@ -231,7 +291,7 @@ namespace DVM4T.DD4T
             this.template = template;
             this.metadataFields = new FieldSet(template.MetadataFields);
         }
-        public DVM.IFieldSet MetadataFields
+        public IFieldsData MetadataFields
         {
             get
             {
@@ -239,36 +299,46 @@ namespace DVM4T.DD4T
             }
         }
 
-
         public DateTime RevisionDate
         {
             get { return template.RevisionDate; }
         }
+
+        public override object BaseData
+        {
+            get { return template; }
+        }
     }
 
-    public class ComponentPresentation : DVM.IComponentPresentation
+    public class ComponentPresentation : IComponentPresentationData
     {
-        private DVM.IComponent component;
-        private DVM.IComponentTemplate template;
-
+        private IComponentData component;
+        private IComponentTemplateData template;
+        private IComponentPresentation cp;
         public ComponentPresentation(IComponentPresentation cp)
         {
+            this.cp = cp;
             component = new Component(cp.Component);
             template = new ComponentTemplate(cp.ComponentTemplate);
         }
-        public ComponentPresentation(DVM.IComponent component, DVM.IComponentTemplate template)
+        public ComponentPresentation(IComponentData component, IComponentTemplateData template)
         {
             this.component = component;
             this.template = template;
         }
-        public DVM.IComponent Component
+        public IComponentData Component
         {
             get { return component; }
         }
 
-        public DVM.IComponentTemplate ComponentTemplate
+        public IComponentTemplateData ComponentTemplate
         {
             get { return template; }
+        }
+
+        public object BaseData
+        {
+            get { return cp; }
         }
     }
 }

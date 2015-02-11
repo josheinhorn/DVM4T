@@ -77,10 +77,11 @@ namespace DVM4T.ModelGeneratorApp
                 {
                     client.Abort();
                 }
-                else if (client.State != CommunicationState.Closed)
+                if (client.State != CommunicationState.Closed)
                 {
                     client.Close();
                 }
+                client = null;
             }
             return result;
         }

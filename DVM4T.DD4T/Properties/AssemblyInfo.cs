@@ -6,10 +6,10 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("DVM4T.DD4T")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("DD4T Support for DVM4T")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("DD4T Support for DVM4T")]
+[assembly: AssemblyProduct("DVM4T.DD4T")]
 [assembly: AssemblyCopyright("Copyright © Josh Einhorn 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -33,4 +33,4 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.1")]
-[assembly: AssemblyFileVersion("1.0.1")]
+[assembly: AssemblyFileVersion("1.0.0.1")]

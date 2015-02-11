@@ -45,9 +45,15 @@ namespace DVM4T.XPM
         /// <returns>XPM Markup and field value</returns>
         public HtmlString XpmEditableField<TProp>(Expression<Func<TModel, TProp>> propertyLambda, int index = -1)
         {
-            var fieldProp = GetFieldProperty(propertyLambda);
-            var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
-            return SiteEditable<TProp>(model, fields, fieldProp, index);
+            HtmlString result = null;
+            var modelProp = GetModelProperty(propertyLambda);
+            if (modelProp.PropertyAttribute is IFieldAttribute)
+            {
+                var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
+                var fields = fieldProp.IsMetadata ? model.ModelData.MetadataFields : model.ModelData.Fields;
+                result = SiteEditable<TProp>(model, fields, modelProp, index);
+            }
+            return result;
         }
         /// <summary>
         /// Renders both XPM Markup and Field Value for a multi-value field
@@ -67,10 +73,16 @@ namespace DVM4T.XPM
         /// <returns>XPM Markup and field value</returns>
         public HtmlString XpmEditableField<TProp, TItem>(Expression<Func<TModel, TProp>> propertyLambda, TItem item)
         {
-            var fieldProp = GetFieldProperty(propertyLambda);
-            int index = IndexOf(fieldProp, model, item);
-            var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
-            return SiteEditable<TProp>(model, fields, fieldProp, index);
+            HtmlString result = null;
+            var modelProp = GetModelProperty(propertyLambda);
+            if (modelProp.PropertyAttribute is IFieldAttribute)
+            {
+                var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
+                var fields = fieldProp.IsMetadata ? model.ModelData.MetadataFields : model.ModelData.Fields;
+                int index = IndexOf(modelProp, model, item);
+                result = SiteEditable<TProp>(model, fields, modelProp, index);
+            }
+            return result;
         }
         /// <summary>
         /// Renders the XPM markup for a field
@@ -83,13 +95,19 @@ namespace DVM4T.XPM
         /// <returns>XPM Markup</returns>
         public HtmlString XpmMarkupFor<TProp>(Expression<Func<TModel, TProp>> propertyLambda, int index = -1)
         {
+            HtmlString result = null;
             if (IsSiteEditEnabled(model))
             {
-                var fieldProp = GetFieldProperty(propertyLambda);
-                var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
-                return XpmMarkupFor(fields, fieldProp, index);
+                
+                var modelProp = GetModelProperty(propertyLambda);
+                if (modelProp.PropertyAttribute is IFieldAttribute)
+                {
+                    var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
+                    var fields = fieldProp.IsMetadata ? model.ModelData.MetadataFields : model.ModelData.Fields;
+                    result = XpmMarkupFor(fields, modelProp, index);
+                }
             }
-            else return null;
+            return result;
         }
         /// <summary>
         /// Renders XPM Markup for a multi-value field
@@ -110,14 +128,20 @@ namespace DVM4T.XPM
         /// <returns>XPM Markup</returns>
         public HtmlString XpmMarkupFor<TProp, TItem>(Expression<Func<TModel, TProp>> propertyLambda, TItem item)
         {
+            HtmlString result = null;
             if (IsSiteEditEnabled(model))
             {
-                var fieldProp = GetFieldProperty(propertyLambda);
-                int index = IndexOf(fieldProp, model, item);
-                var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
-                return XpmMarkupFor(fields, fieldProp, index);
+
+                var modelProp = GetModelProperty(propertyLambda);
+                if (modelProp.PropertyAttribute is IFieldAttribute)
+                {
+                    var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
+                    var fields = fieldProp.IsMetadata ? model.ModelData.MetadataFields : model.ModelData.Fields;
+                    int index = IndexOf(modelProp, model, item);
+                    result = XpmMarkupFor(fields, modelProp, index);
+                }
             }
-            else return null;
+            return result;
         }
         /// <summary>
         /// Renders the XPM Markup for a Component Presentation
@@ -136,7 +160,7 @@ namespace DVM4T.XPM
         #region private methods
         private bool IsSiteEditEnabled(IViewModel model)
         {
-            return XpmMarkupService.IsSiteEditEnabled(model.PublicationId);
+            return XpmMarkupService.IsSiteEditEnabled(model.ModelData.PublicationId);
         }
 
         private int IndexOf(IEnumerable enumerable, object obj)
@@ -152,7 +176,7 @@ namespace DVM4T.XPM
             }
             return -1;
         }
-        private int IndexOf<T>(FieldAttributeProperty fieldProp, object model, T item)
+        private int IndexOf<T>(ModelAttributeProperty fieldProp, object model, T item)
         {
             int index = -1;
             object value = fieldProp.Get(model);
@@ -164,12 +188,12 @@ namespace DVM4T.XPM
             else throw new FormatException(String.Format("Generic type of property type {0} does not match generic type of item {1}", value.GetType().Name, typeof(T).Name));
             return index;
         }
-        private FieldAttributeProperty GetFieldProperty<TProp>(Expression<Func<TModel, TProp>> propertyLambda)
+        private ModelAttributeProperty GetModelProperty<TProp>(Expression<Func<TModel, TProp>> propertyLambda)
         {
             PropertyInfo property = ReflectionUtility.ReflectionCache.GetPropertyInfo(propertyLambda);
-            return GetFieldProperty(typeof(TModel), property);
+            return GetModelProperty(typeof(TModel), property);
         }
-        private HtmlString SiteEditable<TProp>(IViewModel model, IFieldSet fields, FieldAttributeProperty fieldProp, int index)
+        private HtmlString SiteEditable<TProp>(IViewModel model, IFieldsData fields, ModelAttributeProperty fieldProp, int index)
         {
             string markup = string.Empty;
             object value = null;
@@ -188,23 +212,28 @@ namespace DVM4T.XPM
             return new HtmlString(markup + propValue);
         }
 
-        private string GenerateSiteEditTag(IField field, int index)
+        private string GenerateSiteEditTag(IFieldData field, int index)
         {
             return XpmMarkupService.RenderXpmMarkupForField(field, index);
         }
-        private IField GetField(IFieldSet fields, FieldAttributeProperty fieldProp)
+        private IFieldData GetField(IFieldsData fields, ModelAttributeProperty fieldProp)
         {
-            var fieldName = fieldProp.FieldAttribute.FieldName;
-            return fields.ContainsKey(fieldName) ? fields[fieldName] : null;
+            IFieldData result = null;
+            if (fieldProp.PropertyAttribute is IFieldAttribute)
+            {
+                var fieldName = ((IFieldAttribute)fieldProp.PropertyAttribute).FieldName;
+                result = fields.ContainsKey(fieldName) ? fields[fieldName] : null;
+            }
+            return result;
         }
 
-        private FieldAttributeProperty GetFieldProperty(Type type, PropertyInfo property)
+        private ModelAttributeProperty GetModelProperty(Type type, PropertyInfo property)
         {
-            var props = ReflectionUtility.ReflectionCache.GetFieldProperties(type);
+            var props = ReflectionUtility.ReflectionCache.GetModelProperties(type);
             return props.FirstOrDefault(x => x.Name == property.Name);
         }
 
-        private HtmlString XpmMarkupFor(IFieldSet fields, FieldAttributeProperty fieldProp, int index)
+        private HtmlString XpmMarkupFor(IFieldsData fields, ModelAttributeProperty fieldProp, int index)
         {
             try
             {

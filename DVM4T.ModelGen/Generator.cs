@@ -53,15 +53,19 @@ namespace DVM4T.ModelGen
                    
                     if (field.FieldType == FieldType.Linked)
                     {
+                        //Field is a Linked Component, we need to assemble the list of possible Types
                         var modelTypes = new List<CodeExpression>();
+                        //Populate list of Types
                         foreach (var modelName in field.LinkedComponentTypeNames)
                         {
                             modelTypes.Add(new CodeTypeOfExpression(modelName));
                         }
                         if (modelTypes.Count > 0)
                         {
+                            //Create Array of Types and pass in the list of Types
                             CodeArrayCreateExpression codeArrayCreate = new CodeArrayCreateExpression("Type",
                             modelTypes.ToArray());
+                            //Add the array of Types to the Attribute arguments
                             fieldAttribute.Arguments.Add(
                                 new CodeAttributeArgument(configuration.LinkedComponentTypesAttributeParameterName,
                                     codeArrayCreate));
@@ -70,20 +74,23 @@ namespace DVM4T.ModelGen
                     else if (field.FieldType == FieldType.Embedded
                         && !string.IsNullOrEmpty(field.EmbeddedTypeName))
                     {
+                        //Add the required Type argument for embedded fields
                         fieldAttribute.Arguments.Add(
                             new CodeAttributeArgument(new CodeTypeOfExpression(field.EmbeddedTypeName)));
                     }
                     if (field.IsMultiValue)
                     {
+                        //Add boolean value for multiple values
                         fieldAttribute.Arguments.Add(new CodeAttributeArgument("AllowMultipleValues",
                             new CodePrimitiveExpression(true)));
                     }
                     if (field.IsMetadata)
                     {
+                        //Add boolean for metadata fields
                         fieldAttribute.Arguments.Add(new CodeAttributeArgument("IsMetadata",
                             new CodePrimitiveExpression(true)));
                     }
-
+                    //Create and populate the model Property
                     CodeMemberField property = new CodeMemberField { Name = field.Name }; //Use CodeMemberField as a hack to add a blank getter/setter
                     property.Attributes = MemberAttributes.Public;
                     property.Type = GetPropertyType(model.BaseClass, field);
@@ -115,7 +122,8 @@ namespace DVM4T.ModelGen
             {
                 provider.GenerateCodeFromCompileUnit(
                     compileUnit, stringWriter, options);
-                string contents = stringWriter.GetStringBuilder().Replace("};","}").ToString(); //this is another hack to remove the trailing ';' added after each Property
+                //this is another hack to remove the trailing ';' added after each Property
+                string contents = stringWriter.GetStringBuilder().Replace("};","}").ToString(); 
                 using (StreamWriter fileWriter = new StreamWriter(filePath))
                 {
                     fileWriter.Write(contents);

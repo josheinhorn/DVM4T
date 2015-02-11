@@ -291,7 +291,7 @@ namespace DVM4T.Testing
             Assert.IsInstanceOfType(model, typeof(TitleViewModel));
         }
 
-        [TestMethod, ExpectedException(typeof(FieldTypeMismatchException))]
+        [TestMethod, ExpectedException(typeof(PropertyTypeMismatchException))]
         public void TestFieldTypeMismatch()
         {
             string expectedString = autoMocker.Create<string>();

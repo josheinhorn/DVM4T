@@ -18,40 +18,40 @@ namespace DVM4T.Reflection
 
     public class ReflectionOptimizer : IReflectionHelper
     {
-        private Dictionary<Type, List<FieldAttributeProperty>> fieldProperties = new Dictionary<Type, List<FieldAttributeProperty>>();
+        private Dictionary<Type, List<ModelAttributeProperty>> modelProperties = new Dictionary<Type, List<ModelAttributeProperty>>();
         private Dictionary<Type, Func<object>> constructors = new Dictionary<Type, Func<object>>();
         //private Dictionary<Type, ViewModelAttribute> viewModelAttributes = new Dictionary<Type, ViewModelAttribute>();
         private Dictionary<Type, Attribute> modelAttributes = new Dictionary<Type, Attribute>();
 
         internal ReflectionOptimizer() { }
 
-        public List<FieldAttributeProperty> GetFieldProperties(Type type)
+        public List<ModelAttributeProperty> GetModelProperties(Type type)
         {
-            List<FieldAttributeProperty> result;
-            if (!fieldProperties.TryGetValue(type, out result))
+            List<ModelAttributeProperty> result;
+            if (!modelProperties.TryGetValue(type, out result))
             {
-                lock (fieldProperties)
+                lock (modelProperties)
                 {
-                    if (!fieldProperties.TryGetValue(type, out result))
+                    if (!modelProperties.TryGetValue(type, out result))
                     {
                         PropertyInfo[] props = type.GetProperties();
-                        result = new List<FieldAttributeProperty>();
+                        result = new List<ModelAttributeProperty>();
                         foreach (var prop in props)
                         {
-                            FieldAttributeBase fieldAttribute = prop.GetCustomAttributes(typeof(FieldAttributeBase), true).FirstOrDefault() as FieldAttributeBase;
-                            if (fieldAttribute != null) //only add properties that have the custom attribute
+                            ModelPropertyAttributeBase propAttribute = prop.GetCustomAttributes(typeof(ModelPropertyAttributeBase), true).FirstOrDefault() as ModelPropertyAttributeBase;
+                            if (propAttribute != null) //only add properties that have the custom attribute
                             {
-                                result.Add(new FieldAttributeProperty
+                                result.Add(new ModelAttributeProperty
                                 {
                                     Name = prop.Name,
-                                    FieldAttribute = fieldAttribute,
+                                    PropertyAttribute = propAttribute,
                                     Set = BuildSetter(prop),
                                     Get = BuildGetter(prop),
                                     PropertyType = prop.PropertyType
                                 });
                             }
                         }
-                        fieldProperties.Add(type, result);
+                        modelProperties.Add(type, result);
                     }
                 }
             }

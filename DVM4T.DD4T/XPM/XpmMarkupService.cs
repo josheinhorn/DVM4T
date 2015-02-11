@@ -11,7 +11,7 @@ namespace DVM4T.DD4T.XPM
 
     public class XpmMarkupService : IXpmMarkupService
     {
-        private Dynamic.Field CreateDD4TField(IField field)
+        private Dynamic.Field CreateDD4TField(IFieldData field)
         {
             Dynamic.Schema schema = field.EmbeddedSchema != null ?
                 new Dynamic.Schema
@@ -28,7 +28,7 @@ namespace DVM4T.DD4T.XPM
                 EmbeddedSchema = schema
             };
         }
-        public string RenderXpmMarkupForField(IField field, int index = -1)
+        public string RenderXpmMarkupForField(IFieldData field, int index = -1)
         {
             var dd4tField = CreateDD4TField(field);
             var result = index >= 0 ? SiteEditService.GenerateSiteEditFieldTag(dd4tField, index)
@@ -36,7 +36,7 @@ namespace DVM4T.DD4T.XPM
             return result ?? string.Empty;
         }
 
-        public string RenderXpmMarkupForComponent(IComponentPresentation cp, string region = null)
+        public string RenderXpmMarkupForComponent(IComponentPresentationData cp, string region = null)
         {
             var dd4tCP = new Dynamic.ComponentPresentation
             {
@@ -56,7 +56,7 @@ namespace DVM4T.DD4T.XPM
             return SiteEditService.GenerateSiteEditComponentTag(dd4tCP, region);
         }
 
-        public bool IsSiteEditEnabled(ITridionItem item)
+        public bool IsSiteEditEnabled(ITridionItemData item)
         {
             return IsSiteEditEnabled(item.PublicationId);
         }

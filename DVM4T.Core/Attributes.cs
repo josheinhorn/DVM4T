@@ -10,10 +10,21 @@ using DVM4T.Exceptions;
 
 namespace DVM4T.Attributes
 {
+    public abstract class ModelPropertyAttributeBase : Attribute, IPropertyAttribute
+    {
+        public abstract object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null);
+        /// <summary>
+        /// When overriden in a derived class, this property returns the expected return type of the View Model property.
+        /// </summary>
+        /// <remarks>Primarily used for debugging purposes. This property is used to throw an accurate exception at run time if
+        /// the property return type does not match with the expected type.</remarks>
+        public abstract Type ExpectedReturnType { get; }
+    }
+
     /// <summary>
     /// The Base class for all Field Attributes. Inherit this class to create custom attributes for decorating Domain View Models.
     /// </summary>
-    public abstract class FieldAttributeBase : Attribute, IFieldAttribute
+    public abstract class FieldAttributeBase : ModelPropertyAttributeBase, IFieldAttribute
     {
         protected readonly string fieldName;
         protected bool allowMultipleValues = false;
@@ -28,6 +39,19 @@ namespace DVM4T.Attributes
         {
             this.fieldName = fieldName;
         }
+        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
+        {
+            object result = null;
+            if (model != null)
+            {
+                var fields = IsMetadata ? model.ModelData.MetadataFields : model.ModelData.Fields;
+                if (fields != null && fields.ContainsKey(FieldName))
+                {
+                    result = this.GetFieldValue(fields[FieldName], propertyType, model.ModelData.ComponentTemplate, builder);
+                }
+            }
+            return result;
+        }
         /// <summary>
         /// When overriden in a derived class, this method should return the value of the View Model property from a Field object
         /// </summary>
@@ -36,13 +60,8 @@ namespace DVM4T.Attributes
         /// <param name="template">The Component Template to use</param>
         /// <param name="builder">The View Model Builder</param>
         /// <returns></returns>
-        public abstract object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null);
-        /// <summary>
-        /// When overriden in a derived class, this property returns the expected return type of the View Model property.
-        /// </summary>
-        /// <remarks>Primarily used for debugging purposes. This property is used to throw an accurate exception at run time if
-        /// the property return type does not match with the expected type.</remarks>
-        public abstract Type ExpectedReturnType { get; }
+        public abstract object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null);
+        
         /// <summary>
         /// The Tridion schema field name for this property
         /// </summary>
@@ -95,6 +114,41 @@ namespace DVM4T.Attributes
             set { isMetadata = value; }
         }
     }
+
+    public abstract class ComponentAttributeBase : ModelPropertyAttributeBase, IComponentAttribute
+    {
+        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
+        {
+            object result = null;
+            if (model != null && model is IComponentPresentationViewModel)
+            {
+                var cpModel = model as IComponentPresentationViewModel;
+                if (cpModel.ComponentPresentation != null)
+                {
+                    result = GetPropertyValue(cpModel.ComponentPresentation.Component, propertyType,
+                        cpModel.ComponentPresentation.ComponentTemplate, builder);
+                }
+            }
+            return result;
+        }
+        public abstract object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null);
+    }
+
+    public abstract class ComponentTemplateAttributeBase : ModelPropertyAttributeBase, IComponentTemplateAttribute
+    {
+        public abstract object GetPropertyValue(IComponentTemplateData template, Type propertyType, IViewModelBuilder builder = null);
+
+        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
+        {
+            object result = null;
+            if (model != null && model.ModelData.ComponentTemplate != null)
+            {
+                result = this.GetPropertyValue(model.ModelData.ComponentTemplate, propertyType, builder);
+            }
+            return result;
+        }
+    }
+
     /// <summary>
     /// A View Model.
     /// </summary>

@@ -53,22 +53,22 @@ namespace DVM4T.Core
                 }
             }
         }
-        public IComponentPresentationViewModel BuildCPViewModel(Type type, IComponentPresentation cp)
+        public IComponentPresentationViewModel BuildCPViewModel(Type type, IComponentPresentationData cp)
         {
             IComponentPresentationViewModel viewModel = null;
             viewModel = (IComponentPresentationViewModel)ReflectionUtility.ReflectionCache.CreateInstance(type);
             viewModel.ComponentPresentation = cp;
-            viewModel.Builder = this;
-            IFieldSet fields = cp.Component.Fields;
-            ProcessFields(fields, viewModel, type, cp.ComponentTemplate, cp.Component.MetadataFields);
+            viewModel.ModelData = new ViewModelData(cp, this);
+            IFieldsData fields = cp.Component.Fields;
+            ProcessViewModel(viewModel, type, cp.ComponentTemplate);
             return viewModel;
         }
-        public T BuildCPViewModel<T>(IComponentPresentation cp) where T : class, IComponentPresentationViewModel
+        public T BuildCPViewModel<T>(IComponentPresentationData cp) where T : class, IComponentPresentationViewModel
         {
             Type type = typeof(T);
             return (T)BuildCPViewModel(type, cp);
         }
-        public IComponentPresentationViewModel BuildCPViewModel(IComponentPresentation cp)
+        public IComponentPresentationViewModel BuildCPViewModel(IComponentPresentationData cp)
         {
             if (cp == null) throw new ArgumentNullException("cp");
             var key = new ViewModelAttribute(cp.Component.Schema.Title, false)
@@ -80,7 +80,7 @@ namespace DVM4T.Core
             Type type = viewModels.ContainsKey(key) ? viewModels[key] : null; //Keep an eye on this -- GetHashCode isn't the same as Equals
             if (type != null)
             {
-                result = (IComponentPresentationViewModel)BuildCPViewModel(type, cp);
+                result = BuildCPViewModel(type, cp);
             }
             else
             {
@@ -88,12 +88,12 @@ namespace DVM4T.Core
             }
             return result;
         }
-        public T BuildEmbeddedViewModel<T>(IFieldSet embeddedFields, IComponentTemplate template) where T : class, IEmbeddedSchemaViewModel
+        public T BuildEmbeddedViewModel<T>(IFieldsData embeddedFields, IComponentTemplateData template) where T : class, IEmbeddedSchemaViewModel
         {
             Type type = typeof(T);
             return (T)BuildEmbeddedViewModel(type, embeddedFields, template);
         }
-        public IEmbeddedSchemaViewModel BuildEmbeddedViewModel(IFieldSet embeddedFields, ISchema schema, IComponentTemplate template)
+        public IEmbeddedSchemaViewModel BuildEmbeddedViewModel(IFieldsData embeddedFields, ISchemaData schema, IComponentTemplateData template)
         {
             if (embeddedFields == null) throw new ArgumentNullException("embeddedFields");
             if (schema == null) throw new ArgumentNullException("schema");
@@ -115,60 +115,47 @@ namespace DVM4T.Core
             }
             return result;
         }
-        public IEmbeddedSchemaViewModel BuildEmbeddedViewModel(Type type, IFieldSet embeddedFields, IComponentTemplate template)
+        public IEmbeddedSchemaViewModel BuildEmbeddedViewModel(Type type, IFieldsData embeddedFields, IComponentTemplateData template)
         {
             IEmbeddedSchemaViewModel viewModel = (IEmbeddedSchemaViewModel)ReflectionUtility.ReflectionCache.CreateInstance(type);
-            viewModel.Fields = embeddedFields;
-            viewModel.ComponentTemplate = template;
-            viewModel.Builder = this;
-            ProcessFields(embeddedFields, viewModel, type, template);
+            viewModel.ModelData = new ViewModelData(embeddedFields, template, this);
+            ProcessViewModel(viewModel, type, template);
             return viewModel;
         }
         #endregion
 
         #region Private methods
-        private void ProcessFields(IFieldSet contentFields, object viewModel, Type type, IComponentTemplate template, IFieldSet metadataFields = null)
+
+
+        private void ProcessViewModel(IViewModel viewModel, Type type, IComponentTemplateData template)
         {
             //PropertyInfo[] props = type.GetProperties();
-            var props = ReflectionUtility.ReflectionCache.GetFieldProperties(type);
-            IField field;
-            IFieldSet fields;
-            string fieldName;
-            IFieldAttribute fieldAttribute;
-            object fieldValue = null;
+            var props = ReflectionUtility.ReflectionCache.GetModelProperties(type);
+            IPropertyAttribute propAttribute;
+            object value = null;
             foreach (var prop in props)
             {
-                fieldAttribute = prop.FieldAttribute;//prop.GetCustomAttributes(typeof(FieldAttributeBase), true).FirstOrDefault() as FieldAttributeBase;
-                if (fieldAttribute != null) //It has a FieldAttribute
+                propAttribute = prop.PropertyAttribute;//prop.GetCustomAttributes(typeof(FieldAttributeBase), true).FirstOrDefault() as FieldAttributeBase;
+                if (propAttribute != null) //It has a FieldAttribute
                 {
-                    fieldName = fieldAttribute.FieldName;
-                    fields = fieldAttribute.IsMetadata ? metadataFields : contentFields;
-                    if (fields != null && fields.ContainsKey(fieldName))
+                    value = propAttribute.GetPropertyValue(viewModel, prop.PropertyType, this); //delegate all the real work to the Property Attribute object itself. Allows for custom attribute types to easily be added
+                    if (value != null)
                     {
-                        //TODO: Check the property type and make sure it matches expected return type or throw an exception -- not sure this is worth it
-                        field = fields[fieldName];
-                        if (fields != null)
+                        try
                         {
-                            fieldValue = fieldAttribute.GetFieldValue(field, prop.PropertyType, template, this); //delegate all the real work to the Field Attribute object itself. Allows for custom attribute types to easily be added
-                            if (fieldValue != null)
-                            {
-                                try
-                                {
-                                    prop.Set(viewModel, fieldValue);
-                                }
-                                catch (Exception e)
-                                {
-                                    if (e is TargetException || e is InvalidCastException)
-                                        throw new FieldTypeMismatchException(prop, fieldAttribute, fieldValue);
-                                    else throw e;
-                                }
-                            }
+                            prop.Set(viewModel, value);
+                        }
+                        catch (Exception e)
+                        {
+                            if (e is TargetException || e is InvalidCastException)
+                                throw new PropertyTypeMismatchException(prop, propAttribute, value);
+                            else throw e;
                         }
                     }
                 }
             }
         }
-        private string[] GetViewModelKey(IComponentTemplate template)
+        private string[] GetViewModelKey(IComponentTemplateData template)
         {
             string key = keyProvider.GetViewModelKey(template);
             return String.IsNullOrEmpty(key) ? null : new string[] { key };

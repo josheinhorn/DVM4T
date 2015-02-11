@@ -48,14 +48,14 @@ namespace DVM4T.Core
     public abstract class ViewModelKeyProviderBase : IViewModelKeyProvider
     {
         protected string ViewModelKeyField = string.Empty;
-        public string GetViewModelKey(IComponentTemplate template)
+        public string GetViewModelKey(IComponentTemplateData template)
         {
             string result = null;
             if (template != null
                 && template.MetadataFields != null
                 && template.MetadataFields.ContainsKey(ViewModelKeyField))
             {
-                result = template.MetadataFields[ViewModelKeyField].Value.Cast<string>().FirstOrDefault();
+                result = template.MetadataFields[ViewModelKeyField].Values.Cast<string>().FirstOrDefault();
             }
             return result;
         }
@@ -71,6 +71,56 @@ namespace DVM4T.Core
         {
             ViewModelKeyField = WebConfigurationManager.AppSettings[webConfigKey];
             if (string.IsNullOrEmpty(ViewModelKeyField)) ViewModelKeyField = "viewModelKey"; //Default value
+        }
+    }
+
+    public class ViewModelData : IViewModelData
+    {
+        public ViewModelData(IComponentPresentationData cpData, IViewModelBuilder builder)
+        {
+            Builder = builder;
+            Fields = cpData.Component.Fields;
+            MetadataFields = cpData.Component.MetadataFields;
+            ComponentTemplate = cpData.ComponentTemplate;
+            PublicationId = cpData.Component.PublicationId;
+        }
+        public ViewModelData(IFieldsData fields, IComponentTemplateData template, IViewModelBuilder builder)
+        {
+            Builder = builder;
+            Fields = fields;
+            MetadataFields = null;
+            ComponentTemplate = template;
+            PublicationId = template.PublicationId;
+        }
+
+        public IViewModelBuilder Builder
+        {
+            get;
+            private set;
+        }
+
+        public IFieldsData Fields
+        {
+            get;
+            private set;
+        }
+
+        public IFieldsData MetadataFields
+        {
+            get;
+            private set;
+        }
+
+        public IComponentTemplateData ComponentTemplate
+        {
+            get;
+            private set;
+        }
+
+        public int PublicationId
+        {
+            get;
+            private set;
         }
     }
 }

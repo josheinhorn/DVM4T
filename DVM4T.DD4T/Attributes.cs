@@ -48,17 +48,17 @@ namespace DVM4T.DD4T.Attributes
                 linkedComponentTypes = value;
             }
         }
-        public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
+        public override object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
         {
             object fieldValue = null;
-            var linkedComponentValues = field.Value.Cast<Dynamic.IComponent>().ToList();
+            var linkedComponentValues = field.Values.Cast<Dynamic.IComponent>().ToList();
             if (linkedComponentValues != null && linkedComponentValues.Count > 0)
             {
                 if (AllowMultipleValues)
                 {
                     if (linkedComponentTypes == null)
                     {
-                        fieldValue = field.Value;
+                        fieldValue = field.Values;
                     }
                     else
                     {
@@ -99,9 +99,9 @@ namespace DVM4T.DD4T.Attributes
                 }
             }
         }
-        private IComponentPresentationViewModel BuildLinkedComponent(IComponent component, IComponentTemplate template, IViewModelBuilder builder)
+        private IComponentPresentationViewModel BuildLinkedComponent(IComponentData component, IComponentTemplateData template, IViewModelBuilder builder)
         {
-            IComponentPresentation linkedCp = new ComponentPresentation
+            IComponentPresentationData linkedCp = new ComponentPresentation
             (
                 component as Component,
                 template as ComponentTemplate
@@ -112,7 +112,7 @@ namespace DVM4T.DD4T.Attributes
             if (type == null) return null;
             else return builder.BuildCPViewModel(type, linkedCp);
         }
-        private Type GetViewModelType(ISchema schema, IViewModelBuilder builder, IComponentTemplate template = null)
+        private Type GetViewModelType(ISchemaData schema, IViewModelBuilder builder, IComponentTemplateData template = null)
         {
             //Create some algorithm to determine the proper view model type, perhaps build a static collection of all Types with the
             //View Model Attribute and set the key to the schema name + template name?
@@ -159,10 +159,10 @@ namespace DVM4T.DD4T.Attributes
             }
         }
 
-        public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
+        public override object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
         {
             object fieldValue = null;
-            var embeddedValues = field.Value.Cast<Dynamic.FieldSet>().Select(x => new FieldSet(x)).ToList();
+            var embeddedValues = field.Values.Cast<Dynamic.FieldSet>().Select(x => new FieldSet(x)).ToList();
             if (embeddedValues != null && embeddedValues.Count > 0)
             {
                 if (AllowMultipleValues)
@@ -197,10 +197,10 @@ namespace DVM4T.DD4T.Attributes
     public class MultimediaFieldAttribute : FieldAttributeBase
     {
         public MultimediaFieldAttribute(string fieldName) : base(fieldName) { }
-        public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
+        public override object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
         {
             object fieldValue = null;
-            var mmValues = field.Value.Cast<Dynamic.IComponent>().Select(x => x.Multimedia).ToList();
+            var mmValues = field.Values.Cast<Dynamic.IComponent>().Select(x => x.Multimedia).ToList();
             if (mmValues != null && mmValues.Count > 0)
             {
                 if (AllowMultipleValues)
@@ -227,10 +227,10 @@ namespace DVM4T.DD4T.Attributes
     public class TextFieldAttribute : FieldAttributeBase, ICanBeBoolean
     {
         public TextFieldAttribute(string fieldName) : base(fieldName) { }
-        public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
+        public override object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
         {
             object fieldValue = null;
-            var values = field.Value.Cast<string>().ToList();
+            var values = field.Values.Cast<string>().ToList();
             if (values != null && values.Count > 0)
             {
                 if (AllowMultipleValues)
@@ -273,10 +273,10 @@ namespace DVM4T.DD4T.Attributes
     public class RichTextFieldAttribute : FieldAttributeBase
     {
         public RichTextFieldAttribute(string fieldName) : base(fieldName) { }
-        public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
+        public override object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
         {
             object fieldValue = null;
-            var values = field.Value.Cast<string>().ToList();
+            var values = field.Values.Cast<string>().ToList();
             if (values != null && values.Count > 0)
             {
                 if (AllowMultipleValues)
@@ -303,10 +303,10 @@ namespace DVM4T.DD4T.Attributes
     public class NumberFieldAttribute : FieldAttributeBase
     {
         public NumberFieldAttribute(string fieldName) : base(fieldName) { }
-        public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
+        public override object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
         {
             object fieldValue = null;
-            var values = field.Value.Cast<double>().ToList();
+            var values = field.Values.Cast<double>().ToList();
             if (values != null && values.Count > 0)
             {
                 if (AllowMultipleValues)
@@ -333,10 +333,10 @@ namespace DVM4T.DD4T.Attributes
     public class DateFieldAttribute : FieldAttributeBase
     {
         public DateFieldAttribute(string fieldName) : base(fieldName) { }
-        public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
+        public override object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
         {
             object fieldValue = null;
-            var values = field.Value.Cast<DateTime>().ToList();
+            var values = field.Values.Cast<DateTime>().ToList();
             if (values != null && values.Count > 0)
             {
                 if (AllowMultipleValues)
@@ -362,10 +362,10 @@ namespace DVM4T.DD4T.Attributes
     public class KeywordFieldAttribute : FieldAttributeBase
     {
         public KeywordFieldAttribute(string fieldName) : base(fieldName) { }
-        public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
+        public override object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
         {
             object fieldValue = null;
-            var values = field.Value.Cast<Dynamic.IKeyword>().ToList();
+            var values = field.Values.Cast<Dynamic.IKeyword>().ToList();
             if (values != null && values.Count > 0)
             {
                 if (AllowMultipleValues)
@@ -396,10 +396,10 @@ namespace DVM4T.DD4T.Attributes
         /// </summary>
         /// <param name="fieldName">Tridion schema field name</param>
         public KeywordKeyFieldAttribute(string fieldName) : base(fieldName) { }
-        public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
+        public override object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
         {
             object value = null;
-            var values = field.Value.Cast<Dynamic.IKeyword>().ToList();
+            var values = field.Values.Cast<Dynamic.IKeyword>().ToList();
             if (values != null && values.Count > 0)
             {
                 if (AllowMultipleValues)
@@ -439,10 +439,10 @@ namespace DVM4T.DD4T.Attributes
     public class NumericKeywordKeyFieldAttribute : FieldAttributeBase
     {
         public NumericKeywordKeyFieldAttribute(string fieldName) : base(fieldName) { }
-        public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
+        public override object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
         {
             object value = null;
-            var values = field.Value.Cast<Dynamic.IKeyword>().ToList();
+            var values = field.Values.Cast<Dynamic.IKeyword>().ToList();
             if (values != null && values.Count > 0)
             {
                 if (AllowMultipleValues)
@@ -468,6 +468,34 @@ namespace DVM4T.DD4T.Attributes
         }
     }
 
-    //TODO: Use custom CT Metadata fields instead of CT Name
+    public class MultimediaUrlAttribute : ComponentAttributeBase
+    {
+        public override object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
+        {
+            string result = null;
+            if (component != null && component.MultimediaData != null)
+            {
+                result = component.MultimediaData.Url;
+            }
+            return result;
+        }
 
+        public override Type ExpectedReturnType
+        {
+            get { return typeof(String); }
+        }
+    }
+
+    public class ComponentTitleAttribute : ComponentAttributeBase
+    {
+        public override object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
+        {
+            return component.Title;
+        }
+
+        public override Type ExpectedReturnType
+        {
+            get { return typeof(String); }
+        }
+    }
 }
