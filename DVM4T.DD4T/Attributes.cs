@@ -486,6 +486,25 @@ namespace DVM4T.DD4T.Attributes
         }
     }
 
+    public class MultimediaAttribute : ComponentAttributeBase
+    {
+
+        public override object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
+        {
+            IMultimediaData result = null;
+            if (component != null && component.MultimediaData != null)
+            {
+                result = component.MultimediaData;
+            }
+            return result;
+        }
+
+        public override Type ExpectedReturnType
+        {
+            get { return typeof(IMultimediaData); }
+        }
+    }
+
     public class ComponentTitleAttribute : ComponentAttributeBase
     {
         public override object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
@@ -498,4 +517,47 @@ namespace DVM4T.DD4T.Attributes
             get { return typeof(String); }
         }
     }
+
+    public class DD4TMultimediaAttribute : ComponentAttributeBase
+    {
+        //Example of using the BaseData object
+
+        public override object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
+        {
+            Dynamic.IMultimedia result = null;
+            if (component != null && component.MultimediaData != null)
+            {
+                result = component.MultimediaData.BaseData as Dynamic.IMultimedia;
+            }
+            return result;
+        }
+
+        public override Type ExpectedReturnType
+        {
+            get { return typeof(Dynamic.IMultimedia); }
+        }
+    }
+
+    //A test class for re-using existing TextField in combo with CT Metadata
+    public class TemplateMetaTextFieldAttribute : ComponentTemplateMetadataFieldAttributeBase, ICanBeBoolean
+    {
+        private IFieldAttribute textField;
+        public TemplateMetaTextFieldAttribute(string fieldName) : base(fieldName)
+        {
+            this.textField = new TextFieldAttribute(fieldName);
+        }
+        public bool IsBooleanValue
+        {
+            get;
+            set;
+        }
+
+        protected override IFieldAttribute BaseFieldAttribute
+        {
+            get { return textField; }
+        }
+
+    }
+
+ 
 }
