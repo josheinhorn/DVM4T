@@ -50,7 +50,7 @@ namespace DVM4T.XPM
             if (modelProp.PropertyAttribute is IFieldAttribute)
             {
                 var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
-                var fields = fieldProp.IsMetadata ? model.ModelData.MetadataFields : model.ModelData.Fields;
+                var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : model.ModelData.Content;
                 result = SiteEditable<TProp>(model, fields, modelProp, index);
             }
             return result;
@@ -78,7 +78,7 @@ namespace DVM4T.XPM
             if (modelProp.PropertyAttribute is IFieldAttribute)
             {
                 var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
-                var fields = fieldProp.IsMetadata ? model.ModelData.MetadataFields : model.ModelData.Fields;
+                var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : model.ModelData.Content;
                 int index = IndexOf(modelProp, model, item);
                 result = SiteEditable<TProp>(model, fields, modelProp, index);
             }
@@ -103,7 +103,7 @@ namespace DVM4T.XPM
                 if (modelProp.PropertyAttribute is IFieldAttribute)
                 {
                     var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
-                    var fields = fieldProp.IsMetadata ? model.ModelData.MetadataFields : model.ModelData.Fields;
+                    var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : model.ModelData.Content;
                     result = XpmMarkupFor(fields, modelProp, index);
                 }
             }
@@ -136,7 +136,7 @@ namespace DVM4T.XPM
                 if (modelProp.PropertyAttribute is IFieldAttribute)
                 {
                     var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
-                    var fields = fieldProp.IsMetadata ? model.ModelData.MetadataFields : model.ModelData.Fields;
+                    var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : model.ModelData.Content;
                     int index = IndexOf(modelProp, model, item);
                     result = XpmMarkupFor(fields, modelProp, index);
                 }

@@ -79,16 +79,16 @@ namespace DVM4T.Core
         public ViewModelData(IComponentPresentationData cpData, IViewModelBuilder builder)
         {
             Builder = builder;
-            Fields = cpData.Component.Fields;
-            MetadataFields = cpData.Component.MetadataFields;
+            Content = cpData.Component.Fields;
+            Metadata = cpData.Component.MetadataFields;
             ComponentTemplate = cpData.ComponentTemplate;
             PublicationId = cpData.Component.PublicationId;
         }
         public ViewModelData(IFieldsData fields, IComponentTemplateData template, IViewModelBuilder builder)
         {
             Builder = builder;
-            Fields = fields;
-            MetadataFields = null;
+            Content = fields;
+            Metadata = null;
             ComponentTemplate = template;
             PublicationId = template.PublicationId;
         }
@@ -99,13 +99,13 @@ namespace DVM4T.Core
             private set;
         }
 
-        public IFieldsData Fields
+        public IFieldsData Content
         {
             get;
             private set;
         }
 
-        public IFieldsData MetadataFields
+        public IFieldsData Metadata
         {
             get;
             private set;

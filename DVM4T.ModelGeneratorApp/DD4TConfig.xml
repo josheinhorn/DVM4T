@@ -13,6 +13,11 @@
     <FieldAttribute fieldType="Text" name="TextField" singleType="String" multiType="IList&lt;String&gt;"/>
     <FieldAttribute fieldType="ExternalLink" name="TextField" singleType="String" multiType="IList&lt;String&gt;"/>
   </FieldAttributeTypes>
+  <ModelAttributeTypes>
+    <ModelAttributes modelType="MultimediaComponent">
+      <Attribute name="MultimediaUrl" returnType="String" propertyName="Url"/>
+    </ModelAttributes>
+  </ModelAttributeTypes>
   <Namespaces>
     <Namespace value="System"/>
     <Namespace value="System.Web.Mvc"/>

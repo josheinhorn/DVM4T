@@ -91,10 +91,25 @@ namespace DVM4T.ModelGen
                             new CodePrimitiveExpression(true)));
                     }
                     //Create and populate the model Property
-                    CodeMemberField property = new CodeMemberField { Name = field.Name }; //Use CodeMemberField as a hack to add a blank getter/setter
+                    CodeMemberField property = new CodeMemberField { Name = field.PropertyName }; //Use CodeMemberField as a hack to add a blank getter/setter
                     property.Attributes = MemberAttributes.Public;
                     property.Type = GetPropertyType(model.BaseClass, field);
                     property.CustomAttributes.Add(fieldAttribute); //Add the Field Attribute
+                    property.Name += " { get; set; }"; //Hack to add empty get/set
+                    modelClass.Members.Add(property);
+                }
+            }
+            if (configuration.ModelAttributeTypes.ContainsKey(model.ModelType))
+            {
+                var attrs = configuration.ModelAttributeTypes[model.ModelType];
+                //loop through all the "extra" model properties in the config that don't necessarily have a direct link to the Schema i.e. multimedia
+                foreach (var attr in attrs)
+                {
+                    CodeAttributeDeclaration modelAttribute = new CodeAttributeDeclaration(attr.Name); //Field Attribute Name
+                    CodeMemberField property = new CodeMemberField { Name = attr.DefaultPropertyName }; //Use CodeMemberField as a hack to add a blank getter/setter
+                    property.Attributes = MemberAttributes.Public;
+                    property.Type = new CodeTypeReference(attr.ReturnTypeName);
+                    property.CustomAttributes.Add(modelAttribute); //Add the Field Attribute
                     property.Name += " { get; set; }"; //Hack to add empty get/set
                     modelClass.Members.Add(property);
                 }
@@ -136,7 +151,7 @@ namespace DVM4T.ModelGen
             var config = configuration.FieldAttributeTypes[fieldProp.FieldType];            
             //return new CodeTypeReference(fieldProp.IsMultiValue ? config.MultiExpectedReturnTypeName : config.SingleExpectedReturnTypeName);
 
-            CodeTypeReference singleType = new CodeTypeReference(config.SingleExpectedReturnTypeName);
+            CodeTypeReference singleType = new CodeTypeReference(config.ReturnTypeName);
             CodeTypeReference result;
             if (fieldProp.FieldType == FieldType.Embedded)
             {

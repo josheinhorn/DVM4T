@@ -44,7 +44,7 @@ namespace DVM4T.Attributes
             object result = null;
             if (model != null)
             {
-                var fields = IsMetadata ? model.ModelData.MetadataFields : model.ModelData.Fields;
+                var fields = IsMetadata ? model.ModelData.Metadata : model.ModelData.Content;
                 if (fields != null && fields.ContainsKey(FieldName))
                 {
                     result = this.GetFieldValue(fields[FieldName], propertyType, model.ModelData.ComponentTemplate, builder);
@@ -114,7 +114,9 @@ namespace DVM4T.Attributes
             set { isMetadata = value; }
         }
     }
-
+    /// <summary>
+    /// Base class for Property Attributes using Component Data
+    /// </summary>
     public abstract class ComponentAttributeBase : ModelPropertyAttributeBase, IComponentAttribute
     {
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
@@ -134,6 +136,9 @@ namespace DVM4T.Attributes
         public abstract object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null);
     }
 
+    /// <summary>
+    /// Base class for Property Attributes using Component Template Data
+    /// </summary>
     public abstract class ComponentTemplateAttributeBase : ModelPropertyAttributeBase, IComponentTemplateAttribute
     {
         public abstract object GetPropertyValue(IComponentTemplateData template, Type propertyType, IViewModelBuilder builder = null);
@@ -150,7 +155,28 @@ namespace DVM4T.Attributes
     }
 
     /// <summary>
-    /// A View Model.
+    /// Base class for Property Attributes using Component Template Metadata Fields Data
+    /// </summary>
+    public abstract class TemplateMetadataFieldAttributeBase : FieldAttributeBase
+    {
+        public TemplateMetadataFieldAttributeBase(string fieldName) : base(fieldName) { }
+        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
+        {
+            object result = null;
+            if (model != null && model.ModelData != null && model.ModelData.ComponentTemplate != null)
+            {
+                var fields = model.ModelData.ComponentTemplate.MetadataFields;
+                if (fields != null && fields.ContainsKey(FieldName))
+                {
+                    result = this.GetFieldValue(fields[FieldName], propertyType, model.ModelData.ComponentTemplate, builder);
+                }
+            }
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Attribute for a View Model. Required for DVM4T Framework to build a Model.
     /// </summary>
     public class ViewModelAttribute : Attribute, IViewModelAttribute
     {

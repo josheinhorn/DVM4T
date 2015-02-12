@@ -92,19 +92,21 @@ namespace DVM4T.ModelGeneratorApp
             Console.WriteLine("\nTitle:" + schema.Title + ", Schema Purpose: " + schema.Purpose);
             IList<FieldProperty> modelProperties = new List<FieldProperty>();
             ViewModel model = new ViewModel();
-            //TODO - Why is schema.Purpose always null?! Documentation indicates it should contain the type of Schema
             switch (schema.Purpose)
             {
                 case SchemaPurpose.Embedded:
                     model.BaseClass = typeof(EmbeddedSchemaViewModelBase);
+                    model.ModelType = ModelType.EmbeddedSchemaFields;
                     break;
                 case SchemaPurpose.Component:
                     model.BaseClass = typeof(ComponentPresentationViewModelBase);
+                    model.ModelType = ModelType.ComponentPresentation;
                     break;
                 case SchemaPurpose.Metadata:
                     return null;
                 case SchemaPurpose.Multimedia:
                     model.BaseClass = typeof(ComponentPresentationViewModelBase); //testing
+                    model.ModelType = ModelType.MultimediaComponent;
                     break;
                 case SchemaPurpose.Protocol:
                     return null;
@@ -144,7 +146,7 @@ namespace DVM4T.ModelGeneratorApp
                 fieldProp.IsMultiValue = field.MaxOccurs != 1;
                 fieldProp.IsMetadata = isMetadata;
                 fieldProp.FieldName = field.Name;
-                fieldProp.Name = field.Name.ResolvePropertyName();
+                fieldProp.PropertyName = field.Name.ResolvePropertyName();
                 if (field is ComponentLinkFieldDefinitionData)
                 {
                     //Linked component

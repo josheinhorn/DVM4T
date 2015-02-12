@@ -104,10 +104,10 @@ namespace DVM4T.Contracts
     }
     public interface IFieldData : ICanUseXpm, IHaveData
     {
-        //The object Value is the most powerful thing about this entire framework -- this object will be retrieved based on the FieldAttribute's overrided method. Question is, should it be implemented here.
-        IEnumerable Values { get; } //can/should I do this?
+        //The object Value is an important part of this framework -- this object will be retrieved based on the FieldAttribute's overriden method. Implementer could alternatively use the BaseData object to circumvent
+        IEnumerable Values { get; } //should this be object or is it ok as Enumerable?
         ISchemaData EmbeddedSchema { get; }
-        string FieldTypeString { get; } //maybe make an enum?? meh
+        string FieldTypeString { get; } //maybe make an enum?? This would prescribe the implementation though -- could use object to make it really generic
     }
     #endregion
 
@@ -119,14 +119,14 @@ namespace DVM4T.Contracts
         IViewModelData ModelData { get; set; }
     }
 
-    public interface IViewModelData //Should this extend IHaveData?
+    public interface IViewModelData //Should this extend IHaveData? I don't think so at this time because each piece i.e. Content, MetadataFields has their own BaseData object
     {
         /// <summary>
         /// The underlying data object that the View Model represents
         /// </summary>
         IViewModelBuilder Builder { get; }
-        IFieldsData Fields { get;  }
-        IFieldsData MetadataFields { get; }
+        IFieldsData Content { get;  }
+        IFieldsData Metadata { get; }
         IComponentTemplateData ComponentTemplate { get; } //we required Component Template here in order to generate Site Edit markup for any linked components in the embedded fields
         /// <summary>
         /// Publication ID of the underlying Tridion item
@@ -138,6 +138,14 @@ namespace DVM4T.Contracts
     {
         IComponentPresentationData ComponentPresentation { get; set; }
     }
+
+    //Consider use cases for this interface -- is it worth separating from ComponentPresentationViewModel?
+    //Multimedia... could use CP instead, not technically correct but it's close
+    public interface IComponentViewModel : IViewModel
+    {
+        IComponentData Component { get; set; }
+    }
+
     //TODO: Consider removing this interface, holding on to template is not actually necessary after building is done
     public interface IEmbeddedSchemaViewModel : IViewModel
     {
