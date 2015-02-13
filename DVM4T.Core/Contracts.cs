@@ -73,7 +73,7 @@ namespace DVM4T.Contracts
         ISchemaData Schema { get; }
         IMultimediaData MultimediaData { get; }
     }
-    
+
     public interface IComponentTemplateData : ITridionItemData
     {
         IFieldsData MetadataFields { get; }
@@ -125,7 +125,7 @@ namespace DVM4T.Contracts
         /// The underlying data object that the View Model represents
         /// </summary>
         IViewModelBuilder Builder { get; }
-        IFieldsData Content { get;  }
+        IFieldsData Content { get; }
         IFieldsData Metadata { get; }
         IComponentTemplateData ComponentTemplate { get; } //we required Component Template here in order to generate Site Edit markup for any linked components in the embedded fields
         /// <summary>
@@ -149,7 +149,7 @@ namespace DVM4T.Contracts
     //TODO: Consider removing this interface, holding on to template is not actually necessary after building is done
     public interface IEmbeddedSchemaViewModel : IViewModel
     {
-        
+
     }
 
     public interface IViewModelBuilder
@@ -332,7 +332,7 @@ namespace DVM4T.Contracts
     {
         bool IsBooleanValue { get; set; }
     }
-   
+
     public interface IReflectionHelper
     {
         List<ModelAttributeProperty> GetModelProperties(Type type);
@@ -368,6 +368,7 @@ namespace DVM4T.Contracts
         bool InlineEditable { get; set; }
         bool Mandatory { get; set; }
         bool IsMetadata { get; set; }
+        bool IsComponentTemplateMetadata { get; set; }
     }
 
     //TODO: Anyway to merge all three interfaces into one? They're so similar

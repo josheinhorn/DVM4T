@@ -199,6 +199,17 @@ namespace DVM4T.Testing
 
                 },
                 ComponentTemplate = new Dynamic.ComponentTemplate()
+                {
+                    MetadataFields = new Dynamic.FieldSet
+                    {
+                        { "view", new Dynamic.Field 
+                            { 
+                                Values = new List<string> { "Component View Name"},
+                                FieldType = Dynamic.FieldType.Text
+                            }
+                        }
+                    }
+                }
             };
             return cp;
         }
@@ -262,6 +273,7 @@ namespace DVM4T.Testing
                     new Dynamic.Field { Values = new List<string> { viewModelKey }}
                 }
             };
+            ((Dynamic.Component)cp.Component).Title = "test title";
 
             //exercise
             var model = ViewModelDefaults.Builder.BuildCPViewModel(new ComponentPresentation(cp));

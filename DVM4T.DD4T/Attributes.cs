@@ -536,28 +536,5 @@ namespace DVM4T.DD4T.Attributes
         {
             get { return typeof(Dynamic.IMultimedia); }
         }
-    }
-
-    //A test class for re-using existing TextField in combo with CT Metadata
-    public class TemplateMetaTextFieldAttribute : ComponentTemplateMetadataFieldAttributeBase, ICanBeBoolean
-    {
-        private IFieldAttribute textField;
-        public TemplateMetaTextFieldAttribute(string fieldName) : base(fieldName)
-        {
-            this.textField = new TextFieldAttribute(fieldName);
-        }
-        public bool IsBooleanValue
-        {
-            get;
-            set;
-        }
-
-        protected override IFieldAttribute BaseFieldAttribute
-        {
-            get { return textField; }
-        }
-
-    }
-
- 
+    } 
 }

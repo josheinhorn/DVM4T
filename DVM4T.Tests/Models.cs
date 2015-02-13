@@ -5,6 +5,8 @@ using DVM4T.Attributes;
 using DVM4T.Base;
 using DVM4T.DD4T.Attributes;
 using DVM4T.Core;
+using DVM4T.Contracts;
+using DVM4T.Attributes;
 
 namespace DVM4T.Testing.Models
 {
@@ -13,6 +15,9 @@ namespace DVM4T.Testing.Models
     {
         [TextField("title")]
         public string Title { get; set; }
+
+        [ComponentTitle]
+        public string CompTitle { get; set; }
     }
 
     [ViewModel("GeneralContent", true, ViewModelKeys = new string[] { "BasicGeneralContent", "Test" })]
@@ -34,6 +39,18 @@ namespace DVM4T.Testing.Models
         public double NumberFieldExample { get; set; }
     }
 
+    [ViewModel("Image", true)]
+    public class Image : ComponentPresentationViewModelBase
+    {
+        [MultimediaUrl]
+        public string Url { get; set; }
+
+        [Multimedia]
+        public IMultimediaData Multimedia { get; set; }
+
+        [TextField("alt", IsMetadata = true)]
+        public string AltText { get; set; }
+    }
     [ViewModel("ContentContainer", true, ViewModelKeys = new string[] { "Test" })]
     public class ContentContainerViewModel : ComponentPresentationViewModelBase
     {
@@ -48,6 +65,12 @@ namespace DVM4T.Testing.Models
 
         [EmbeddedSchemaField("links", typeof(EmbeddedLinkViewModel), AllowMultipleValues = true)]
         public ViewModelList<EmbeddedLinkViewModel> Links { get; set; }
+
+        [LinkedComponentField("image", LinkedComponentTypes = new Type[] { typeof(Image) })]
+        public Image Image { get; set; }
+
+        [TextField("view", IsComponentTemplateMetadata = true)]
+        public string ViewName { get; set; }
     }
 
     [ViewModel("EmbeddedLink", true)]
@@ -83,5 +106,6 @@ namespace DVM4T.Testing.Models
 
         [NumberField("someNumber")]
         public double NumberFieldExample { get; set; }
+
     }
 }

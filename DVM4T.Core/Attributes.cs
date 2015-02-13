@@ -44,7 +44,8 @@ namespace DVM4T.Attributes
             object result = null;
             if (model != null)
             {
-                var fields = IsMetadata ? model.ModelData.Metadata : model.ModelData.Content;
+                var fields = IsComponentTemplateMetadata ? model.ModelData.ComponentTemplate.MetadataFields
+                    : IsMetadata ? model.ModelData.Metadata : model.ModelData.Content;
                 if (fields != null && fields.ContainsKey(FieldName))
                 {
                     result = this.GetFieldValue(fields[FieldName], propertyType, model.ModelData.ComponentTemplate, builder);
@@ -113,6 +114,8 @@ namespace DVM4T.Attributes
             get { return isMetadata; }
             set { isMetadata = value; }
         }
+
+        public bool IsComponentTemplateMetadata { get; set; }
     }
     /// <summary>
     /// Base class for Property Attributes using Component Data
@@ -157,39 +160,49 @@ namespace DVM4T.Attributes
     /// <summary>
     /// Base class for Property Attributes using Component Template Metadata Fields Data
     /// </summary>
-    public abstract class ComponentTemplateMetadataFieldAttributeBase : FieldAttributeBase
-    {
-        protected abstract IFieldAttribute BaseFieldAttribute { get; }
-        public ComponentTemplateMetadataFieldAttributeBase(string fieldName) : base(fieldName) { }
-        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
-        {
-            object result = null;
-            if (model != null && model.ModelData != null && model.ModelData.ComponentTemplate != null)
-            {
-                var fields = model.ModelData.ComponentTemplate.MetadataFields;
-                if (fields != null && fields.ContainsKey(FieldName))
-                {
+    //public abstract class ComponentTemplateMetadataFieldAttributeBase : Attribute, IPropertyAttribute
+    //{
+    //    protected abstract IFieldAttribute BaseFieldAttribute { get; }
+    //    public object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
+    //    {
+    //        object result = null;
+    //        if (model != null && model.ModelData != null && model.ModelData.ComponentTemplate != null)
+    //        {
+    //            var fields = model.ModelData.ComponentTemplate.MetadataFields;
+    //            if (fields != null && fields.ContainsKey(BaseFieldAttribute.FieldName))
+    //            {
 
-                    result = this.GetFieldValue(fields[FieldName], propertyType, model.ModelData.ComponentTemplate, builder);
-                }
-            }
-            return result;
-        }
-        public override object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
-        {
-            new MappingHelper().MapFieldAttribute(this, BaseFieldAttribute);
-            return BaseFieldAttribute.GetFieldValue(field, propertyType, template, builder);
-        }
+    //                result = this.GetFieldValue(fields[BaseFieldAttribute.FieldName], propertyType, model.ModelData.ComponentTemplate, builder);
+    //            }
+    //        }
+    //        return result;
+    //    }
+    //    public object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
+    //    {
+    //        return BaseFieldAttribute.GetFieldValue(field, propertyType, template, builder);
+    //    }
 
-        public override Type ExpectedReturnType
-        {
-            get
-            {
-                new MappingHelper().MapFieldAttribute(this, BaseFieldAttribute);
-                return BaseFieldAttribute.ExpectedReturnType;
-            }
-        }
-    }
+    //    public Type ExpectedReturnType
+    //    {
+    //        get
+    //        {
+    //            return BaseFieldAttribute.ExpectedReturnType;
+    //        }
+    //    }
+    //}
+
+    //public class ComponentTemplateMetadataFieldAttribute : ComponentTemplateMetadataFieldAttributeBase
+    //{
+    //    private IFieldAttribute fieldAttribute;
+    //    public ComponentTemplateMetadataFieldAttribute(IFieldAttribute fieldAttribute)
+    //    {
+    //        this.fieldAttribute = fieldAttribute;
+    //    }
+    //    protected override IFieldAttribute BaseFieldAttribute
+    //    {
+    //        get { return fieldAttribute; }
+    //    }
+    //}
 
     /// <summary>
     /// Attribute for a View Model. Required for DVM4T Framework to build a Model.
@@ -295,20 +308,20 @@ namespace DVM4T.Attributes
 
     //Consider adding abstract classes for common Fields? Could I use Dependency Injection to add the concrete implementations?
 
-    internal class MappingHelper
-    {
+    //internal class MappingHelper
+    //{
 
-        internal MappingHelper MapFieldAttribute(IFieldAttribute mapFrom, IFieldAttribute mapTo)
-        {
-            mapTo.AllowMultipleValues = mapFrom.AllowMultipleValues;
-            mapTo.InlineEditable = mapFrom.InlineEditable;
-            mapTo.IsMetadata = mapFrom.IsMetadata;
-            mapTo.Mandatory = mapFrom.Mandatory;
-            if (mapFrom is ICanBeBoolean && mapTo is ICanBeBoolean)
-            {
-                (mapTo as ICanBeBoolean).IsBooleanValue = (mapFrom as ICanBeBoolean).IsBooleanValue;
-            }
-            return this;
-        }
-    }
+    //    internal MappingHelper MapFieldAttribute(IFieldAttribute mapFrom, IFieldAttribute mapTo)
+    //    {
+    //        mapTo.AllowMultipleValues = mapFrom.AllowMultipleValues;
+    //        mapTo.InlineEditable = mapFrom.InlineEditable;
+    //        mapTo.IsMetadata = mapFrom.IsMetadata;
+    //        mapTo.Mandatory = mapFrom.Mandatory;
+    //        if (mapFrom is ICanBeBoolean && mapTo is ICanBeBoolean)
+    //        {
+    //            (mapTo as ICanBeBoolean).IsBooleanValue = (mapFrom as ICanBeBoolean).IsBooleanValue;
+    //        }
+    //        return this;
+    //    }
+    //}
 }
