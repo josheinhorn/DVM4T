@@ -6,7 +6,6 @@ using DVM4T.Base;
 using DVM4T.DD4T.Attributes;
 using DVM4T.Core;
 using DVM4T.Contracts;
-using DVM4T.Attributes;
 
 namespace DVM4T.Testing.Models
 {
@@ -58,7 +57,7 @@ namespace DVM4T.Testing.Models
         public string Title { get; set; }
 
         [LinkedComponentField("content", LinkedComponentTypes = new Type[] { typeof(GeneralContentViewModel) }, AllowMultipleValues = true)]
-        public ViewModelList<GeneralContentViewModel> Content { get; set; }
+        public ViewModelList<GeneralContentViewModel> ContentList { get; set; }
 
         [LinkedComponentField("content", LinkedComponentTypes = new Type[] { typeof(TitleViewModel) })]
         public TitleViewModel OtherContent { get; set; }

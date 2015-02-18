@@ -38,7 +38,7 @@ namespace DVM4T.DD4T.XPM
         /// <param name="propertyLambda">Lambda expression representing the property to render. This must be a direct property of the model.</param>
         /// <param name="index">Optional index for a multi-value field</param>
         /// <returns>XPM Markup and field value</returns>
-        public static HtmlString XpmEditableField<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IViewModel
+        public static HtmlString XpmEditableField<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IContentViewModel
         {
             var renderer = new XpmRenderer<TModel>(model, XpmMarkupService);
             return renderer.XpmEditableField(propertyLambda, index);
@@ -60,7 +60,7 @@ namespace DVM4T.DD4T.XPM
         /// </example>
         /// <returns>XPM Markup and field value</returns>
         public static HtmlString XpmEditableField<TModel, TProp, TItem>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, TItem item) 
-            where TModel : IViewModel
+            where TModel : IContentViewModel
         {
             var renderer = new XpmRenderer<TModel>(model, XpmMarkupService);
             return renderer.XpmEditableField(propertyLambda, item);
@@ -74,7 +74,7 @@ namespace DVM4T.DD4T.XPM
         /// <param name="propertyLambda">Lambda expression representing the property to render. This must be a direct property of the model.</param>
         /// <param name="index">Optional index for a multi-value field</param>
         /// <returns>XPM Markup</returns>
-        public static HtmlString XpmMarkupFor<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IViewModel
+        public static HtmlString XpmMarkupFor<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IContentViewModel
         {
             var renderer = new XpmRenderer<TModel>(model, XpmMarkupService);
             return renderer.XpmMarkupFor(propertyLambda, index);
@@ -97,7 +97,7 @@ namespace DVM4T.DD4T.XPM
         /// </example>
         /// <returns>XPM Markup</returns>
         public static HtmlString XpmMarkupFor<TModel, TProp, TItem>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, TItem item) 
-            where TModel : IViewModel
+            where TModel : IContentViewModel
         {
             var renderer = new XpmRenderer<TModel>(model, XpmMarkupService);
             return renderer.XpmMarkupFor(propertyLambda, item);  

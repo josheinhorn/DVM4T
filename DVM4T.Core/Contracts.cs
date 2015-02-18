@@ -59,7 +59,12 @@ namespace DVM4T.Contracts
         string Title { get; }
         int PublicationId { get; }
     }
-
+    public interface IPageData : ITridionItemData
+    {
+        IList<IComponentPresentationData> ComponentPresentations { get; }
+        IPageTemplateData PageTemplate { get; }
+        IFieldsData Metadata { get; }
+    }
     public interface IComponentPresentationData : IHaveData
     {
         IComponentData Component { get; }
@@ -73,11 +78,19 @@ namespace DVM4T.Contracts
         ISchemaData Schema { get; }
         IMultimediaData MultimediaData { get; }
     }
-
-    public interface IComponentTemplateData : ITridionItemData
+    public interface ITemplateData : ITridionItemData
     {
-        IFieldsData MetadataFields { get; }
+        IFieldsData Metadata { get; }
         DateTime RevisionDate { get; }
+    }
+    public interface IComponentTemplateData : ITemplateData
+    {
+        //Anything specific to this?
+    }
+
+    public interface IPageTemplateData : ITemplateData
+    {
+        //Anything specific to this?
     }
     public interface IMultimediaData : IHaveData
     {
@@ -119,40 +132,51 @@ namespace DVM4T.Contracts
         IViewModelData ModelData { get; set; }
     }
 
-    public interface IViewModelData //Should this extend IHaveData? I don't think so at this time because each piece i.e. Content, MetadataFields has their own BaseData object
+    public interface IContentViewModel : IViewModel
+    {
+        IFieldsData Content { get; set; } //This is specific to Component/Embedded
+        IComponentTemplateData ComponentTemplate { get; set; }
+    }
+
+    public interface IViewModelData : IHaveData //Should this extend IHaveData? I don't think so at this time because each piece i.e. Content, MetadataFields has their own BaseData object
     {
         /// <summary>
         /// The underlying data object that the View Model represents
         /// </summary>
         IViewModelBuilder Builder { get; }
-        IFieldsData Content { get; }
+        //IFieldsData Content { get; } //This is specific to Component/Embedded
         IFieldsData Metadata { get; }
-        IComponentTemplateData ComponentTemplate { get; } //we required Component Template here in order to generate Site Edit markup for any linked components in the embedded fields
+        //we required Component Template here in order to generate Site Edit markup for any linked components in the embedded fields
+        //IComponentTemplateData ComponentTemplate { get; } //This is specific to Component/Embedded
         /// <summary>
         /// Publication ID of the underlying Tridion item
         /// </summary>
         int PublicationId { get; }
     }
 
-    public interface IComponentPresentationViewModel : IViewModel
+    public interface IComponentPresentationViewModel : IContentViewModel
     {
         IComponentPresentationData ComponentPresentation { get; set; }
     }
 
     //Consider use cases for this interface -- is it worth separating from ComponentPresentationViewModel?
     //Multimedia... could use CP instead, not technically correct but it's close
-    public interface IComponentViewModel : IViewModel
+    public interface IComponentViewModel : IContentViewModel
     {
-        IComponentData Component { get; set; }
+        IComponentData Component { get; }  
     }
 
     //TODO: Consider removing this interface, holding on to template is not actually necessary after building is done
-    public interface IEmbeddedSchemaViewModel : IViewModel
+    public interface IEmbeddedSchemaViewModel : IContentViewModel
     {
 
     }
 
-    public interface IViewModelBuilder
+    public interface IPageViewModel : IViewModel
+    {
+        IPageData Page { get; }
+    }
+    public interface IViewModelBuilder //!!!!!TODO!!!!!: Add/implement IPageViewModel BuildPageModel(IPageData page);
     {
         /// <summary>
         /// Builds a View Model from previously loaded Assemblies using the input Component Presentation. This method infers the View Model type by comparing
@@ -380,6 +404,14 @@ namespace DVM4T.Contracts
     public interface IComponentTemplateAttribute : IPropertyAttribute
     {
         object GetPropertyValue(IComponentTemplateData template, Type propertyType, IViewModelBuilder builder = null);
+    }
+    public interface IPageAttribute : IPropertyAttribute
+    {
+        object GetPropertyValue(IPageData page, Type propertyType, IViewModelBuilder builder = null);
+    }
+    public interface IPageTemplateAttribute : IPropertyAttribute
+    {
+        object GetPropertyValue(IPageTemplateData page, Type propertyType, IViewModelBuilder builder = null);
     }
     public interface IViewModelAttribute
     {

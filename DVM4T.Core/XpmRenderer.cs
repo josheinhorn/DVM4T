@@ -15,12 +15,12 @@ namespace DVM4T.XPM
     /// Renders XPM Markup for View Models
     /// </summary>
     /// <typeparam name="TModel">Type of the View Model</typeparam>
-    public class XpmRenderer<TModel> : IXpmRenderer<TModel> where TModel : IViewModel
+    public class XpmRenderer<TModel> : IXpmRenderer<TModel> where TModel : IContentViewModel
     {
         //This is just an OO implementation of the static extension methods... which one is better
-        private IViewModel model;
+        private IContentViewModel model;
         private IXpmMarkupService xpmMarkupService;
-        public XpmRenderer(IViewModel model, IXpmMarkupService service)
+        public XpmRenderer(IContentViewModel model, IXpmMarkupService service)
         {
             this.model = model;
             this.xpmMarkupService = service;
@@ -50,7 +50,7 @@ namespace DVM4T.XPM
             if (modelProp.PropertyAttribute is IFieldAttribute)
             {
                 var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
-                var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : model.ModelData.Content;
+                var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : model.Content;
                 result = SiteEditable<TProp>(model, fields, modelProp, index);
             }
             return result;
@@ -78,7 +78,7 @@ namespace DVM4T.XPM
             if (modelProp.PropertyAttribute is IFieldAttribute)
             {
                 var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
-                var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : model.ModelData.Content;
+                var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : model.Content;
                 int index = IndexOf(modelProp, model, item);
                 result = SiteEditable<TProp>(model, fields, modelProp, index);
             }
@@ -103,7 +103,7 @@ namespace DVM4T.XPM
                 if (modelProp.PropertyAttribute is IFieldAttribute)
                 {
                     var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
-                    var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : model.ModelData.Content;
+                    var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : model.Content;
                     result = XpmMarkupFor(fields, modelProp, index);
                 }
             }
@@ -136,7 +136,7 @@ namespace DVM4T.XPM
                 if (modelProp.PropertyAttribute is IFieldAttribute)
                 {
                     var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
-                    var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : model.ModelData.Content;
+                    var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : model.Content;
                     int index = IndexOf(modelProp, model, item);
                     result = XpmMarkupFor(fields, modelProp, index);
                 }

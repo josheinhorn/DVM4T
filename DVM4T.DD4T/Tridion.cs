@@ -291,7 +291,7 @@ namespace DVM4T.DD4T
             this.template = template;
             this.metadataFields = new FieldSet(template.MetadataFields);
         }
-        public IFieldsData MetadataFields
+        public IFieldsData Metadata
         {
             get
             {

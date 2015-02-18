@@ -59,7 +59,9 @@ namespace DVM4T.Core
             viewModel = (IComponentPresentationViewModel)ReflectionUtility.ReflectionCache.CreateInstance(type);
             viewModel.ComponentPresentation = cp;
             viewModel.ModelData = new ViewModelData(cp, this);
+            viewModel.ComponentTemplate = cp.ComponentTemplate;
             IFieldsData fields = cp.Component.Fields;
+            viewModel.Content = fields;
             ProcessViewModel(viewModel, type, cp.ComponentTemplate);
             return viewModel;
         }
@@ -119,6 +121,8 @@ namespace DVM4T.Core
         {
             IEmbeddedSchemaViewModel viewModel = (IEmbeddedSchemaViewModel)ReflectionUtility.ReflectionCache.CreateInstance(type);
             viewModel.ModelData = new ViewModelData(embeddedFields, template, this);
+            viewModel.ComponentTemplate = template;
+            viewModel.Content = embeddedFields;
             ProcessViewModel(viewModel, type, template);
             return viewModel;
         }

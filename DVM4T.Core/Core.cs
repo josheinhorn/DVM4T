@@ -52,10 +52,10 @@ namespace DVM4T.Core
         {
             string result = null;
             if (template != null
-                && template.MetadataFields != null
-                && template.MetadataFields.ContainsKey(ViewModelKeyField))
+                && template.Metadata != null
+                && template.Metadata.ContainsKey(ViewModelKeyField))
             {
-                result = template.MetadataFields[ViewModelKeyField].Values.Cast<string>().FirstOrDefault();
+                result = template.Metadata[ViewModelKeyField].Values.Cast<string>().FirstOrDefault();
             }
             return result;
         }
@@ -79,27 +79,26 @@ namespace DVM4T.Core
         public ViewModelData(IComponentPresentationData cpData, IViewModelBuilder builder)
         {
             Builder = builder;
-            Content = cpData.Component.Fields;
             Metadata = cpData.Component.MetadataFields;
-            ComponentTemplate = cpData.ComponentTemplate;
             PublicationId = cpData.Component.PublicationId;
+            BaseData = cpData;
         }
-        public ViewModelData(IFieldsData fields, IComponentTemplateData template, IViewModelBuilder builder)
+        public ViewModelData(IFieldsData fieldsData, IComponentTemplateData template, IViewModelBuilder builder)
         {
             Builder = builder;
-            Content = fields;
             Metadata = null;
-            ComponentTemplate = template;
             PublicationId = template.PublicationId;
+            BaseData = fieldsData;
+        }
+        public ViewModelData(IPageData pageData, IViewModelBuilder builder)
+        {
+            Builder = builder;
+            Metadata = pageData.Metadata;
+            PublicationId = pageData.PublicationId;
+            BaseData = pageData;
         }
 
         public IViewModelBuilder Builder
-        {
-            get;
-            private set;
-        }
-
-        public IFieldsData Content
         {
             get;
             private set;
@@ -111,13 +110,13 @@ namespace DVM4T.Core
             private set;
         }
 
-        public IComponentTemplateData ComponentTemplate
+        public int PublicationId
         {
             get;
             private set;
         }
 
-        public int PublicationId
+        public object BaseData
         {
             get;
             private set;

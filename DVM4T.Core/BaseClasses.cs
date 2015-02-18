@@ -21,6 +21,17 @@ namespace DVM4T.Base
             get;
             set;
         }
+
+        public IFieldsData Content
+        {
+            get;
+            set;
+        }
+        public IComponentTemplateData ComponentTemplate
+        {
+            get;
+            set;
+        }
     }
     /// <summary>
     /// Base class for all Embedded Schema View Models
@@ -28,6 +39,16 @@ namespace DVM4T.Base
     public abstract class EmbeddedSchemaViewModelBase : IEmbeddedSchemaViewModel
     {
         public IViewModelData ModelData
+        {
+            get;
+            set;
+        }
+        public  IFieldsData Content
+        {
+            get;
+            set;
+        }
+        public IComponentTemplateData ComponentTemplate
         {
             get;
             set;

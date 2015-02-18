@@ -42,13 +42,15 @@ namespace DVM4T.Attributes
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
         {
             object result = null;
-            if (model != null)
+            if (model != null && model is IContentViewModel)
             {
-                var fields = IsComponentTemplateMetadata ? model.ModelData.ComponentTemplate.MetadataFields
-                    : IsMetadata ? model.ModelData.Metadata : model.ModelData.Content;
+                var contentModel = model as IContentViewModel;
+                var fields = IsComponentTemplateMetadata ? contentModel.ComponentTemplate.Metadata
+                    : IsMetadata ? contentModel.ModelData.Metadata
+                    : contentModel.Content;
                 if (fields != null && fields.ContainsKey(FieldName))
                 {
-                    result = this.GetFieldValue(fields[FieldName], propertyType, model.ModelData.ComponentTemplate, builder);
+                    result = this.GetFieldValue(fields[FieldName], propertyType, contentModel.ComponentTemplate, builder);
                 }
             }
             return result;
@@ -149,9 +151,25 @@ namespace DVM4T.Attributes
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
         {
             object result = null;
-            if (model != null && model.ModelData.ComponentTemplate != null)
+            if (model != null && model is IContentViewModel && ((IContentViewModel)model).ComponentTemplate != null)
             {
-                result = this.GetPropertyValue(model.ModelData.ComponentTemplate, propertyType, builder);
+                result = this.GetPropertyValue(((IContentViewModel)model).ComponentTemplate, propertyType, builder);
+            }
+            return result;
+        }
+    }
+
+    public abstract class PageAttributeBase : ModelPropertyAttributeBase
+    {
+        public abstract object GetPropertyValue(IPageData page, Type propertyType, IViewModelBuilder builder = null);
+
+        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
+        {
+            object result = null;
+            if (model != null && model is IPageViewModel)
+            {
+                var pageModel = model as IPageViewModel;
+                result = this.GetPropertyValue(pageModel, propertyType, builder);
             }
             return result;
         }
@@ -209,6 +227,9 @@ namespace DVM4T.Attributes
     /// </summary>
     public class ViewModelAttribute : Attribute, IViewModelAttribute
     {
+        //TODO: De-couple this from the Schema name specifically? What would make sense?
+        //TOOD: Possibly change this to use purely ViewModelKey and make that an object, leave it to the key provider to assign objects with logical equals overrides
+        
         private string schemaName;
         private bool inlineEditable = false;
         private bool isDefault = false;
@@ -226,6 +247,13 @@ namespace DVM4T.Attributes
             this.isDefault = isDefault;
         }
 
+        //Using Schema Name ties each View Model to a single Tridion Schema -- this is probably ok in 99% of cases
+        //Using schema name doesn't allow us to de-couple the Model itself from Tridion however (neither does requiring
+        //inheritance of IViewModel!)
+        //Possible failure: if the same model was meant to represent similar parts of multiple schemas (should however
+        //be covered by decent Schema design i.e. use of Embedded Schemas and Linked Components. Same fields shouldn't
+        //occur repeatedly)
+        //Possible failure: 
         public string SchemaName
         {
             get
@@ -308,20 +336,4 @@ namespace DVM4T.Attributes
 
     //Consider adding abstract classes for common Fields? Could I use Dependency Injection to add the concrete implementations?
 
-    //internal class MappingHelper
-    //{
-
-    //    internal MappingHelper MapFieldAttribute(IFieldAttribute mapFrom, IFieldAttribute mapTo)
-    //    {
-    //        mapTo.AllowMultipleValues = mapFrom.AllowMultipleValues;
-    //        mapTo.InlineEditable = mapFrom.InlineEditable;
-    //        mapTo.IsMetadata = mapFrom.IsMetadata;
-    //        mapTo.Mandatory = mapFrom.Mandatory;
-    //        if (mapFrom is ICanBeBoolean && mapTo is ICanBeBoolean)
-    //        {
-    //            (mapTo as ICanBeBoolean).IsBooleanValue = (mapFrom as ICanBeBoolean).IsBooleanValue;
-    //        }
-    //        return this;
-    //    }
-    //}
 }
