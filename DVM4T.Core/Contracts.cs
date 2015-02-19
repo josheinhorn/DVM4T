@@ -65,7 +65,6 @@ namespace DVM4T.Contracts
         IPageTemplateData PageTemplate { get; }
         IFieldsData Metadata { get; }
         string FileName { get; }
-        string RelativePath { get; }
     }
     public interface IComponentPresentationData : IHaveData
     {

@@ -9,6 +9,7 @@ using DVM4T.Reflection;
 using DD4T.Mvc.Html;
 using System.Web.Mvc;
 using DVM4T.Core;
+using DVM4T.Exceptions;
 
 namespace DVM4T.DD4T.Attributes
 {
@@ -119,21 +120,32 @@ namespace DVM4T.DD4T.Attributes
             //View Model Attribute and set the key to the schema name + template name?
             if (cp == null) throw new ArgumentNullException("cp");
             //string ctName;
-            string viewModelKey = builder.ViewModelKeyProvider.GetViewModelKey(new ContentViewModelData(cp, builder));
-            //TODO: Fix all of this -- we shouldn't directly need to search for a Type at all, it should all be provided by the ViewModelBuilder!!
-            //e.g. - return builder.SelectViewModelType<ViewModelAttribute>(LinkedComponentTypes, new ViewModelData(cp, builder)); 
-            ViewModelAttribute key = new ViewModelAttribute(cp.Component.Schema.Title, false)
+            Type result = null;
+            try
             {
-                ViewModelKeys = String.IsNullOrEmpty(viewModelKey) ? null : new string[] { viewModelKey }
-            };
-            foreach (var type in LinkedComponentTypes)
-            {
-                ViewModelAttribute modelAttr = ReflectionUtility.ReflectionCache.GetCustomAttribute<ViewModelAttribute>(type);
-
-                if (modelAttr != null && key.Equals(modelAttr))
-                    return type;
+                result = builder.FindViewModelByAttribute<IContentModelAttribute>(
+                    new ComponentPresentationViewModelData(cp, builder), LinkedComponentTypes);
             }
-            return null; //no matching types found, return null
+            catch (ViewModelTypeNotFoundException)
+            {
+                result = null; //return null if it's not found instead of throwing exception
+            }
+            return result;
+            //string viewModelKey = builder.ViewModelKeyProvider.GetViewModelKey(new ContentViewModelData(cp, builder));
+            ////TODO: Fix all of this -- we shouldn't directly need to search for a Type at all, it should all be provided by the ViewModelBuilder!!
+            ////e.g. - return builder.SelectViewModelType<ViewModelAttribute>(LinkedComponentTypes, new ViewModelData(cp, builder)); 
+            //ViewModelAttribute key = new ViewModelAttribute(cp.Component.Schema.Title, false)
+            //{
+            //    ViewModelKeys = String.IsNullOrEmpty(viewModelKey) ? null : new string[] { viewModelKey }
+            //};
+            //foreach (var type in LinkedComponentTypes)
+            //{
+            //    ViewModelAttribute modelAttr = ReflectionUtility.ReflectionCache.GetCustomAttribute<ViewModelAttribute>(type);
+
+            //    if (modelAttr != null && key.Equals(modelAttr))
+            //        return type;
+            //}
+            //return null; //no matching types found, return null
             //throw new ViewModelTypeNotFoundExpception(schema.Title, viewModelKey);
         }
 
@@ -542,4 +554,6 @@ namespace DVM4T.DD4T.Attributes
             get { return typeof(Dynamic.IMultimedia); }
         }
     } 
+
+    
 }

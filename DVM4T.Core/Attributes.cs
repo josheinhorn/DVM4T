@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Web;
 using DVM4T.Reflection;
 using DVM4T.Exceptions;
+using System.Collections;
 
 namespace DVM4T.Attributes
 {
@@ -42,15 +43,34 @@ namespace DVM4T.Attributes
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
         {
             object result = null;
-            if (model != null && model.ModelData != null && model.ModelData is IContentViewModelData)
+            if (model != null && model.ModelData != null)
             {
-                var contentData = model.ModelData as IContentViewModelData;
-                var fields = IsTemplateMetadata ? contentData.Template.Metadata
-                    : IsMetadata ? contentData.Metadata
-                    : contentData.ContentData;
+                //need null checks on Template
+                IFieldsData fields = null;
+                if (IsTemplateMetadata)
+                {
+                    fields =  model.ModelData.Template != null ? model.ModelData.Template.Metadata : null;
+                }
+                else if (IsMetadata)
+                {
+                    fields = model.ModelData.Metadata;
+                }
+                else if (model.ModelData is IContentViewModelData)
+                {
+                    fields = (model.ModelData as IContentViewModelData).ContentData;
+                }
+                else
+                {
+                    fields = model.ModelData.Metadata;
+                }
+                //var fields = IsTemplateMetadata && model.ModelData.Template != null ? model.ModelData.Template.Metadata
+                //    : IsMetadata ? model.ModelData.Metadata
+                //    : model.ModelData is IContentViewModelData ? (model.ModelData as IContentViewModelData).ContentData
+                //    : model.ModelData.Metadata; //If it isn't content data, just use Metadata no matter what
+
                 if (fields != null && fields.ContainsKey(FieldName))
                 {
-                    result = this.GetFieldValue(fields[FieldName], propertyType, contentData.Template, builder);
+                    result = this.GetFieldValue(fields[FieldName], propertyType, model.ModelData.Template, builder);
                 }
             }
             return result;
@@ -167,14 +187,32 @@ namespace DVM4T.Attributes
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
         {
             object result = null;
-            if (model != null && model is IViewModel)
+            if (model != null && model != null && model.ModelData is IPageViewModelData)
             {
-                var pageModel = model as IViewModel;
+                var pageModel = (model.ModelData as IPageViewModelData).Page;
                 result = this.GetPropertyValue(pageModel, propertyType, builder);
             }
             return result;
         }
     }
+
+    public abstract class ComponentPresentationsAttributeBase : ModelPropertyAttributeBase //For use in a PageModel
+    {
+        //Really leaving the bulk of the work to implementer -- they must both find out if the CP matches this attribute and then construct an object with it
+        public abstract IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, Type propertyType, IViewModelBuilder builder = null);
+
+        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
+        {
+            object result = null;
+            if (model != null && model != null && model.ModelData is IPageViewModelData)
+            {
+                var cpModels = (model.ModelData as IPageViewModelData).Page.ComponentPresentations;
+                result = GetPresentationValues(cpModels, propertyType, builder);
+            }
+            return result;
+        }
+    }
+
 
     /// <summary>
     /// Attribute for a View Model. Required for DVM4T Framework to build a Model.
@@ -183,7 +221,7 @@ namespace DVM4T.Attributes
     {
         //TODO: De-couple this from the Schema name specifically? What would make sense?
         //TOOD: Possibly change this to use purely ViewModelKey and make that an object, leave it to the key provider to assign objects with logical equals overrides
-        
+
         private string schemaName;
         private bool inlineEditable = false;
         private bool isDefault = false;

@@ -341,4 +341,83 @@ namespace DVM4T.DD4T
             get { return cp; }
         }
     }
+    public class PageTemplate : TridionItemBase, IPageTemplateData
+    {
+        private readonly IPageTemplate template;
+        private readonly IFieldsData metadataFields;
+        protected override IItem Item
+        {
+            get { return template; }
+        }
+        public PageTemplate(IPageTemplate template)
+        {
+            this.template = template;
+            this.metadataFields = new FieldSet(template.MetadataFields);
+        }
+        public IFieldsData Metadata
+        {
+            get
+            {
+                return metadataFields;
+            }
+        }
+
+        public DateTime RevisionDate
+        {
+            get { return template.RevisionDate; }
+        }
+
+        public override object BaseData
+        {
+            get { return template; }
+        }
+    }
+    public class Page : TridionItemBase, IPageData
+    {
+        IPage page = null;
+
+        protected override IItem Item
+        {
+            get { return page; }
+        }
+
+        public override object BaseData
+        {
+            get { return Item; }
+        }
+
+        public Page(IPage page)
+        {
+            this.page = page;
+            ComponentPresentations = page.ComponentPresentations.Select(x => new ComponentPresentation(x) as IComponentPresentationData).ToList();
+            Metadata = new FieldSet(page.MetadataFields);
+            FileName = page.Filename;
+            PageTemplate = new PageTemplate(page.PageTemplate);
+        }
+
+        public IList<IComponentPresentationData> ComponentPresentations
+        {
+            get;
+            private set;
+        }
+
+        public IPageTemplateData PageTemplate
+        {
+            get;
+            private set;
+        }
+
+        public IFieldsData Metadata
+        {
+            get;
+            private set;
+        }
+
+        public string FileName
+        {
+            get;
+            private set;
+        }
+    }
+
 }
