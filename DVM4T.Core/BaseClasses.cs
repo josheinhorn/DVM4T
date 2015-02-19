@@ -9,7 +9,7 @@ namespace DVM4T.Base
     /// <summary>
     /// Base class for all Component Presentation View Models
     /// </summary>
-    public abstract class ComponentPresentationViewModelBase : IComponentPresentationViewModel
+    public abstract class ComponentPresentationViewModelBase : IViewModel
     {
         public IComponentPresentationData ComponentPresentation
         {
@@ -22,12 +22,18 @@ namespace DVM4T.Base
             set;
         }
 
-        public IFieldsData Content
+        public IFieldsData ContentData
         {
             get;
             set;
         }
         public IComponentTemplateData ComponentTemplate
+        {
+            get;
+            set;
+        }
+
+        public ISchemaData Schema
         {
             get;
             set;
@@ -36,19 +42,25 @@ namespace DVM4T.Base
     /// <summary>
     /// Base class for all Embedded Schema View Models
     /// </summary>
-    public abstract class EmbeddedSchemaViewModelBase : IEmbeddedSchemaViewModel
+    public abstract class EmbeddedSchemaViewModelBase : IViewModel
     {
         public IViewModelData ModelData
         {
             get;
             set;
         }
-        public  IFieldsData Content
+        public  IFieldsData ContentData
         {
             get;
             set;
         }
         public IComponentTemplateData ComponentTemplate
+        {
+            get;
+            set;
+        }
+
+        public ISchemaData Schema
         {
             get;
             set;

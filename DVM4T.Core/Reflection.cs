@@ -21,7 +21,7 @@ namespace DVM4T.Reflection
         private Dictionary<Type, List<ModelAttributeProperty>> modelProperties = new Dictionary<Type, List<ModelAttributeProperty>>();
         private Dictionary<Type, Func<object>> constructors = new Dictionary<Type, Func<object>>();
         //private Dictionary<Type, ViewModelAttribute> viewModelAttributes = new Dictionary<Type, ViewModelAttribute>();
-        private Dictionary<Type, Attribute> modelAttributes = new Dictionary<Type, Attribute>();
+        private Dictionary<Type, IModelAttribute> modelAttributes = new Dictionary<Type, IModelAttribute>();
 
         internal ReflectionOptimizer() { }
 
@@ -57,21 +57,21 @@ namespace DVM4T.Reflection
             }
             return result;
         }
-        public T GetCustomAttribute<T>(Type type) where T : Attribute
+        public T GetCustomAttribute<T>(Type type) where T : IModelAttribute
         {
-            Attribute result;
+            IModelAttribute result;
             if (!modelAttributes.TryGetValue(type, out result))
             {
                 lock (modelAttributes)
                 {
                     if (!modelAttributes.TryGetValue(type, out result))
                     {
-                        result = type.GetCustomAttributes(typeof(T), true).FirstOrDefault() as Attribute;
+                        result = type.GetCustomAttributes(typeof(T), true).FirstOrDefault() as IModelAttribute;
                         modelAttributes.Add(type, result);
                     }
                 }
             }
-            return result as T;
+            return (T)result;
         }
 
         public object CreateInstance(Type objectType)

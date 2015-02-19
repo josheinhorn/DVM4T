@@ -64,6 +64,8 @@ namespace DVM4T.Contracts
         IList<IComponentPresentationData> ComponentPresentations { get; }
         IPageTemplateData PageTemplate { get; }
         IFieldsData Metadata { get; }
+        string FileName { get; }
+        string RelativePath { get; }
     }
     public interface IComponentPresentationData : IHaveData
     {
@@ -134,8 +136,9 @@ namespace DVM4T.Contracts
 
     public interface IContentViewModel : IViewModel
     {
-        IFieldsData Content { get; set; } //This is specific to Component/Embedded
-        IComponentTemplateData ComponentTemplate { get; set; }
+        ISchemaData Schema { get; set; } //This is specific to Component/Embedded
+        IFieldsData ContentData { get; set; } //This is specific to Component/Embedded
+        //IComponentTemplateData ComponentTemplate { get; set; } //Is this necessary?
     }
 
     public interface IViewModelData : IHaveData //Should this extend IHaveData? I don't think so at this time because each piece i.e. Content, MetadataFields has their own BaseData object
@@ -146,6 +149,7 @@ namespace DVM4T.Contracts
         IViewModelBuilder Builder { get; }
         //IFieldsData Content { get; } //This is specific to Component/Embedded
         IFieldsData Metadata { get; }
+        ITemplateData Template { get; }
         //we required Component Template here in order to generate Site Edit markup for any linked components in the embedded fields
         //IComponentTemplateData ComponentTemplate { get; } //This is specific to Component/Embedded
         /// <summary>
@@ -154,30 +158,56 @@ namespace DVM4T.Contracts
         int PublicationId { get; }
     }
 
-    public interface IComponentPresentationViewModel : IContentViewModel
+    public interface IContentViewModelData : IViewModelData
     {
-        IComponentPresentationData ComponentPresentation { get; set; }
+        ISchemaData Schema { get; }
+        IFieldsData ContentData { get; }
     }
 
-    //Consider use cases for this interface -- is it worth separating from ComponentPresentationViewModel?
-    //Multimedia... could use CP instead, not technically correct but it's close
-    public interface IComponentViewModel : IContentViewModel
+    public interface IComponentPresentationViewModelData : IContentViewModelData
     {
-        IComponentData Component { get; }  
+        IComponentPresentationData ComponentPresentation { get; }
     }
 
-    //TODO: Consider removing this interface, holding on to template is not actually necessary after building is done
-    public interface IEmbeddedSchemaViewModel : IContentViewModel
+    public interface IEmbeddedSchemaViewModelData : IContentViewModelData
     {
-
+        //??
     }
 
-    public interface IPageViewModel : IViewModel
+    public interface IPageViewModelData : IViewModelData
     {
         IPageData Page { get; }
     }
-    public interface IViewModelBuilder //!!!!!TODO!!!!!: Add/implement IPageViewModel BuildPageModel(IPageData page);
+    //Consider need for Component Presentation specific Data -- should be taken care of by accessing BaseData though...
+
+
+    //Removed these 3 ViewModel interfaces and instead using different ViewModelData objects -- investigate the impacts of this
+    //public interface IComponentPresentationViewModel : IViewModel
+    //{
+    //    IComponentPresentationData ComponentPresentation { get; set; }
+    //}
+
+    ////Consider use cases for this interface -- is it worth separating from ComponentPresentationViewModel?
+    ////Multimedia... could use CP instead, not technically correct but it's close
+    //public interface IComponentViewModel : IViewModel
+    //{
+    //    IComponentData Component { get; }  
+    //}
+
+    ////TODO: Consider removing this interface, holding on to template is not actually necessary after building is done
+    //public interface IEmbeddedSchemaViewModel : IViewModel
+    //{
+
+    //}
+
+    //public interface IPageViewModel : IViewModel
+    //{
+    //    IPageData Page { get; }
+    //}
+
+    public interface IViewModelBuilder
     {
+        Type FindViewModelByAttribute<T>(IViewModelData data, Type[] typesToSearch = null) where T : IModelAttribute;
         /// <summary>
         /// Builds a View Model from previously loaded Assemblies using the input Component Presentation. This method infers the View Model type by comparing
         /// information from the Component Presentation object to the attributes of the View Model classes.
@@ -187,7 +217,7 @@ namespace DVM4T.Contracts
         /// The LoadViewModels method must be called with the desired View Model Types in order for this to return a valid object.
         /// </remarks>
         /// <returns>Component Presentation View Model</returns>
-        IComponentPresentationViewModel BuildCPViewModel(IComponentPresentationData componentPresentation); //A way to build view model without passing type -- type is inferred using loaded assemblies
+        IViewModel BuildCPViewModel(IComponentPresentationData componentPresentation); //A way to build view model without passing type -- type is inferred using loaded assemblies
         /// <summary>
         /// Builds a View Model from a FieldSet using the schema determine the View Model class to use.
         /// </summary>
@@ -195,14 +225,14 @@ namespace DVM4T.Contracts
         /// <param name="embeddedSchema">Embedded Schema</param>
         /// <param name="template">Component Template to use for generating XPM Markup for any linked components</param>
         /// <returns>Embedded Schema View Model</returns>
-        IEmbeddedSchemaViewModel BuildEmbeddedViewModel(IFieldsData embeddedFields, ISchemaData embeddedSchemaTitle, IComponentTemplateData template);
+        IViewModel BuildEmbeddedViewModel(IFieldsData embeddedFields, ISchemaData embeddedSchemaTitle, ITemplateData template);
         /// <summary>
         /// Builds a View Model from a Component Presentation using the type parameter to determine the View Model class to use.
         /// </summary>
         /// <param name="type">Type of View Model class to return</param>
         /// <param name="cp">Component Presentation</param>
         /// <returns>Component Presentation View Model</returns>
-        IComponentPresentationViewModel BuildCPViewModel(Type type, IComponentPresentationData componentPresentation);
+        IViewModel BuildCPViewModel(Type type, IComponentPresentationData componentPresentation);
         /// <summary>
         /// Builds a View Model from a FieldSet using the generic type to determine the View Model class to use.
         /// </summary>
@@ -210,14 +240,14 @@ namespace DVM4T.Contracts
         /// <param name="embeddedFields">Embedded FieldSet</param>
         /// <param name="template">Component Template to use for generating XPM Markup for any linked components</param>
         /// <returns>Embedded Schema View Model</returns>
-        IEmbeddedSchemaViewModel BuildEmbeddedViewModel(Type type, IFieldsData embeddedFields, IComponentTemplateData template);
+        IViewModel BuildEmbeddedViewModel(Type type, IFieldsData embeddedFields, ISchemaData schema, ITemplateData template);
         /// <summary>
         /// Builds a View Model from a Component Presentation using the generic type to determine the View Model class to use.
         /// </summary>
         /// <typeparam name="T">Type of View Model class to return</typeparam>
         /// <param name="cp">Component Presentation</param>
         /// <returns>Component Presentation View Model</returns>
-        T BuildCPViewModel<T>(IComponentPresentationData componentPresentation) where T : class, IComponentPresentationViewModel;
+        T BuildCPViewModel<T>(IComponentPresentationData componentPresentation) where T : class, IViewModel;
         /// <summary>
         /// Builds a View Model from a FieldSet using the generic type to determine the View Model class to use.
         /// </summary>
@@ -225,11 +255,16 @@ namespace DVM4T.Contracts
         /// <param name="embeddedFields">Embedded FieldSet</param>
         /// <param name="template">Component Template to use for generating XPM Markup for any linked components</param>
         /// <returns>Embedded Schema View Model</returns>
-        T BuildEmbeddedViewModel<T>(IFieldsData embeddedFields, IComponentTemplateData template) where T : class, IEmbeddedSchemaViewModel;
+        T BuildEmbeddedViewModel<T>(IFieldsData embeddedFields, ISchemaData schema, ITemplateData template) where T : class, IViewModel;
         /// <summary>
         /// The View Model Key Provider for this Builder
         /// </summary>
         IViewModelKeyProvider ViewModelKeyProvider { get; }
+
+        T BuildPageViewModel<T>(IPageData page) where T : IViewModel;
+        IViewModel BuildPageViewModel(Type type, IPageData page);
+        IViewModel BuildPageViewModel(IPageData page);
+
         /// <summary>
         /// Loads all View Model classes from an assembly
         /// </summary>
@@ -349,7 +384,7 @@ namespace DVM4T.Contracts
         /// </summary>
         /// <param name="template">Component Template</param>
         /// <returns>View Model Key</returns>
-        string GetViewModelKey(IComponentTemplateData template);
+        string GetViewModelKey(IViewModelData model);
     }
 
     public interface ICanBeBoolean
@@ -360,7 +395,7 @@ namespace DVM4T.Contracts
     public interface IReflectionHelper
     {
         List<ModelAttributeProperty> GetModelProperties(Type type);
-        T GetCustomAttribute<T>(Type type) where T : Attribute;
+        T GetCustomAttribute<T>(Type type) where T : IModelAttribute;
         object CreateInstance(Type objectType);
         T CreateInstance<T>() where T : class, new();
         Action<object, object> BuildSetter(PropertyInfo propertyInfo);
@@ -386,13 +421,13 @@ namespace DVM4T.Contracts
     }
     public interface IFieldAttribute : IPropertyAttribute
     {
-        object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null);
+        object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelBuilder builder = null);
         string FieldName { get; }
         bool AllowMultipleValues { get; set; }
         bool InlineEditable { get; set; }
         bool Mandatory { get; set; }
         bool IsMetadata { get; set; }
-        bool IsComponentTemplateMetadata { get; set; }
+        bool IsTemplateMetadata { get; set; }
     }
 
     //TODO: Anyway to merge all three interfaces into one? They're so similar
@@ -413,12 +448,19 @@ namespace DVM4T.Contracts
     {
         object GetPropertyValue(IPageTemplateData page, Type propertyType, IViewModelBuilder builder = null);
     }
-    public interface IViewModelAttribute
+    public interface IModelAttribute
+    {
+        string[] ViewModelKeys { get; set; }
+        bool IsMatch(IViewModelData data, IViewModelKeyProvider provider);
+    }
+    public interface IContentModelAttribute : IModelAttribute
     {
         string SchemaName { get; }
-        string ComponentTemplateName { get; set; }
-        string[] ViewModelKeys { get; set; }
         bool InlineEditable { get; set; }
         bool IsDefault { get; }
+    }
+    public interface IPageModelAttribute : IModelAttribute
+    {
+        //What Properties go here to identify a Page Model?
     }
 }

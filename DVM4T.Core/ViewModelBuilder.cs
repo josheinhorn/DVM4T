@@ -19,7 +19,8 @@ namespace DVM4T.Core
     /// </summary>
     public class ViewModelBuilder : IViewModelBuilder
     {
-        private IDictionary<ViewModelAttribute, Type> viewModels = new Dictionary<ViewModelAttribute, Type>();
+        //private IDictionary<ViewModelAttribute, Type> viewModels2 = new Dictionary<ViewModelAttribute, Type>();
+        private IDictionary<IModelAttribute, Type> viewModels = new Dictionary<IModelAttribute, Type>();
         private IList<Assembly> loadedAssemblies = new List<Assembly>();
         public IViewModelKeyProvider keyProvider;
         /// <summary>
@@ -42,10 +43,10 @@ namespace DVM4T.Core
             if (!loadedAssemblies.Contains(assembly))
             {
                 loadedAssemblies.Add(assembly);
-                ViewModelAttribute viewModelAttr;
+                IModelAttribute viewModelAttr;
                 foreach (var type in assembly.GetTypes())
                 {
-                    viewModelAttr = ReflectionUtility.ReflectionCache.GetCustomAttribute<ViewModelAttribute>(type);
+                    viewModelAttr = ReflectionUtility.ReflectionCache.GetCustomAttribute<IModelAttribute>(type);
                     if (viewModelAttr != null && !viewModels.ContainsKey(viewModelAttr))
                     {
                         viewModels.Add(viewModelAttr, type);
@@ -53,85 +54,107 @@ namespace DVM4T.Core
                 }
             }
         }
-        public IComponentPresentationViewModel BuildCPViewModel(Type type, IComponentPresentationData cp)
+        public Type FindViewModelByAttribute<T>(IViewModelData data, Type[] typesToSearch = null) where T : IModelAttribute
         {
-            IComponentPresentationViewModel viewModel = null;
-            viewModel = (IComponentPresentationViewModel)ReflectionUtility.ReflectionCache.CreateInstance(type);
-            viewModel.ComponentPresentation = cp;
-            viewModel.ModelData = new ViewModelData(cp, this);
-            viewModel.ComponentTemplate = cp.ComponentTemplate;
+            //Anyway to speed this up? Better than just a straight up loop?
+            typesToSearch = typesToSearch ?? viewModels.Where(x => x.Key is T).Select(x => x.Value).ToArray();
+            foreach (var type in typesToSearch)
+            {
+                T modelAttr = ReflectionUtility.ReflectionCache.GetCustomAttribute<T>(type);
+
+                if (modelAttr != null && modelAttr.IsMatch(data, ViewModelKeyProvider))
+                    return type;
+            }
+            throw new ViewModelTypeNotFoundException(data);
+        }
+        public IViewModel BuildCPViewModel(Type type, IComponentPresentationData cp)
+        {
+            IViewModel viewModel = null;
+            viewModel = (IViewModel)ReflectionUtility.ReflectionCache.CreateInstance(type);
+            viewModel.ModelData = new ComponentPresentationViewModelData(cp, this);
             IFieldsData fields = cp.Component.Fields;
-            viewModel.Content = fields;
             ProcessViewModel(viewModel, type, cp.ComponentTemplate);
             return viewModel;
         }
-        public T BuildCPViewModel<T>(IComponentPresentationData cp) where T : class, IComponentPresentationViewModel
+        public T BuildCPViewModel<T>(IComponentPresentationData cp) where T : class, IViewModel
         {
             Type type = typeof(T);
             return (T)BuildCPViewModel(type, cp);
         }
-        public IComponentPresentationViewModel BuildCPViewModel(IComponentPresentationData cp)
+        public IViewModel BuildCPViewModel(IComponentPresentationData cp)
         {
+            IViewModel result = null;
             if (cp == null) throw new ArgumentNullException("cp");
-            var key = new ViewModelAttribute(cp.Component.Schema.Title, false)
-            {
-                ViewModelKeys = GetViewModelKey(cp.ComponentTemplate)
-            };
-            IComponentPresentationViewModel result = null;
-            //var type = viewModels.Where(x => x.Key.Equals(key)).Select(x => x.Value).FirstOrDefault();
-            Type type = viewModels.ContainsKey(key) ? viewModels[key] : null; //Keep an eye on this -- GetHashCode isn't the same as Equals
+            var modelData = new ComponentPresentationViewModelData(cp, this);
+            Type type = FindViewModelByAttribute<IContentModelAttribute>(modelData);
+            
             if (type != null)
             {
                 result = BuildCPViewModel(type, cp);
             }
-            else
-            {
-                throw new ViewModelTypeNotFoundExpception(key.SchemaName, key.ViewModelKeys.FirstOrDefault());
-            }
             return result;
         }
-        public T BuildEmbeddedViewModel<T>(IFieldsData embeddedFields, IComponentTemplateData template) where T : class, IEmbeddedSchemaViewModel
+        public T BuildEmbeddedViewModel<T>(IFieldsData embeddedFields, ISchemaData schema, ITemplateData template) where T : class, IViewModel
         {
             Type type = typeof(T);
-            return (T)BuildEmbeddedViewModel(type, embeddedFields, template);
+            return (T)BuildEmbeddedViewModel(type, embeddedFields, schema, template);
         }
-        public IEmbeddedSchemaViewModel BuildEmbeddedViewModel(IFieldsData embeddedFields, ISchemaData schema, IComponentTemplateData template)
+        public IViewModel BuildEmbeddedViewModel(IFieldsData embeddedFields, ISchemaData schema, ITemplateData template)
         {
             if (embeddedFields == null) throw new ArgumentNullException("embeddedFields");
             if (schema == null) throw new ArgumentNullException("schema");
             if (template == null) throw new ArgumentNullException("template");
-            var key = new ViewModelAttribute(schema.Title, false)
-            {
-                ViewModelKeys = GetViewModelKey(template)
-            };
-            IEmbeddedSchemaViewModel result = null;
+            var modelData = new ContentViewModelData(embeddedFields, schema, template, this);
+            IViewModel result = null;
+            Type type = FindViewModelByAttribute<IContentModelAttribute>(modelData);
             //var type = viewModels.Where(x => x.Key.Equals(key)).Select(x => x.Value).FirstOrDefault();
-            Type type = viewModels.ContainsKey(key) ? viewModels[key] : null; //Keep an eye on this -- GetHashCode isn't the same as Equals
+            //Type type = viewModels.ContainsKey(key) ? viewModels[key] : null; //Keep an eye on this -- GetHashCode isn't the same as Equals
             if (type != null)
             {
-                result = (IEmbeddedSchemaViewModel)BuildEmbeddedViewModel(type, embeddedFields, template);
-            }
-            else
-            {
-                throw new ViewModelTypeNotFoundExpception(key.SchemaName, key.ViewModelKeys.FirstOrDefault());
+                result = (IViewModel)BuildEmbeddedViewModel(type, embeddedFields, schema, template);
             }
             return result;
         }
-        public IEmbeddedSchemaViewModel BuildEmbeddedViewModel(Type type, IFieldsData embeddedFields, IComponentTemplateData template)
+        public IViewModel BuildEmbeddedViewModel(Type type, IFieldsData embeddedFields, ISchemaData schema, ITemplateData template)
         {
-            IEmbeddedSchemaViewModel viewModel = (IEmbeddedSchemaViewModel)ReflectionUtility.ReflectionCache.CreateInstance(type);
-            viewModel.ModelData = new ViewModelData(embeddedFields, template, this);
-            viewModel.ComponentTemplate = template;
-            viewModel.Content = embeddedFields;
+            if (type == null) throw new ArgumentNullException("type");
+            IViewModel viewModel = (IViewModel)ReflectionUtility.ReflectionCache.CreateInstance(type);
+            viewModel.ModelData = new ContentViewModelData(embeddedFields, schema, template, this);
             ProcessViewModel(viewModel, type, template);
             return viewModel;
+        }
+        public T BuildPageViewModel<T>(IPageData page) where T : IViewModel
+        {
+            Type type = typeof(T);
+            return (T)BuildPageViewModel(type, page);
+        }
+        public IViewModel BuildPageViewModel(Type type, IPageData page)
+        {
+            if (type == null) throw new ArgumentNullException("type");
+            IViewModel viewModel = (IViewModel)ReflectionUtility.ReflectionCache.CreateInstance(type);
+            viewModel.ModelData = new PageViewModelData(page, this);
+            ProcessViewModel(viewModel, type, page.PageTemplate);
+            return viewModel;
+        }
+        public IViewModel BuildPageViewModel(IPageData page)
+        {
+            IViewModel result = null;
+            if (page == null) throw new ArgumentNullException("page");
+            var modelData = new PageViewModelData(page, this);
+            Type type = FindViewModelByAttribute<IPageModelAttribute>(modelData);
+
+            if (type != null)
+            {
+                result = BuildPageViewModel(type, page);
+            }
+            return result;
         }
         #endregion
 
         #region Private methods
 
 
-        private void ProcessViewModel(IViewModel viewModel, Type type, IComponentTemplateData template)
+        private void ProcessViewModel(IViewModel viewModel, Type type, ITemplateData template)
         {
             //PropertyInfo[] props = type.GetProperties();
             var props = ReflectionUtility.ReflectionCache.GetModelProperties(type);
@@ -159,12 +182,15 @@ namespace DVM4T.Core
                 }
             }
         }
-        private string[] GetViewModelKey(IComponentTemplateData template)
+        private string[] GetViewModelKey(IViewModelData model)
         {
-            string key = keyProvider.GetViewModelKey(template);
+            string key = keyProvider.GetViewModelKey(model);
             return String.IsNullOrEmpty(key) ? null : new string[] { key };
         }
         #endregion
+
+
+
     }
 
 }

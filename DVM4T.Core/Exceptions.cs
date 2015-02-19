@@ -6,11 +6,15 @@ using System.Text;
 
 namespace DVM4T.Exceptions
 {
-    public class ViewModelTypeNotFoundExpception : Exception
+    public class ViewModelTypeNotFoundException : Exception
     {
-        public ViewModelTypeNotFoundExpception(string schemaName, string viewModelKey)
-            : base(String.Format("Could not find view model for schema '{0}' and key '{1}' or default for schema '{0}' in loaded assemblies."
-                    , schemaName, viewModelKey)) 
+        public ViewModelTypeNotFoundException(IContentViewModelData data)
+            : base(String.Format("Could not find view model for schema '{0}' and Template '{1}' or default for schema '{0}' in loaded assemblies."
+                    , data.Schema.Title, data.Template.Title)) 
+        { }
+
+        public ViewModelTypeNotFoundException(IViewModelData data)
+            : base(String.Format("Could not find view model for item with Template {0} and Publication ID {1}", data.Template.Title, data.PublicationId))
         { }
     }
 

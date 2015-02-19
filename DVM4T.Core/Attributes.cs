@@ -42,15 +42,15 @@ namespace DVM4T.Attributes
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
         {
             object result = null;
-            if (model != null && model is IContentViewModel)
+            if (model != null && model.ModelData != null && model.ModelData is IContentViewModelData)
             {
-                var contentModel = model as IContentViewModel;
-                var fields = IsComponentTemplateMetadata ? contentModel.ComponentTemplate.Metadata
-                    : IsMetadata ? contentModel.ModelData.Metadata
-                    : contentModel.Content;
+                var contentData = model.ModelData as IContentViewModelData;
+                var fields = IsTemplateMetadata ? contentData.Template.Metadata
+                    : IsMetadata ? contentData.Metadata
+                    : contentData.ContentData;
                 if (fields != null && fields.ContainsKey(FieldName))
                 {
-                    result = this.GetFieldValue(fields[FieldName], propertyType, contentModel.ComponentTemplate, builder);
+                    result = this.GetFieldValue(fields[FieldName], propertyType, contentData.Template, builder);
                 }
             }
             return result;
@@ -63,7 +63,7 @@ namespace DVM4T.Attributes
         /// <param name="template">The Component Template to use</param>
         /// <param name="builder">The View Model Builder</param>
         /// <returns></returns>
-        public abstract object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null);
+        public abstract object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelBuilder builder = null);
 
         /// <summary>
         /// The Tridion schema field name for this property
@@ -117,7 +117,8 @@ namespace DVM4T.Attributes
             set { isMetadata = value; }
         }
 
-        public bool IsComponentTemplateMetadata { get; set; }
+        public bool IsTemplateMetadata { get; set; }
+
     }
     /// <summary>
     /// Base class for Property Attributes using Component Data
@@ -127,13 +128,13 @@ namespace DVM4T.Attributes
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
         {
             object result = null;
-            if (model != null && model is IComponentPresentationViewModel)
+            if (model != null && model.ModelData != null && model.ModelData is IComponentPresentationViewModelData)
             {
-                var cpModel = model as IComponentPresentationViewModel;
-                if (cpModel.ComponentPresentation != null)
+                var cpData = model.ModelData as IComponentPresentationViewModelData;
+                if (cpData.ComponentPresentation != null)
                 {
-                    result = GetPropertyValue(cpModel.ComponentPresentation.Component, propertyType,
-                        cpModel.ComponentPresentation.ComponentTemplate, builder);
+                    result = GetPropertyValue(cpData.ComponentPresentation.Component, propertyType,
+                        cpData.ComponentPresentation.ComponentTemplate, builder);
                 }
             }
             return result;
@@ -151,9 +152,9 @@ namespace DVM4T.Attributes
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
         {
             object result = null;
-            if (model != null && model is IContentViewModel && ((IContentViewModel)model).ComponentTemplate != null)
+            if (model != null && model is IViewModel && model.ModelData.Template != null)
             {
-                result = this.GetPropertyValue(((IContentViewModel)model).ComponentTemplate, propertyType, builder);
+                result = this.GetPropertyValue(model.ModelData.Template as IComponentTemplateData, propertyType, builder);
             }
             return result;
         }
@@ -166,9 +167,9 @@ namespace DVM4T.Attributes
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
         {
             object result = null;
-            if (model != null && model is IPageViewModel)
+            if (model != null && model is IViewModel)
             {
-                var pageModel = model as IPageViewModel;
+                var pageModel = model as IViewModel;
                 result = this.GetPropertyValue(pageModel, propertyType, builder);
             }
             return result;
@@ -176,56 +177,9 @@ namespace DVM4T.Attributes
     }
 
     /// <summary>
-    /// Base class for Property Attributes using Component Template Metadata Fields Data
-    /// </summary>
-    //public abstract class ComponentTemplateMetadataFieldAttributeBase : Attribute, IPropertyAttribute
-    //{
-    //    protected abstract IFieldAttribute BaseFieldAttribute { get; }
-    //    public object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
-    //    {
-    //        object result = null;
-    //        if (model != null && model.ModelData != null && model.ModelData.ComponentTemplate != null)
-    //        {
-    //            var fields = model.ModelData.ComponentTemplate.MetadataFields;
-    //            if (fields != null && fields.ContainsKey(BaseFieldAttribute.FieldName))
-    //            {
-
-    //                result = this.GetFieldValue(fields[BaseFieldAttribute.FieldName], propertyType, model.ModelData.ComponentTemplate, builder);
-    //            }
-    //        }
-    //        return result;
-    //    }
-    //    public object GetFieldValue(IFieldData field, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
-    //    {
-    //        return BaseFieldAttribute.GetFieldValue(field, propertyType, template, builder);
-    //    }
-
-    //    public Type ExpectedReturnType
-    //    {
-    //        get
-    //        {
-    //            return BaseFieldAttribute.ExpectedReturnType;
-    //        }
-    //    }
-    //}
-
-    //public class ComponentTemplateMetadataFieldAttribute : ComponentTemplateMetadataFieldAttributeBase
-    //{
-    //    private IFieldAttribute fieldAttribute;
-    //    public ComponentTemplateMetadataFieldAttribute(IFieldAttribute fieldAttribute)
-    //    {
-    //        this.fieldAttribute = fieldAttribute;
-    //    }
-    //    protected override IFieldAttribute BaseFieldAttribute
-    //    {
-    //        get { return fieldAttribute; }
-    //    }
-    //}
-
-    /// <summary>
     /// Attribute for a View Model. Required for DVM4T Framework to build a Model.
     /// </summary>
-    public class ViewModelAttribute : Attribute, IViewModelAttribute
+    public class ViewModelAttribute : Attribute, IContentModelAttribute //Should be re-named ContentViewModelAttribute
     {
         //TODO: De-couple this from the Schema name specifically? What would make sense?
         //TOOD: Possibly change this to use purely ViewModelKey and make that an object, leave it to the key provider to assign objects with logical equals overrides
@@ -233,7 +187,6 @@ namespace DVM4T.Attributes
         private string schemaName;
         private bool inlineEditable = false;
         private bool isDefault = false;
-        private string componentTemplateName;
         private string[] viewModelKeys;
         /// <summary>
         /// View Model
@@ -262,14 +215,6 @@ namespace DVM4T.Attributes
             }
         }
 
-        /// <summary>
-        /// The name of the Component Template. For semantic purposes only.
-        /// </summary>
-        public string ComponentTemplateName //TODO: Use custom CT Metadata fields instead of CT Name
-        {
-            get { return componentTemplateName; }
-            set { componentTemplateName = value; }
-        }
         /// <summary>
         /// Identifiers for further specifying which View Model to use for different presentations.
         /// </summary>
@@ -332,8 +277,47 @@ namespace DVM4T.Attributes
             }
             return false;
         }
+
+
+        public bool IsMatch(IViewModelData data, IViewModelKeyProvider provider)
+        {
+            bool result = false;
+            if (data is IContentViewModelData)
+            {
+                var contentData = data as IContentViewModelData;
+                var compare = new ViewModelAttribute(contentData.Schema.Title, false)
+                {
+                    ViewModelKeys = new string[] { provider.GetViewModelKey(contentData) }
+                };
+                result = this.Equals(compare);
+            }
+            return result;
+        }
     }
 
     //Consider adding abstract classes for common Fields? Could I use Dependency Injection to add the concrete implementations?
+    public class PageViewModelAttribute : Attribute, IPageModelAttribute
+    {
+        public PageViewModelAttribute(string[] viewModelKeys)
+        {
+            ViewModelKeys = viewModelKeys;
+        }
+        public string[] ViewModelKeys
+        {
+            get;
+            set;
+        }
 
+        public bool IsMatch(IViewModelData data, IViewModelKeyProvider provider)
+        {
+            bool result = false;
+            if (data is IPageViewModelData)
+            {
+                var contentData = data as IPageViewModelData;
+                var key = provider.GetViewModelKey(data);
+                return ViewModelKeys.Any(x => x.Equals(key));
+            }
+            return result;
+        }
+    }
 }

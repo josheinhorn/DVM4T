@@ -48,18 +48,21 @@ namespace DVM4T.Core
     public abstract class ViewModelKeyProviderBase : IViewModelKeyProvider
     {
         protected string ViewModelKeyField = string.Empty;
-        public string GetViewModelKey(IComponentTemplateData template)
+        public string GetViewModelKey(IViewModelData modelData)
         {
             string result = null;
-            if (template != null
-                && template.Metadata != null
-                && template.Metadata.ContainsKey(ViewModelKeyField))
+            if (modelData != null
+                    && modelData.Template != null
+                    && modelData.Template.Metadata != null
+                    && modelData.Template.Metadata.ContainsKey(ViewModelKeyField))
             {
-                result = template.Metadata[ViewModelKeyField].Values.Cast<string>().FirstOrDefault();
+                result = modelData.Template.Metadata[ViewModelKeyField].Values.Cast<string>().FirstOrDefault();
             }
+
             return result;
         }
     }
+
     /// <summary>
     /// Implementation of View Model Key Provider that uses the Web Config app settings 
     /// to retrieve the name of the Component Template Metadata field for the view model key.
@@ -74,27 +77,15 @@ namespace DVM4T.Core
         }
     }
 
-    public class ViewModelData : IViewModelData
+    public class PageViewModelData : IViewModelData
     {
-        public ViewModelData(IComponentPresentationData cpData, IViewModelBuilder builder)
-        {
-            Builder = builder;
-            Metadata = cpData.Component.MetadataFields;
-            PublicationId = cpData.Component.PublicationId;
-            BaseData = cpData;
-        }
-        public ViewModelData(IFieldsData fieldsData, IComponentTemplateData template, IViewModelBuilder builder)
-        {
-            Builder = builder;
-            Metadata = null;
-            PublicationId = template.PublicationId;
-            BaseData = fieldsData;
-        }
-        public ViewModelData(IPageData pageData, IViewModelBuilder builder)
+        
+        public PageViewModelData(IPageData pageData, IViewModelBuilder builder)
         {
             Builder = builder;
             Metadata = pageData.Metadata;
             PublicationId = pageData.PublicationId;
+            Template = pageData.PageTemplate;
             BaseData = pageData;
         }
 
@@ -105,6 +96,90 @@ namespace DVM4T.Core
         }
 
         public IFieldsData Metadata
+        {
+            get;
+            private set;
+        }
+
+        public int PublicationId
+        {
+            get;
+            private set;
+        }
+
+        public object BaseData
+        {
+            get;
+            private set;
+        }
+
+
+        public ITemplateData Template
+        {
+            get;
+            private set;
+        }
+    }
+    public class ComponentPresentationViewModelData : ContentViewModelData, IComponentPresentationViewModelData
+    {
+        public ComponentPresentationViewModelData(IComponentPresentationData cpData, IViewModelBuilder builder)
+            : base (cpData, builder)
+        {
+            ComponentPresentation = cpData;
+        }
+        public IComponentPresentationData ComponentPresentation
+        {
+            get;
+            private set;
+        }
+    }
+    public class ContentViewModelData : IContentViewModelData
+    {
+        public ContentViewModelData(IComponentPresentationData cpData, IViewModelBuilder builder)
+        {
+            Builder = builder;
+            Metadata = cpData.Component.MetadataFields;
+            PublicationId = cpData.Component.PublicationId;
+            Template = cpData.ComponentTemplate;
+            Schema = cpData.Component.Schema;
+            ContentData = cpData.Component.Fields;
+            BaseData = cpData;
+        }
+        public ContentViewModelData(IFieldsData fieldsData, ISchemaData schema, ITemplateData template, IViewModelBuilder builder)
+        {
+            Builder = builder;
+            Metadata = null;
+            PublicationId = template.PublicationId;
+            Template = template;
+            Schema = schema;
+            ContentData = fieldsData;
+            BaseData = fieldsData;
+        }
+        public ISchemaData Schema
+        {
+            get;
+            private set;
+        }
+
+        public IFieldsData ContentData
+        {
+            get;
+            private set;
+        }
+
+        public IViewModelBuilder Builder
+        {
+            get;
+            private set;
+        }
+
+        public IFieldsData Metadata
+        {
+            get;
+            private set;
+        }
+
+        public ITemplateData Template
         {
             get;
             private set;

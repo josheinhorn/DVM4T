@@ -6,6 +6,7 @@ using DVM4T.Base;
 using DVM4T.DD4T.Attributes;
 using DVM4T.Core;
 using DVM4T.Contracts;
+using System.Collections.Generic;
 
 namespace DVM4T.Testing.Models
 {
@@ -68,7 +69,7 @@ namespace DVM4T.Testing.Models
         [LinkedComponentField("image", LinkedComponentTypes = new Type[] { typeof(Image) })]
         public Image Image { get; set; }
 
-        [TextField("view", IsComponentTemplateMetadata = true)]
+        [TextField("view", IsTemplateMetadata = true)]
         public string ViewName { get; set; }
     }
 
