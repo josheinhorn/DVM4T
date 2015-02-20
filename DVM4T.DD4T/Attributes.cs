@@ -555,5 +555,36 @@ namespace DVM4T.DD4T.Attributes
         }
     } 
 
+    public class PresentationsByViewAttribute : ComponentPresentationsAttributeBase
+    {
+        public override System.Collections.IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, Type propertyType, IViewModelBuilder builder = null)
+        {
+            IList<IViewModel> result = ReflectionUtility.ReflectionCache.CreateInstance(propertyType) as IList<IViewModel>;
+            string view = null;
+            foreach (var cp in cps)
+            {
+                if (cp.ComponentTemplate != null && cp.ComponentTemplate.Metadata != null && cp.ComponentTemplate.Metadata.ContainsKey("view"))
+                {
+                    view = cp.ComponentTemplate.Metadata["view"].Values.Cast<string>().FirstOrDefault(); //DD4T Convention for view name
+                    if (view != null && view.StartsWith(View))
+                    {
+                        result.Add(builder.BuildCPViewModel(cp));
+                    }
+                }
+            }
+            return result;
+        }
+        private readonly string byView;
+        public PresentationsByViewAttribute(string byView)
+        {
+            this.byView = byView;
+        }
+
+        public string View { get { return byView; } }
+        public override Type ExpectedReturnType
+        {
+            get { return typeof(IList<IViewModel>); }
+        }
+    }
     
 }

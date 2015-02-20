@@ -333,7 +333,6 @@ namespace DVM4T.Attributes
         }
     }
 
-    //Consider adding abstract classes for common Fields? Could I use Dependency Injection to add the concrete implementations?
     public class PageViewModelAttribute : Attribute, IPageModelAttribute
     {
         public PageViewModelAttribute(string[] viewModelKeys)

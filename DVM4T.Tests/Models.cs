@@ -108,4 +108,14 @@ namespace DVM4T.Testing.Models
         public double NumberFieldExample { get; set; }
 
     }
+
+    [PageViewModel(new string[] { "Homepage" })]
+    public class Homepage : ViewModelBase
+    {
+        [PresentationsByView("Carousel")]
+        public ViewModelList<GeneralContentViewModel> Carousels { get; set; }
+
+        [TextField("javascript", IsMetadata = true)]
+        public String Javascript { get; set; }
+    }
 }

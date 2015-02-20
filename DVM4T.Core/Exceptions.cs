@@ -14,7 +14,7 @@ namespace DVM4T.Exceptions
         { }
 
         public ViewModelTypeNotFoundException(IViewModelData data)
-            : base(String.Format("Could not find view model for item with Template {0} and Publication ID {1}", data.Template.Title, data.PublicationId))
+            : base(String.Format("Could not find view model for item with Template '{0}' and Publication ID '{1}'", data.Template.Title, data.PublicationId))
         { }
     }
 

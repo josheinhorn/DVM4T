@@ -77,7 +77,7 @@ namespace DVM4T.Core
         }
     }
 
-    public class PageViewModelData : IViewModelData
+    public class PageViewModelData : IPageViewModelData
     {
         
         public PageViewModelData(IPageData pageData, IViewModelBuilder builder)
@@ -86,6 +86,7 @@ namespace DVM4T.Core
             Metadata = pageData.Metadata;
             PublicationId = pageData.PublicationId;
             Template = pageData.PageTemplate;
+            Page = pageData;
             BaseData = pageData;
         }
 
@@ -115,6 +116,12 @@ namespace DVM4T.Core
 
 
         public ITemplateData Template
+        {
+            get;
+            private set;
+        }
+
+        public IPageData Page
         {
             get;
             private set;

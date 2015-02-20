@@ -283,6 +283,28 @@ namespace DVM4T.Testing
         }
 
         [TestMethod]
+        [ExpectedException(typeof(ViewModelTypeNotFoundException))]
+        public void TestViewModelTypeNotFoundException()
+        {
+            string viewModelKey = "Non-existent View Model Key";
+            ViewModelDefaults.Builder.LoadViewModels(typeof(GeneralContentViewModel).Assembly);
+            var cp = GetMockCp(GetMockModel());
+            ((Dynamic.ComponentTemplate)cp.ComponentTemplate).MetadataFields = new Dynamic.FieldSet
+            {
+                {
+                    "viewModelKey",
+                    new Dynamic.Field { Values = new List<string> { viewModelKey }}
+                }
+            };
+            ((Dynamic.Component)cp.Component).Title = "test title";
+
+            //exercise
+            var model = ViewModelDefaults.Builder.BuildCPViewModel(new ComponentPresentation(cp));
+
+            //test
+            //Assert.IsInstanceOfType(model, typeof(TitleViewModel));
+        }
+        [TestMethod]
         public void TestCustomKeyProvider()
         {
             string key = autoMocker.Create<string>();
@@ -323,6 +345,63 @@ namespace DVM4T.Testing
             Assert.IsNotNull(markup);
         }
 
+        [TestMethod]
+        public void TestBuildPageModel()
+        {
+            string expectedString = autoMocker.Create<string>();
+            var cp = GetCPMockup<MockModels.GeneralContentViewModel, MvcHtmlString>(x => x.Body, new MvcHtmlString(expectedString)) as Dynamic.ComponentPresentation;
+            cp.ComponentTemplate = new Dynamic.ComponentTemplate
+            {
+                MetadataFields = new Dynamic.FieldSet
+                {
+                    {
+                        "viewModelKey",
+                        new Dynamic.Field { Values = new List<string> { "BasicGeneralContent"} }
+                    },
+                    {
+                        "view",
+                        new Dynamic.Field { Values = new List<string> { "CarouselGeneralContent"} }
+                    }
+                },
+                Title = "Testing CT",
+                Id = "tcm:1-123-32"
+            };
+            var page = new Dynamic.Page
+            {
+                PageTemplate = new Dynamic.PageTemplate
+                {
+                    MetadataFields = new Dynamic.FieldSet
+                    {
+                        { "viewModelKey",
+                        new Dynamic.Field 
+                            {
+                                Values = new List<string> { "Homepage" },
+                                Name = "viewModelKey",
+                                FieldType = Dynamic.FieldType.Text,
+                            }
+                        }
+                    }
+                },
+                MetadataFields = new Dynamic.FieldSet
+                {
+                     { "javascript",
+                        new Dynamic.Field 
+                            {
+                                Values = new List<string> { "some javascript here" },
+                                Name = "javascript",
+                                FieldType = Dynamic.FieldType.Text,
+                            }
+                    }
+                },
+                ComponentPresentations = new List<Dynamic.ComponentPresentation>
+                {
+                    cp
+                }
+            };
+            ViewModelDefaults.Builder.LoadViewModels(typeof(Homepage).Assembly);
+            var pageModel = ViewModelDefaults.Builder.BuildPageViewModel(new Page(page));
+            Assert.IsNotNull(pageModel);
+        }
 
         private TModel GetCPModelMockup<TModel, TProp>(Expression<Func<TModel, TProp>> propLambda, TProp value)
             where TModel : MockContracts.IComponentPresentationViewModel
