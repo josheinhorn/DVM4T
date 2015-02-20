@@ -18,6 +18,8 @@ namespace DVM4T.Base
             set;
         }
     }
+
+    [Obsolete("Use ViewModelBase instead")]
     /// <summary>
     /// Base class for all Component Presentation View Models
     /// </summary>
@@ -25,6 +27,8 @@ namespace DVM4T.Base
     {
 
     }
+
+    [Obsolete("Use ViewModelBase instead")]
     /// <summary>
     /// Base class for all Embedded Schema View Models
     /// </summary>

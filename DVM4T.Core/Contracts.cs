@@ -146,11 +146,8 @@ namespace DVM4T.Contracts
         /// The underlying data object that the View Model represents
         /// </summary>
         IViewModelBuilder Builder { get; }
-        //IFieldsData Content { get; } //This is specific to Component/Embedded
         IFieldsData Metadata { get; }
-        ITemplateData Template { get; }
-        //we required Component Template here in order to generate Site Edit markup for any linked components in the embedded fields
-        //IComponentTemplateData ComponentTemplate { get; } //This is specific to Component/Embedded
+        ITemplateData Template { get; } //This might present a problem with creating a Model for Keywords . . . there is no template
         /// <summary>
         /// Publication ID of the underlying Tridion item
         /// </summary>

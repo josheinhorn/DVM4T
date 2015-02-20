@@ -452,7 +452,9 @@ namespace DVM4T.DD4T.Attributes
             }
         }
     }
-
+    /// <summary>
+    /// A Keyword's Key as a number
+    /// </summary>
     public class NumericKeywordKeyFieldAttribute : FieldAttributeBase
     {
         public NumericKeywordKeyFieldAttribute(string fieldName) : base(fieldName) { }
@@ -484,7 +486,9 @@ namespace DVM4T.DD4T.Attributes
             }
         }
     }
-
+    /// <summary>
+    /// The URL of the Multimedia data of the view model
+    /// </summary>
     public class MultimediaUrlAttribute : ComponentAttributeBase
     {
         public override object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
@@ -502,7 +506,9 @@ namespace DVM4T.DD4T.Attributes
             get { return typeof(String); }
         }
     }
-
+    /// <summary>
+    /// The Multimedia data of the view model
+    /// </summary>
     public class MultimediaAttribute : ComponentAttributeBase
     {
 
@@ -521,7 +527,9 @@ namespace DVM4T.DD4T.Attributes
             get { return typeof(IMultimediaData); }
         }
     }
-
+    /// <summary>
+    /// The title of the Component (if the view model represents a Component)
+    /// </summary>
     public class ComponentTitleAttribute : ComponentAttributeBase
     {
         public override object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null)
@@ -534,7 +542,9 @@ namespace DVM4T.DD4T.Attributes
             get { return typeof(String); }
         }
     }
-
+    /// <summary>
+    /// A DD4T IMultimedia object representing the multimedia data of the model
+    /// </summary>
     public class DD4TMultimediaAttribute : ComponentAttributeBase
     {
         //Example of using the BaseData object
@@ -554,7 +564,10 @@ namespace DVM4T.DD4T.Attributes
             get { return typeof(Dynamic.IMultimedia); }
         }
     } 
-
+    /// <summary>
+    /// Component Presentations filtered by the DD4T CT Metadata "view" field
+    /// </summary>
+    /// <remarks>Use with ViewModelList</remarks>
     public class PresentationsByViewAttribute : ComponentPresentationsAttributeBase
     {
         public override System.Collections.IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, Type propertyType, IViewModelBuilder builder = null)
@@ -566,7 +579,7 @@ namespace DVM4T.DD4T.Attributes
                 if (cp.ComponentTemplate != null && cp.ComponentTemplate.Metadata != null && cp.ComponentTemplate.Metadata.ContainsKey("view"))
                 {
                     view = cp.ComponentTemplate.Metadata["view"].Values.Cast<string>().FirstOrDefault(); //DD4T Convention for view name
-                    if (view != null && view.StartsWith(View))
+                    if (view != null && view.StartsWith(ViewPrefix))
                     {
                         result.Add(builder.BuildCPViewModel(cp));
                     }
@@ -574,13 +587,13 @@ namespace DVM4T.DD4T.Attributes
             }
             return result;
         }
-        private readonly string byView;
-        public PresentationsByViewAttribute(string byView)
+        private readonly string viewStartsWith;
+        public PresentationsByViewAttribute(string viewStartsWith)
         {
-            this.byView = byView;
+            this.viewStartsWith = viewStartsWith;
         }
 
-        public string View { get { return byView; } }
+        public string ViewPrefix { get { return viewStartsWith; } }
         public override Type ExpectedReturnType
         {
             get { return typeof(IList<IViewModel>); }

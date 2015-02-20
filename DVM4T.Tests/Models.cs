@@ -11,7 +11,7 @@ using System.Collections.Generic;
 namespace DVM4T.Testing.Models
 {
     [ViewModel("ContentContainer", false, ViewModelKeys = new string[] { "TitleOnly" })]
-    public class TitleViewModel : ComponentPresentationViewModelBase
+    public class TitleViewModel : ViewModelBase
     {
         [TextField("title")]
         public string Title { get; set; }
@@ -21,7 +21,7 @@ namespace DVM4T.Testing.Models
     }
 
     [ViewModel("GeneralContent", true, ViewModelKeys = new string[] { "BasicGeneralContent", "Test" })]
-    public class GeneralContentViewModel : ComponentPresentationViewModelBase
+    public class GeneralContentViewModel : ViewModelBase
     {
         [TextField("title")]
         public string Title { get; set; }
@@ -37,10 +37,13 @@ namespace DVM4T.Testing.Models
 
         [NumberField("someNumber")]
         public double NumberFieldExample { get; set; }
+
+        [TextField("view", IsTemplateMetadata = true)]
+        public string ViewName { get; set; }
     }
 
     [ViewModel("Image", true)]
-    public class Image : ComponentPresentationViewModelBase
+    public class Image : ViewModelBase
     {
         [MultimediaUrl]
         public string Url { get; set; }
@@ -52,7 +55,7 @@ namespace DVM4T.Testing.Models
         public string AltText { get; set; }
     }
     [ViewModel("ContentContainer", true, ViewModelKeys = new string[] { "Test" })]
-    public class ContentContainerViewModel : ComponentPresentationViewModelBase
+    public class ContentContainerViewModel : ViewModelBase
     {
         [TextField("title", InlineEditable = true)]
         public string Title { get; set; }
@@ -74,7 +77,7 @@ namespace DVM4T.Testing.Models
     }
 
     [ViewModel("EmbeddedLink", true)]
-    public class EmbeddedLinkViewModel : EmbeddedSchemaViewModelBase
+    public class EmbeddedLinkViewModel : ViewModelBase
     {
         [TextField("linkText")]
         public string LinkText { get; set; }
@@ -90,7 +93,7 @@ namespace DVM4T.Testing.Models
     }
 
     [ViewModel("GeneralContent", false, ViewModelKeys = new string[] { "Broken" })]
-    public class BrokenViewModel : ComponentPresentationViewModelBase
+    public class BrokenViewModel : ViewModelBase
     {
         [TextField("title")]
         public double BrokenTitle { get; set; }
