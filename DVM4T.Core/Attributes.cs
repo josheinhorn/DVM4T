@@ -11,6 +11,9 @@ using System.Collections;
 
 namespace DVM4T.Attributes
 {
+    /// <summary>
+    /// A Base class for an Attribute identifying a Property that represents some part of a View Model
+    /// </summary>
     public abstract class ModelPropertyAttributeBase : Attribute, IPropertyAttribute
     {
         public abstract object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null);
@@ -23,8 +26,11 @@ namespace DVM4T.Attributes
     }
 
     /// <summary>
-    /// The Base class for all Field Attributes. Inherit this class to create custom attributes for decorating Domain View Models.
+    /// A Base class for an Attribute identifying a Property that represents a Field
     /// </summary>
+    /// <remarks>
+    /// The field can be content, metadata, or the metadata of a template
+    /// </remarks>
     public abstract class FieldAttributeBase : ModelPropertyAttributeBase, IFieldAttribute
     {
         protected readonly string fieldName;
@@ -141,7 +147,7 @@ namespace DVM4T.Attributes
 
     }
     /// <summary>
-    /// Base class for Property Attributes using Component Data
+    /// A Base class for an Attribute identifying a Property that represents some part of a Component 
     /// </summary>
     public abstract class ComponentAttributeBase : ModelPropertyAttributeBase, IComponentAttribute
     {
@@ -159,14 +165,29 @@ namespace DVM4T.Attributes
             }
             return result;
         }
+        /// <summary>
+        /// When overriden in a derived class, this gets the value of the Property for a given Component
+        /// </summary>
+        /// <param name="component">Component for the View Model</param>
+        /// <param name="propertyType">Actual return type for the Property</param>
+        /// <param name="template">Component Template</param>
+        /// <param name="builder">View Model builder</param>
+        /// <returns>The Property value</returns>
         public abstract object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null);
     }
 
     /// <summary>
-    /// Base class for Property Attributes using Component Template Data
+    ///  A Base class for an Attribute identifying a Property that represents some part of a Component Template
     /// </summary>
     public abstract class ComponentTemplateAttributeBase : ModelPropertyAttributeBase, IComponentTemplateAttribute
     {
+        /// <summary>
+        /// When overriden in a derived class, this gets the value of the Property for a given Component Template
+        /// </summary>
+        /// <param name="template">Component Template for the View Model</param>
+        /// <param name="propertyType">Actual return type for the Property</param>
+        /// <param name="builder">View Model builder</param>
+        /// <returns>The Property value</returns>
         public abstract object GetPropertyValue(IComponentTemplateData template, Type propertyType, IViewModelBuilder builder = null);
 
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
@@ -180,8 +201,18 @@ namespace DVM4T.Attributes
         }
     }
 
+    /// <summary>
+    /// A Base class for an Attribute identifying a Property that represents some part of a Page
+    /// </summary>
     public abstract class PageAttributeBase : ModelPropertyAttributeBase
     {
+        /// <summary>
+        /// When overriden in a derived class, this gets the value of the Property for a given Page
+        /// </summary>
+        /// <param name="page">Page for the View Model</param>
+        /// <param name="propertyType">Actual return type for the Property</param>
+        /// <param name="builder">View Model builder</param>
+        /// <returns>The Property value</returns>
         public abstract object GetPropertyValue(IPageData page, Type propertyType, IViewModelBuilder builder = null);
 
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
@@ -196,9 +227,19 @@ namespace DVM4T.Attributes
         }
     }
 
+    /// <summary>
+    /// A Base class for an Attribute identifying a Property that represents a set of Component Presentations
+    /// </summary>
     public abstract class ComponentPresentationsAttributeBase : ModelPropertyAttributeBase //For use in a PageModel
     {
         //Really leaving the bulk of the work to implementer -- they must both find out if the CP matches this attribute and then construct an object with it
+        /// <summary>
+        /// When overriden in a derived class, this gets a set of values representing Component Presentations of a Page
+        /// </summary>
+        /// <param name="cps">Component Presentations for the Page Model</param>
+        /// <param name="propertyType">Actual return type of the Property</param>
+        /// <param name="builder">A View Model builder</param>
+        /// <returns>The Property value</returns>
         public abstract IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, Type propertyType, IViewModelBuilder builder = null);
 
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
@@ -215,7 +256,7 @@ namespace DVM4T.Attributes
 
 
     /// <summary>
-    /// Attribute for a View Model. Required for DVM4T Framework to build a Model.
+    /// An Attribute for identifying a Content View Model
     /// </summary>
     public class ViewModelAttribute : Attribute, IContentModelAttribute //Should be re-named ContentViewModelAttribute
     {
@@ -333,6 +374,9 @@ namespace DVM4T.Attributes
         }
     }
 
+    /// <summary>
+    /// An Attribute for identifying a Page View Model
+    /// </summary>
     public class PageViewModelAttribute : Attribute, IPageModelAttribute
     {
         public PageViewModelAttribute(string[] viewModelKeys)

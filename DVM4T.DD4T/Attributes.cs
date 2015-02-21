@@ -131,27 +131,33 @@ namespace DVM4T.DD4T.Attributes
                 result = null; //return null if it's not found instead of throwing exception
             }
             return result;
-            //string viewModelKey = builder.ViewModelKeyProvider.GetViewModelKey(new ContentViewModelData(cp, builder));
-            ////TODO: Fix all of this -- we shouldn't directly need to search for a Type at all, it should all be provided by the ViewModelBuilder!!
-            ////e.g. - return builder.SelectViewModelType<ViewModelAttribute>(LinkedComponentTypes, new ViewModelData(cp, builder)); 
-            //ViewModelAttribute key = new ViewModelAttribute(cp.Component.Schema.Title, false)
-            //{
-            //    ViewModelKeys = String.IsNullOrEmpty(viewModelKey) ? null : new string[] { viewModelKey }
-            //};
-            //foreach (var type in LinkedComponentTypes)
-            //{
-            //    ViewModelAttribute modelAttr = ReflectionUtility.ReflectionCache.GetCustomAttribute<ViewModelAttribute>(type);
-
-            //    if (modelAttr != null && key.Equals(modelAttr))
-            //        return type;
-            //}
-            //return null; //no matching types found, return null
-            //throw new ViewModelTypeNotFoundExpception(schema.Title, viewModelKey);
         }
 
 
     }
+    /// <summary>
+    /// An Attribute for a Property representing the Link Resolved URL for a Linked or Multimedia Component
+    /// </summary>
+    /// <remarks>Uses the default DD4T GetResolvedUrl helper method</remarks>
+    public class ResolvedUrlAttribute : FieldAttributeBase
+    {
+        public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelBuilder builder = null)
+        {
+            object fieldValue = null;
+            var linkedComponentValues = field.Values.Cast<Dynamic.IComponent>().ToList();
+            if (linkedComponentValues != null && linkedComponentValues.Count > 0)
+            {
+                fieldValue = AllowMultipleValues ? (object)linkedComponentValues.Select(x => x.GetResolvedUrl())
+                    : (object)linkedComponentValues[0].GetResolvedUrl();
+            }
+            return fieldValue;
+        }
 
+        public override Type ExpectedReturnType
+        {
+            get { return AllowMultipleValues ? typeof(IList<string>) : typeof(string); }
+        }
+    }
     /// <summary>
     /// An embedded schema field
     /// </summary>
@@ -207,7 +213,6 @@ namespace DVM4T.DD4T.Attributes
             get { return AllowMultipleValues ? typeof(IList<IViewModel>) : typeof(IViewModel); }
         }
     }
-
     /// <summary>
     /// A Multimedia component field
     /// </summary>
@@ -237,7 +242,6 @@ namespace DVM4T.DD4T.Attributes
             get { return AllowMultipleValues ? typeof(IList<Dynamic.IMultimedia>) : typeof(Dynamic.IMultimedia); }
         }
     }
-
     /// <summary>
     /// A text field
     /// </summary>
@@ -283,7 +287,6 @@ namespace DVM4T.DD4T.Attributes
             }
         }
     }
-
     /// <summary>
     /// A Rich Text field
     /// </summary>
@@ -313,7 +316,6 @@ namespace DVM4T.DD4T.Attributes
             get { return AllowMultipleValues ? typeof(IList<MvcHtmlString>) : typeof(MvcHtmlString); }
         }
     }
-
     /// <summary>
     /// A Number field
     /// </summary>
@@ -402,7 +404,6 @@ namespace DVM4T.DD4T.Attributes
             get { return AllowMultipleValues ? typeof(IList<Dynamic.IKeyword>) : typeof(Dynamic.IKeyword); }
         }
     }
-
     /// <summary>
     /// The Key of a Keyword field. 
     /// </summary>
@@ -453,7 +454,7 @@ namespace DVM4T.DD4T.Attributes
         }
     }
     /// <summary>
-    /// A Keyword's Key as a number
+    /// The Key of a Keyword as a number
     /// </summary>
     public class NumericKeywordKeyFieldAttribute : FieldAttributeBase
     {

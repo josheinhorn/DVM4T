@@ -20,13 +20,13 @@ namespace DVM4T.Core
     {
         //Singletons
         private static readonly IViewModelKeyProvider keyProvider =
-            new WebConfigViewModelKeyProvider("ViewModelKeyFieldName");
+            new WebConfigViewModelKeyProvider("DVM4T.ViewModelKeyFieldName");
         private static readonly IViewModelBuilder viewModelBuilder = new ViewModelBuilder(keyProvider);
         /// <summary>
         /// Default View Model Builder. 
         /// <remarks>
         /// Set View Model Key Component Template Metadata field in Web config
-        /// with key "ViewModelKeyFieldName". Defaults to field name "viewModelKey".
+        /// with key "DVM4T.ViewModelKeyFieldName". Defaults to field name "viewModelKey".
         /// </remarks>
         /// </summary>
         public static IViewModelBuilder Builder { get { return viewModelBuilder; } }
@@ -34,7 +34,7 @@ namespace DVM4T.Core
         /// Default View Model Key Provider. 
         /// <remarks>
         /// Gets View Model Key from Component Template Metadata with field
-        /// name specified in Web config App Settings wtih key "ViewModelKeyFieldName".
+        /// name specified in Web config App Settings wtih key "DVM4T.ViewModelKeyFieldName".
         /// Defaults to field name "viewModelKey".
         /// </remarks>
         /// </summary>
@@ -77,9 +77,41 @@ namespace DVM4T.Core
         }
     }
 
-    public class PageViewModelData : IPageViewModelData
+    #region View Model Data
+    public abstract class ViewModelDataBase : IViewModelData
     {
-        
+        public IViewModelBuilder Builder
+        {
+            get;
+            protected set;
+        }
+
+        public IFieldsData Metadata
+        {
+            get;
+            protected set;
+        }
+
+        public ITemplateData Template
+        {
+            get;
+            protected set;
+        }
+
+        public int PublicationId
+        {
+            get;
+            protected set;
+        }
+
+        public object BaseData
+        {
+            get;
+            protected set;
+        }
+    }
+    public class PageViewModelData : ViewModelDataBase, IPageViewModelData
+    {
         public PageViewModelData(IPageData pageData, IViewModelBuilder builder)
         {
             Builder = builder;
@@ -88,37 +120,6 @@ namespace DVM4T.Core
             Template = pageData.PageTemplate;
             Page = pageData;
             BaseData = pageData;
-        }
-
-        public IViewModelBuilder Builder
-        {
-            get;
-            private set;
-        }
-
-        public IFieldsData Metadata
-        {
-            get;
-            private set;
-        }
-
-        public int PublicationId
-        {
-            get;
-            private set;
-        }
-
-        public object BaseData
-        {
-            get;
-            private set;
-        }
-
-
-        public ITemplateData Template
-        {
-            get;
-            private set;
         }
 
         public IPageData Page
@@ -140,7 +141,7 @@ namespace DVM4T.Core
             private set;
         }
     }
-    public class ContentViewModelData : IContentViewModelData
+    public class ContentViewModelData : ViewModelDataBase, IContentViewModelData
     {
         public ContentViewModelData(IComponentPresentationData cpData, IViewModelBuilder builder)
         {
@@ -173,35 +174,6 @@ namespace DVM4T.Core
             get;
             private set;
         }
-
-        public IViewModelBuilder Builder
-        {
-            get;
-            private set;
-        }
-
-        public IFieldsData Metadata
-        {
-            get;
-            private set;
-        }
-
-        public ITemplateData Template
-        {
-            get;
-            private set;
-        }
-
-        public int PublicationId
-        {
-            get;
-            private set;
-        }
-
-        public object BaseData
-        {
-            get;
-            private set;
-        }
     }
+    #endregion
 }

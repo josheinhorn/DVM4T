@@ -8,7 +8,7 @@ namespace DVM4T.Base
 {
 
     /// <summary>
-    /// Base class for all Component Presentation View Models
+    /// Base class for all View Models
     /// </summary>
     public abstract class ViewModelBase : IViewModel
     {

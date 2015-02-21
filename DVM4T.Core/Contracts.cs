@@ -119,8 +119,14 @@ namespace DVM4T.Contracts
     public interface IFieldData : ICanUseXpm, IHaveData
     {
         //The object Value is an important part of this framework -- this object will be retrieved based on the FieldAttribute's overriden method. Implementer could alternatively use the BaseData object to circumvent
+        /// <summary>
+        /// A set of Values representing the underlying value of this Field
+        /// </summary>
         IEnumerable Values { get; } //should this be object or is it ok as Enumerable?
         ISchemaData EmbeddedSchema { get; }
+        /// <summary>
+        /// The Field Type in String form
+        /// </summary>
         string FieldTypeString { get; } //maybe make an enum?? This would prescribe the implementation though -- could use object to make it really generic
     }
     #endregion
@@ -130,23 +136,28 @@ namespace DVM4T.Contracts
     /// </summary>
     public interface IViewModel
     {
+        /// <summary>
+        /// Consolidated data for this View Model
+        /// </summary>
         IViewModelData ModelData { get; set; }
     }
 
-    public interface IContentViewModel : IViewModel
-    {
-        ISchemaData Schema { get; set; } //This is specific to Component/Embedded
-        IFieldsData ContentData { get; set; } //This is specific to Component/Embedded
-        //IComponentTemplateData ComponentTemplate { get; set; } //Is this necessary?
-    }
-
+    /// <summary>
+    /// View Model Data - the basic data that all View Models have
+    /// </summary>
     public interface IViewModelData : IHaveData //Should this extend IHaveData? I don't think so at this time because each piece i.e. Content, MetadataFields has their own BaseData object
     {
         /// <summary>
         /// The underlying data object that the View Model represents
         /// </summary>
         IViewModelBuilder Builder { get; }
+        /// <summary>
+        /// Metadata for the View Model
+        /// </summary>
         IFieldsData Metadata { get; }
+        /// <summary>
+        /// Template for the View Model
+        /// </summary>
         ITemplateData Template { get; } //This might present a problem with creating a Model for Keywords . . . there is no template
         /// <summary>
         /// Publication ID of the underlying Tridion item
@@ -154,22 +165,32 @@ namespace DVM4T.Contracts
         int PublicationId { get; }
     }
 
+    /// <summary>
+    /// View Model Data for a Content-driven Model
+    /// </summary>
     public interface IContentViewModelData : IViewModelData
     {
         ISchemaData Schema { get; }
         IFieldsData ContentData { get; }
     }
-
+    /// <summary>
+    /// View Model Data for a Component Presentation Model
+    /// </summary>
     public interface IComponentPresentationViewModelData : IContentViewModelData
     {
         IComponentPresentationData ComponentPresentation { get; }
     }
 
+    /// <summary>
+    /// View Model Data for an Embedded Schema Model
+    /// </summary>
     public interface IEmbeddedSchemaViewModelData : IContentViewModelData
     {
         //??
     }
-
+    /// <summary>
+    /// View Model Data for a Page Model
+    /// </summary>
     public interface IPageViewModelData : IViewModelData
     {
         IPageData Page { get; }
@@ -203,6 +224,13 @@ namespace DVM4T.Contracts
 
     public interface IViewModelBuilder
     {
+        /// <summary>
+        /// Finds a View Model with the specified Type using the input Data
+        /// </summary>
+        /// <typeparam name="T">Type of View Model Attribute</typeparam>
+        /// <param name="data">View Model Data to search for</param>
+        /// <param name="typesToSearch">Optional array of possible Types to search through</param>
+        /// <returns></returns>
         Type FindViewModelByAttribute<T>(IViewModelData data, Type[] typesToSearch = null) where T : IModelAttribute;
         /// <summary>
         /// Builds a View Model from previously loaded Assemblies using the input Component Presentation. This method infers the View Model type by comparing
@@ -256,9 +284,25 @@ namespace DVM4T.Contracts
         /// The View Model Key Provider for this Builder
         /// </summary>
         IViewModelKeyProvider ViewModelKeyProvider { get; }
-
+        /// <summary>
+        /// Builds a View Model for a Page using the input data
+        /// </summary>
+        /// <typeparam name="T">Type of View Model</typeparam>
+        /// <param name="page">Page Data</param>
+        /// <returns>View Model for the Page</returns>
         T BuildPageViewModel<T>(IPageData page) where T : IViewModel;
+        /// <summary>
+        /// Builds a View Model for a Page using the input data
+        /// </summary>
+        /// <param name="type">Type of View Model</param>
+        /// <param name="page">Page Data</param>
+        /// <returns>View Model for the Page</returns>
         IViewModel BuildPageViewModel(Type type, IPageData page);
+        /// <summary>
+        /// Builds a View Model for a Page using the input data
+        /// </summary>
+        /// <param name="page">Page Data</param>
+        /// <returns>View Model for the Page</returns>
         IViewModel BuildPageViewModel(IPageData page);
 
         /// <summary>
@@ -378,83 +422,258 @@ namespace DVM4T.Contracts
         /// Retrieves a View Model Key based on a Component Template. Should return the same key for the same template every time.
         /// Return values of null or empty string will be ignored.
         /// </summary>
-        /// <param name="template">Component Template</param>
+        /// <param name="model">View Model Data to retrieve a key for</param>
         /// <returns>View Model Key</returns>
         string GetViewModelKey(IViewModelData model);
     }
 
     public interface ICanBeBoolean
     {
+        /// <summary>
+        /// True to return a boolean value
+        /// </summary>
         bool IsBooleanValue { get; set; }
     }
 
+    /// <summary>
+    /// A set of methods for performing Reflection-related functions
+    /// </summary>
     public interface IReflectionHelper
     {
+        /// <summary>
+        /// Gets a list of Model Property objects for all Properties marked with a IPropertyAttribute Attribute for the given Type
+        /// </summary>
+        /// <param name="type">Type with the Properties to search</param>
+        /// <returns>List of Model Properties</returns>
         List<ModelAttributeProperty> GetModelProperties(Type type);
+        /// <summary>
+        /// Gets a specfic Model Attribute in the given Type
+        /// </summary>
+        /// <typeparam name="T">Type of Model Attribute to look for</typeparam>
+        /// <param name="type">Type to search</param>
+        /// <returns></returns>
         T GetCustomAttribute<T>(Type type) where T : IModelAttribute;
+        /// <summary>
+        /// Creates an instance of an object
+        /// </summary>
+        /// <param name="objectType">Type of object to create</param>
+        /// <returns>Object of the Type specified</returns>
         object CreateInstance(Type objectType);
+        /// <summary>
+        /// Creates an instance of an object
+        /// </summary>
+        /// <typeparam name="T">Type of object to create</typeparam>
+        /// <returns>Object of the Type specified</returns>
         T CreateInstance<T>() where T : class, new();
+        /// <summary>
+        /// Builds a Setter delegate for the given Property
+        /// </summary>
+        /// <param name="propertyInfo">Property - must have a Set method</param>
+        /// <returns>Setter delegate action</returns>
         Action<object, object> BuildSetter(PropertyInfo propertyInfo);
+        /// <summary>
+        /// Builds a Getter delegate for a given Prpoerty
+        /// </summary>
+        /// <param name="propertyInfo">Property</param>
+        /// <returns>Getter delegate function</returns>
         Func<object, object> BuildGetter(PropertyInfo propertyInfo);
+        /// <summary>
+        /// Gets the PropertyInfo for a Lambda Expression
+        /// </summary>
+        /// <typeparam name="TSource">The source Type</typeparam>
+        /// <typeparam name="TProperty">The property Type</typeparam>
+        /// <param name="propertyLambda">Lambda Expression representing a Property of the source Type</param>
+        /// <returns>Property Info</returns>
         PropertyInfo GetPropertyInfo<TSource, TProperty>(Expression<Func<TSource, TProperty>> propertyLambda);
+        /// <summary>
+        /// Gets the PropertyInfo for a Lambda Expression
+        /// </summary>
+        /// <param name="source">Source object - for type inferrence of the Lambda Expression</param>
+        /// <typeparam name="TSource">The source Type</typeparam>
+        /// <typeparam name="TProperty">The property Type</typeparam>
+        /// <param name="propertyLambda">Lambda Expression representing a Property of the source Type</param>
+        /// <returns>Property Info</returns>
         PropertyInfo GetPropertyInfo<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda);
     }
     /// <summary>
-    /// Data structure for efficient use of Properties marked with a Field Custom Attribute
+    /// Data structure for efficient use of Properties marked with a IPropertyAttribute Custom Attribute
     /// </summary>
     public struct ModelAttributeProperty
     {
+        /// <summary>
+        /// Name of the Property
+        /// </summary>
         public string Name { get; set; }
+        /// <summary>
+        /// Setter delegate
+        /// </summary>
         public Action<object, object> Set { get; set; }
+        /// <summary>
+        /// Getter delegate
+        /// </summary>
         public Func<object, object> Get { get; set; }
+        /// <summary>
+        /// The DVM4T PropertyAttribute of the Property
+        /// </summary>
         public IPropertyAttribute PropertyAttribute { get; set; }
+        /// <summary>
+        /// The return Type of the Property
+        /// </summary>
         public Type PropertyType { get; set; }
     }
     public interface IPropertyAttribute
     {
+        /// <summary>
+        /// The expected return type for this Property
+        /// </summary>
         Type ExpectedReturnType { get; }
+        /// <summary>
+        /// Gets the value for this property based on a View Model object
+        /// </summary>
+        /// <param name="model">View Model this Property is in</param>
+        /// <param name="propertyType">Actual return type of the Property</param>
+        /// <param name="builder">A View Model Builder</param>
+        /// <returns>Property value</returns>
         object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null);
     }
+    /// <summary>
+    /// An attribute for a Property representing a Field
+    /// </summary>
     public interface IFieldAttribute : IPropertyAttribute
     {
+        /// <summary>
+        /// Get the value of a Field
+        /// </summary>
+        /// <param name="field">Field for this property</param>
+        /// <param name="propertyType">Actual return type of this Property</param>
+        /// <param name="template">A Template for context</param>
+        /// <param name="builder">A View Model builder</param>
+        /// <returns>Property value</returns>
         object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelBuilder builder = null);
+        /// <summary>
+        /// Schema XML name of the Field
+        /// </summary>
         string FieldName { get; }
+        /// <summary>
+        /// If true, this Field is multi-value
+        /// </summary>
         bool AllowMultipleValues { get; set; }
+        /// <summary>
+        /// Inline Editable - for semantic purposes only
+        /// </summary>
         bool InlineEditable { get; set; }
+        /// <summary>
+        /// Is Mandatory - for semantic purposes only
+        /// </summary>
         bool Mandatory { get; set; }
+        /// <summary>
+        /// True if this is a Metadata Field of the Model
+        /// </summary>
         bool IsMetadata { get; set; }
+        /// <summary>
+        /// True if this is a Metadata Field of the Template of the Model
+        /// </summary>
         bool IsTemplateMetadata { get; set; }
     }
 
     //TODO: Anyway to merge all three interfaces into one? They're so similar
     //TODO: Use these interfaces in the builder
+    
+    /// <summary>
+    /// An Attribute for a Property representing some part of a Component
+    /// </summary>
     public interface IComponentAttribute : IPropertyAttribute
     {
+        /// <summary>
+        /// Gets a value for this Property based on a Component
+        /// </summary>
+        /// <param name="component">The Component object for this Model</param>
+        /// <param name="propertyType">The actual return type of this Property</param>
+        /// <param name="template">The Template for this Model</param>
+        /// <param name="builder">A View Model builder</param>
+        /// <returns>The Property value</returns>
         object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null);
     }
+    /// <summary>
+    /// An Attribtue for a Property representing some part of a Component Template
+    /// </summary>
     public interface IComponentTemplateAttribute : IPropertyAttribute
     {
+        /// <summary>
+        /// Gets a value for this Property based on a Component Template
+        /// </summary>
+        /// <param name="template">The Template for this Model</param>
+        /// <param name="propertyType">The actual return type of this Property</param>
+        /// <param name="builder">A View Model builder</param>
+        /// <returns>The Property value</returns>
         object GetPropertyValue(IComponentTemplateData template, Type propertyType, IViewModelBuilder builder = null);
     }
+    /// <summary>
+    /// An Attribute for a Property representing some part of a Page
+    /// </summary>
     public interface IPageAttribute : IPropertyAttribute
     {
+        /// <summary>
+        /// Gets a value for this Property based on a Page
+        /// </summary>
+        /// <param name="page">The Template for this Model</param>
+        /// <param name="propertyType">The actual return type of this Property</param>
+        /// <param name="builder">A View Model builder</param>
+        /// <returns>The Property value</returns>
         object GetPropertyValue(IPageData page, Type propertyType, IViewModelBuilder builder = null);
     }
+    /// <summary>
+    /// An Attribute for a Property representing some part of a Page Template
+    /// </summary>
     public interface IPageTemplateAttribute : IPropertyAttribute
     {
-        object GetPropertyValue(IPageTemplateData page, Type propertyType, IViewModelBuilder builder = null);
+        /// <summary>
+        /// Gets a value for this Property based on a Page Template
+        /// </summary>
+        /// <param name="pageTemplate">The Page Template for this Model</param>
+        /// <param name="propertyType">The actual return type of this Property</param>
+        /// <param name="builder">A View Model builder</param>
+        /// <returns>The Property value</returns>
+        object GetPropertyValue(IPageTemplateData pageTemplate, Type propertyType, IViewModelBuilder builder = null);
     }
+    /// <summary>
+    /// An Attribute for identifying a View Model class
+    /// </summary>
     public interface IModelAttribute
     {
+        /// <summary>
+        /// View Model Keys - a set of identifying values for this Model
+        /// </summary>
         string[] ViewModelKeys { get; set; }
+        /// <summary>
+        /// Checks if this Model is a match for a specific View Model Data
+        /// </summary>
+        /// <param name="data">View Model Data to compare</param>
+        /// <param name="provider">View Model Key Provider</param>
+        /// <returns>True if it matches, false if not</returns>
         bool IsMatch(IViewModelData data, IViewModelKeyProvider provider);
     }
+    /// <summary>
+    /// An Attribute for identifying a Content View Model class
+    /// </summary>
     public interface IContentModelAttribute : IModelAttribute
     {
+        /// <summary>
+        /// XML Name of the Schema
+        /// </summary>
         string SchemaName { get; }
+        /// <summary>
+        /// Is Inline Editable - for semantic purposes only
+        /// </summary>
         bool InlineEditable { get; set; }
+        /// <summary>
+        /// Is this the default Model for this Schema
+        /// </summary>
         bool IsDefault { get; }
     }
+    /// <summary>
+    /// An Attribute for identifying a Page Model class
+    /// </summary>
     public interface IPageModelAttribute : IModelAttribute
     {
         //What Properties go here to identify a Page Model?
