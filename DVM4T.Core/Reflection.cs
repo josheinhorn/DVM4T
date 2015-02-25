@@ -176,7 +176,9 @@ namespace DVM4T.Reflection
         /// <returns></returns>
         public IViewModel ResolveModel(Type type, IViewModelData data)
         {
-            return this.CreateInstance(type) as IViewModel;
+            //Use explicit cast or "as" cast? Using as will result in null return value if the Type passed in doesn't implement IViewModel
+            //Using explicit cast (IViewModel) will result in InvalidCastException if Type doesn't implement IViewModel
+            return (IViewModel)this.CreateInstance(type); 
         }
     }
 
