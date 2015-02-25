@@ -141,6 +141,7 @@ namespace DVM4T.DD4T.Attributes
     /// <remarks>Uses the default DD4T GetResolvedUrl helper method</remarks>
     public class ResolvedUrlAttribute : FieldAttributeBase
     {
+        public ResolvedUrlAttribute(string fieldName) : base(fieldName) { }
         public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelBuilder builder = null)
         {
             object fieldValue = null;

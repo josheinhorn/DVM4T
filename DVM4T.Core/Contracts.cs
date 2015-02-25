@@ -195,32 +195,30 @@ namespace DVM4T.Contracts
     {
         IPageData Page { get; }
     }
-    //Consider need for Component Presentation specific Data -- should be taken care of by accessing BaseData though...
-
-
-    //Removed these 3 ViewModel interfaces and instead using different ViewModelData objects -- investigate the impacts of this
-    //public interface IComponentPresentationViewModel : IViewModel
-    //{
-    //    IComponentPresentationData ComponentPresentation { get; set; }
-    //}
-
-    ////Consider use cases for this interface -- is it worth separating from ComponentPresentationViewModel?
-    ////Multimedia... could use CP instead, not technically correct but it's close
-    //public interface IComponentViewModel : IViewModel
-    //{
-    //    IComponentData Component { get; }  
-    //}
-
-    ////TODO: Consider removing this interface, holding on to template is not actually necessary after building is done
-    //public interface IEmbeddedSchemaViewModel : IViewModel
-    //{
-
-    //}
-
-    //public interface IPageViewModel : IViewModel
-    //{
-    //    IPageData Page { get; }
-    //}
+    
+    public interface IViewModelResolver
+    {
+        /// <summary>
+        /// Resolves an instance of a View Model of the given Type
+        /// </summary>
+        /// <param name="type">View Model Type to resolve</param>
+        /// <param name="data">View Model Data for context</param>
+        /// <returns>An instance of a View Model of the input Type</returns>
+        IViewModel ResolveModel(Type type, IViewModelData data);
+        /// <summary>
+        /// Gets a list of Model Property objects for all Properties marked with a IPropertyAttribute Attribute for the given Type
+        /// </summary>
+        /// <param name="type">Type with the Properties to search</param>
+        /// <returns>List of Model Properties</returns>
+        IList<ModelAttributeProperty> GetModelProperties(Type type);
+        /// <summary>
+        /// Gets a specfic Model Attribute in the given Type
+        /// </summary>
+        /// <typeparam name="T">Type of Model Attribute to look for</typeparam>
+        /// <param name="type">Type to search</param>
+        /// <returns>A Model Attribute</returns>
+        T GetCustomAttribute<T>(Type type) where T : IModelAttribute;
+    }
 
     public interface IViewModelBuilder
     {
@@ -440,19 +438,6 @@ namespace DVM4T.Contracts
     /// </summary>
     public interface IReflectionHelper
     {
-        /// <summary>
-        /// Gets a list of Model Property objects for all Properties marked with a IPropertyAttribute Attribute for the given Type
-        /// </summary>
-        /// <param name="type">Type with the Properties to search</param>
-        /// <returns>List of Model Properties</returns>
-        List<ModelAttributeProperty> GetModelProperties(Type type);
-        /// <summary>
-        /// Gets a specfic Model Attribute in the given Type
-        /// </summary>
-        /// <typeparam name="T">Type of Model Attribute to look for</typeparam>
-        /// <param name="type">Type to search</param>
-        /// <returns></returns>
-        T GetCustomAttribute<T>(Type type) where T : IModelAttribute;
         /// <summary>
         /// Creates an instance of an object
         /// </summary>

@@ -21,6 +21,7 @@ using MockModels = Mocking.DVM4T.Testing.MockModels;
 using DVM4T.DD4T.XPM;
 using DVM4T.Core;
 using DVM4T.Exceptions;
+using DVM4T.Reflection;
 
 namespace DVM4T.Testing
 {
@@ -318,7 +319,7 @@ namespace DVM4T.Testing
             };
             cp.Component.Schema = new Dynamic.Schema { Title = "ContentContainer" };
             var provider = new CustomKeyProvider(key);
-            var builder = new ViewModelBuilder(provider);
+            var builder = new ViewModelBuilder(provider, ReflectionUtility.ModelResolver);
             builder.LoadViewModels(typeof(ContentContainerViewModel).Assembly);
             var model = builder.BuildCPViewModel(new ComponentPresentation(cp));
 
@@ -340,7 +341,7 @@ namespace DVM4T.Testing
             ContentContainerViewModel model = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(
                 new ComponentPresentation(GetMockCp(GetMockModel())));
             //make sure the nested component gets a mock ID - used to test if site edit is enabled for component
-            var generalContentXpm = new XpmRenderer<GeneralContentViewModel>((GeneralContentViewModel)model.ContentList[0], new XpmMarkupService());
+            var generalContentXpm = new XpmRenderer<GeneralContentViewModel>((GeneralContentViewModel)model.ContentList[0], new XpmMarkupService(), ReflectionUtility.ModelResolver);
             var markup = generalContentXpm.XpmMarkupFor(m => m.Body);
             Assert.IsNotNull(markup);
         }

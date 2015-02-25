@@ -12,11 +12,12 @@ namespace DVM4T.Reflection
 {
     public static class ReflectionUtility
     {
-        private static IReflectionHelper reflectionCache = new ReflectionOptimizer();
+        private static readonly ReflectionOptimizer reflectionCache = new ReflectionOptimizer();
         public static IReflectionHelper ReflectionCache { get { return reflectionCache; } }
+        public static IViewModelResolver ModelResolver { get { return reflectionCache; } }
     }
 
-    public class ReflectionOptimizer : IReflectionHelper
+    public class ReflectionOptimizer : IReflectionHelper, IViewModelResolver
     {
         private Dictionary<Type, List<ModelAttributeProperty>> modelProperties = new Dictionary<Type, List<ModelAttributeProperty>>();
         private Dictionary<Type, Func<object>> constructors = new Dictionary<Type, Func<object>>();
@@ -25,7 +26,7 @@ namespace DVM4T.Reflection
 
         internal ReflectionOptimizer() { }
 
-        public List<ModelAttributeProperty> GetModelProperties(Type type)
+        public IList<ModelAttributeProperty> GetModelProperties(Type type)
         {
             List<ModelAttributeProperty> result;
             if (!modelProperties.TryGetValue(type, out result))
@@ -165,6 +166,17 @@ namespace DVM4T.Reflection
         public PropertyInfo GetPropertyInfo<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda)
         {
             return GetPropertyInfo<TSource, TProperty>(propertyLambda);
+        }
+
+        /// <summary>
+        /// This implementation requires the View Model Type to have a public parameterless constructor
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public IViewModel ResolveModel(Type type, IViewModelData data)
+        {
+            return this.CreateInstance(type) as IViewModel;
         }
     }
 

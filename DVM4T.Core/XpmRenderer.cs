@@ -18,10 +18,11 @@ namespace DVM4T.XPM
     public class XpmRenderer<TModel> : IXpmRenderer<TModel> where TModel : IViewModel
     {
         //This is just an OO implementation of the static extension methods... which one is better
-        private IViewModel model;
-        private IContentViewModelData contentData = null;
-        private IXpmMarkupService xpmMarkupService;
-        public XpmRenderer(IViewModel model, IXpmMarkupService service)
+        private readonly IViewModel model;
+        private readonly IContentViewModelData contentData = null;
+        private readonly IXpmMarkupService xpmMarkupService;
+        private readonly IViewModelResolver resolver;
+        public XpmRenderer(IViewModel model, IXpmMarkupService service, IViewModelResolver resolver)
         {
             this.model = model;
             if (model.ModelData is IContentViewModelData)
@@ -29,6 +30,7 @@ namespace DVM4T.XPM
                 contentData = model.ModelData as IContentViewModelData;
             }
             this.xpmMarkupService = service;
+            this.resolver = resolver;
         }
         /// <summary>
         /// Gets or sets the XPM Markup Service used to render the XPM Markup for the XPM extension methods
@@ -36,7 +38,6 @@ namespace DVM4T.XPM
         public IXpmMarkupService XpmMarkupService
         {
             get { return xpmMarkupService; }
-            set { xpmMarkupService = value; }
         }
         #region XPM Renderer methods
         /// <summary>
@@ -234,7 +235,7 @@ namespace DVM4T.XPM
 
         private ModelAttributeProperty GetModelProperty(Type type, PropertyInfo property)
         {
-            var props = ReflectionUtility.ReflectionCache.GetModelProperties(type);
+            var props = resolver.GetModelProperties(type);
             return props.FirstOrDefault(x => x.Name == property.Name);
         }
 

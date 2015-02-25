@@ -1,7 +1,6 @@
 ﻿using DVM4T.Attributes;
 using DVM4T.Contracts;
 using DVM4T.Exceptions;
-using DVM4T.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,15 +21,18 @@ namespace DVM4T.Core
         //private IDictionary<ViewModelAttribute, Type> viewModels2 = new Dictionary<ViewModelAttribute, Type>();
         private IDictionary<IModelAttribute, Type> viewModels = new Dictionary<IModelAttribute, Type>();
         private IList<Assembly> loadedAssemblies = new List<Assembly>();
+        private readonly IViewModelResolver resolver;
         public IViewModelKeyProvider keyProvider;
         /// <summary>
         /// New View Model Builder
         /// </summary>
         /// <param name="keyProvider">A View Model Key provider</param>
-        public ViewModelBuilder(IViewModelKeyProvider keyProvider)
+        public ViewModelBuilder(IViewModelKeyProvider keyProvider, IViewModelResolver resolver)
         {
             if (keyProvider == null) throw new ArgumentNullException("keyProvider");
+            if (resolver == null) throw new ArgumentNullException("resolver");
             this.keyProvider = keyProvider;
+            this.resolver = resolver;
         }
         #region IViewModelBuilder
         public IViewModelKeyProvider ViewModelKeyProvider { get { return keyProvider; } }
@@ -46,7 +48,7 @@ namespace DVM4T.Core
                 IModelAttribute viewModelAttr;
                 foreach (var type in assembly.GetTypes())
                 {
-                    viewModelAttr = ReflectionUtility.ReflectionCache.GetCustomAttribute<IModelAttribute>(type);
+                    viewModelAttr = resolver.GetCustomAttribute<IModelAttribute>(type);
                     if (viewModelAttr != null && !viewModels.ContainsKey(viewModelAttr))
                     {
                         viewModels.Add(viewModelAttr, type);
@@ -60,7 +62,7 @@ namespace DVM4T.Core
             typesToSearch = typesToSearch ?? viewModels.Where(x => x.Key is T).Select(x => x.Value).ToArray();
             foreach (var type in typesToSearch)
             {
-                T modelAttr = ReflectionUtility.ReflectionCache.GetCustomAttribute<T>(type);
+                T modelAttr = resolver.GetCustomAttribute<T>(type);
 
                 if (modelAttr != null && modelAttr.IsMatch(data, ViewModelKeyProvider))
                     return type;
@@ -70,8 +72,10 @@ namespace DVM4T.Core
         public IViewModel BuildCPViewModel(Type type, IComponentPresentationData cp)
         {
             IViewModel viewModel = null;
-            viewModel = (IViewModel)ReflectionUtility.ReflectionCache.CreateInstance(type);
-            viewModel.ModelData = new ComponentPresentationViewModelData(cp, this);
+            //TODO: This is a Constructor Constraint, look at moving to Dependency/Constructor Injection
+            var modelData = new ComponentPresentationViewModelData(cp, this);
+            viewModel = resolver.ResolveModel(type, modelData);
+            viewModel.ModelData = modelData;
             IFieldsData fields = cp.Component.Fields;
             ProcessViewModel(viewModel, type, cp.ComponentTemplate);
             return viewModel;
@@ -118,8 +122,10 @@ namespace DVM4T.Core
         public IViewModel BuildEmbeddedViewModel(Type type, IFieldsData embeddedFields, ISchemaData schema, ITemplateData template)
         {
             if (type == null) throw new ArgumentNullException("type");
-            IViewModel viewModel = (IViewModel)ReflectionUtility.ReflectionCache.CreateInstance(type);
-            viewModel.ModelData = new ContentViewModelData(embeddedFields, schema, template, this);
+            //TODO: This is a Constructor Constraint, look at moving to Dependency/Constructor Injection
+            var modelData = new ContentViewModelData(embeddedFields, schema, template, this);
+            IViewModel viewModel = resolver.ResolveModel(type, modelData);
+            viewModel.ModelData = modelData;
             ProcessViewModel(viewModel, type, template);
             return viewModel;
         }
@@ -131,8 +137,10 @@ namespace DVM4T.Core
         public IViewModel BuildPageViewModel(Type type, IPageData page)
         {
             if (type == null) throw new ArgumentNullException("type");
-            IViewModel viewModel = (IViewModel)ReflectionUtility.ReflectionCache.CreateInstance(type);
-            viewModel.ModelData = new PageViewModelData(page, this);
+            //TODO: This is a Constructor Constraint, look at moving to Dependency/Constructor Injection
+            var modelData = new PageViewModelData(page, this);
+            IViewModel viewModel = resolver.ResolveModel(type, modelData);
+            viewModel.ModelData = modelData;
             ProcessViewModel(viewModel, type, page.PageTemplate);
             return viewModel;
         }
@@ -157,7 +165,7 @@ namespace DVM4T.Core
         private void ProcessViewModel(IViewModel viewModel, Type type, ITemplateData template)
         {
             //PropertyInfo[] props = type.GetProperties();
-            var props = ReflectionUtility.ReflectionCache.GetModelProperties(type);
+            var props = resolver.GetModelProperties(type);
             IPropertyAttribute propAttribute;
             object value = null;
             foreach (var prop in props)

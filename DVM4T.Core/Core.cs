@@ -21,7 +21,7 @@ namespace DVM4T.Core
         //Singletons
         private static readonly IViewModelKeyProvider keyProvider =
             new WebConfigViewModelKeyProvider("DVM4T.ViewModelKeyFieldName");
-        private static readonly IViewModelBuilder viewModelBuilder = new ViewModelBuilder(keyProvider);
+        private static readonly IViewModelBuilder viewModelBuilder = new ViewModelBuilder(keyProvider, ReflectionUtility.ModelResolver);
         /// <summary>
         /// Default View Model Builder. 
         /// <remarks>
