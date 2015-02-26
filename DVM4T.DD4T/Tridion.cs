@@ -51,6 +51,38 @@ namespace DVM4T.DD4T
         public abstract object BaseData { get; }
     }
 
+    public class Keyword : TridionItemBase, IKeywordData
+    {
+        private readonly IKeyword keyword;
+        private readonly IFieldsData metadata;
+        public Keyword(IKeyword keyword)
+        {
+            this.keyword = keyword;
+            this.metadata = new FieldSet(keyword.MetadataFields);
+        }
+
+        protected override IItem Item
+        {
+            get { return keyword; }
+        }
+
+        public override object BaseData
+        {
+            get { return keyword; }
+        }
+
+
+        public string Key
+        {
+            get { return keyword.Key; }
+        }
+
+        public IFieldsData Metadata
+        {
+            get { return metadata; }
+        }
+    }
+
     public class Schema : TridionItemBase, ISchemaData
     {
         private ISchema schema;
@@ -78,6 +110,7 @@ namespace DVM4T.DD4T
     {
         private IField field;
         private ISchemaData embeddedSchema;
+        private IList<IKeywordData> keywords;
         private string fieldType;
         private string xpath;
         private string name;
@@ -90,6 +123,8 @@ namespace DVM4T.DD4T
             this.fieldType = field.FieldType.ToString();
             this.xpath = field.XPath;
             this.name = field.Name;
+            this.keywords = field.Keywords != null ? field.Keywords.Select(x => new Keyword(x) as IKeywordData).ToList()
+                : null;
         }
         public IEnumerable Values
         {
@@ -163,6 +198,12 @@ namespace DVM4T.DD4T
         public object BaseData
         {
             get { return field; }
+        }
+
+
+        public IList<IKeywordData> Keywords
+        {
+            get { return keywords; }
         }
     }
 

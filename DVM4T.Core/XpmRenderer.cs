@@ -8,6 +8,7 @@ using System.Linq.Expressions;
 using System.Collections;
 using DVM4T.Reflection;
 using System.Reflection;
+using DVM4T.Core;
 
 namespace DVM4T.XPM
 {
@@ -182,7 +183,7 @@ namespace DVM4T.XPM
             }
             return -1;
         }
-        private int IndexOf<T>(ModelAttributeProperty fieldProp, object model, T item)
+        private int IndexOf<T>(IModelProperty fieldProp, object model, T item)
         {
             int index = -1;
             object value = fieldProp.Get(model);
@@ -194,12 +195,12 @@ namespace DVM4T.XPM
             else throw new FormatException(String.Format("Generic type of property type {0} does not match generic type of item {1}", value.GetType().Name, typeof(T).Name));
             return index;
         }
-        private ModelAttributeProperty GetModelProperty<TProp>(Expression<Func<TModel, TProp>> propertyLambda)
+        private IModelProperty GetModelProperty<TProp>(Expression<Func<TModel, TProp>> propertyLambda)
         {
-            PropertyInfo property = ReflectionUtility.ReflectionCache.GetPropertyInfo(propertyLambda);
+            PropertyInfo property = ViewModelDefaults.ReflectionCache.GetPropertyInfo(propertyLambda);
             return GetModelProperty(typeof(TModel), property);
         }
-        private HtmlString SiteEditable<TProp>(IViewModel model, IFieldsData fields, ModelAttributeProperty fieldProp, int index)
+        private HtmlString SiteEditable<TProp>(IViewModel model, IFieldsData fields, IModelProperty fieldProp, int index)
         {
             string markup = string.Empty;
             object value = null;
@@ -222,7 +223,7 @@ namespace DVM4T.XPM
         {
             return XpmMarkupService.RenderXpmMarkupForField(field, index);
         }
-        private IFieldData GetField(IFieldsData fields, ModelAttributeProperty fieldProp)
+        private IFieldData GetField(IFieldsData fields, IModelProperty fieldProp)
         {
             IFieldData result = null;
             if (fieldProp.PropertyAttribute is IFieldAttribute)
@@ -233,13 +234,13 @@ namespace DVM4T.XPM
             return result;
         }
 
-        private ModelAttributeProperty GetModelProperty(Type type, PropertyInfo property)
+        private IModelProperty GetModelProperty(Type type, PropertyInfo property)
         {
             var props = resolver.GetModelProperties(type);
             return props.FirstOrDefault(x => x.Name == property.Name);
         }
 
-        private HtmlString XpmMarkupFor(IFieldsData fields, ModelAttributeProperty fieldProp, int index)
+        private HtmlString XpmMarkupFor(IFieldsData fields, IModelProperty fieldProp, int index)
         {
             try
             {

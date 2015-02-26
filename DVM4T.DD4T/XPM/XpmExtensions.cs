@@ -10,6 +10,7 @@ using DVM4T.Contracts;
 using System.Reflection;
 using System.Collections;
 using DVM4T.XPM;
+using DVM4T.Core;
 
 namespace DVM4T.DD4T.XPM
 {
@@ -20,7 +21,7 @@ namespace DVM4T.DD4T.XPM
     public static class XpmExtensions
     {
         private static IXpmMarkupService xpmMarkupService = new XpmMarkupService();
-        private static IViewModelResolver resolver = ReflectionUtility.ModelResolver;
+        private static IViewModelResolver resolver = ViewModelDefaults.ModelResolver;
         /// <summary>
         /// Gets or sets the XPM Markup Service used to render the XPM Markup for the XPM extension methods
         /// </summary>

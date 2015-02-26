@@ -128,7 +128,19 @@ namespace DVM4T.Contracts
         /// The Field Type in String form
         /// </summary>
         string FieldTypeString { get; } //maybe make an enum?? This would prescribe the implementation though -- could use object to make it really generic
+        /// <summary>
+        /// The Keyword(s) for this Field if it is a Keyword Field. Otherwise should be null or empty.
+        /// </summary>
+        IList<IKeywordData> Keywords { get; }
     }
+
+    public interface IKeywordData : ITridionItemData
+    {
+        string Title { get; }
+        string Key { get; }
+        IFieldsData Metadata { get; }
+    }
+
     #endregion
 
     /// <summary>
@@ -150,7 +162,7 @@ namespace DVM4T.Contracts
         /// <summary>
         /// The underlying data object that the View Model represents
         /// </summary>
-        IViewModelBuilder Builder { get; }
+        IViewModelFactory Builder { get; }
         /// <summary>
         /// Metadata for the View Model
         /// </summary>
@@ -210,7 +222,7 @@ namespace DVM4T.Contracts
         /// </summary>
         /// <param name="type">Type with the Properties to search</param>
         /// <returns>List of Model Properties</returns>
-        IList<ModelAttributeProperty> GetModelProperties(Type type);
+        IList<IModelProperty> GetModelProperties(Type type);
         /// <summary>
         /// Gets a specfic Model Attribute in the given Type
         /// </summary>
@@ -218,8 +230,37 @@ namespace DVM4T.Contracts
         /// <param name="type">Type to search</param>
         /// <returns>A Model Attribute</returns>
         T GetCustomAttribute<T>(Type type) where T : IModelAttribute;
+
+        //Possible to do something like this? How to make the parameters generic?
+        //T GetModelData<T>(data parameters) where T : IViewModelData
     }
 
+    public interface IViewModelFactory
+    {
+        /// <summary>
+        /// Loads all View Model classes from an assembly
+        /// </summary>
+        /// <param name="assembly">The Assembly with the view model Types to load</param>
+        /// <remarks>
+        /// Required for use of builder methods that don't require a Type parameter or generic.
+        /// The Builder will only use Types tagged with the ViewModelAttribute class.
+        /// </remarks>
+        void LoadViewModels(Assembly assembly);
+        /// <summary>
+        /// Finds a View Model with the specified Type using the input Data
+        /// </summary>
+        /// <typeparam name="T">Type of View Model Attribute</typeparam>
+        /// <param name="data">View Model Data to search for</param>
+        /// <param name="typesToSearch">Optional array of possible Types to search through</param>
+        /// <returns></returns>
+        Type FindViewModelByAttribute<T>(IViewModelData data, Type[] typesToSearch = null) where T : IModelAttribute;
+        IViewModel BuildViewModel(IViewModelData modelData);
+        IViewModel BuildViewModelByAttribute<T>(IViewModelData modelData) where T : IModelAttribute;
+        IViewModel BuildViewModel(Type type, IViewModelData modelData);
+        T BuildViewModel<T>(IViewModelData modelData) where T : IViewModel;
+    }
+
+    [Obsolete("Use IViewModelFactory instead")]
     public interface IViewModelBuilder
     {
         /// <summary>
@@ -302,7 +343,6 @@ namespace DVM4T.Contracts
         /// <param name="page">Page Data</param>
         /// <returns>View Model for the Page</returns>
         IViewModel BuildPageViewModel(IPageData page);
-
         /// <summary>
         /// Loads all View Model classes from an assembly
         /// </summary>
@@ -481,31 +521,32 @@ namespace DVM4T.Contracts
         PropertyInfo GetPropertyInfo<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda);
     }
     /// <summary>
-    /// Data structure for efficient use of Properties marked with a IPropertyAttribute Custom Attribute
+    /// A simple representation of a Model Property
     /// </summary>
-    public struct ModelAttributeProperty
+    public interface IModelProperty
     {
         /// <summary>
         /// Name of the Property
         /// </summary>
-        public string Name { get; set; }
+        string Name { get; }
         /// <summary>
         /// Setter delegate
         /// </summary>
-        public Action<object, object> Set { get; set; }
+        Action<object, object> Set { get; }
         /// <summary>
         /// Getter delegate
         /// </summary>
-        public Func<object, object> Get { get; set; }
+        Func<object, object> Get { get; }
         /// <summary>
         /// The DVM4T PropertyAttribute of the Property
         /// </summary>
-        public IPropertyAttribute PropertyAttribute { get; set; }
+        IPropertyAttribute PropertyAttribute { get; }
         /// <summary>
         /// The return Type of the Property
         /// </summary>
-        public Type PropertyType { get; set; }
+        Type PropertyType { get; }
     }
+  
     public interface IPropertyAttribute
     {
         /// <summary>
@@ -519,7 +560,7 @@ namespace DVM4T.Contracts
         /// <param name="propertyType">Actual return type of the Property</param>
         /// <param name="builder">A View Model Builder</param>
         /// <returns>Property value</returns>
-        object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null);
+        object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory builder = null);
     }
     /// <summary>
     /// An attribute for a Property representing a Field
@@ -534,7 +575,7 @@ namespace DVM4T.Contracts
         /// <param name="template">A Template for context</param>
         /// <param name="builder">A View Model builder</param>
         /// <returns>Property value</returns>
-        object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelBuilder builder = null);
+        object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory builder = null);
         /// <summary>
         /// Schema XML name of the Field
         /// </summary>
@@ -577,7 +618,7 @@ namespace DVM4T.Contracts
         /// <param name="template">The Template for this Model</param>
         /// <param name="builder">A View Model builder</param>
         /// <returns>The Property value</returns>
-        object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null);
+        object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelFactory builder = null);
     }
     /// <summary>
     /// An Attribtue for a Property representing some part of a Component Template
@@ -591,7 +632,7 @@ namespace DVM4T.Contracts
         /// <param name="propertyType">The actual return type of this Property</param>
         /// <param name="builder">A View Model builder</param>
         /// <returns>The Property value</returns>
-        object GetPropertyValue(IComponentTemplateData template, Type propertyType, IViewModelBuilder builder = null);
+        object GetPropertyValue(IComponentTemplateData template, Type propertyType, IViewModelFactory builder = null);
     }
     /// <summary>
     /// An Attribute for a Property representing some part of a Page
@@ -605,7 +646,7 @@ namespace DVM4T.Contracts
         /// <param name="propertyType">The actual return type of this Property</param>
         /// <param name="builder">A View Model builder</param>
         /// <returns>The Property value</returns>
-        object GetPropertyValue(IPageData page, Type propertyType, IViewModelBuilder builder = null);
+        object GetPropertyValue(IPageData page, Type propertyType, IViewModelFactory builder = null);
     }
     /// <summary>
     /// An Attribute for a Property representing some part of a Page Template
@@ -619,7 +660,7 @@ namespace DVM4T.Contracts
         /// <param name="propertyType">The actual return type of this Property</param>
         /// <param name="builder">A View Model builder</param>
         /// <returns>The Property value</returns>
-        object GetPropertyValue(IPageTemplateData pageTemplate, Type propertyType, IViewModelBuilder builder = null);
+        object GetPropertyValue(IPageTemplateData pageTemplate, Type propertyType, IViewModelFactory builder = null);
     }
     /// <summary>
     /// An Attribute for identifying a View Model class
@@ -630,13 +671,16 @@ namespace DVM4T.Contracts
         /// View Model Keys - a set of identifying values for this Model
         /// </summary>
         string[] ViewModelKeys { get; set; }
+        
         /// <summary>
         /// Checks if this Model is a match for a specific View Model Data
         /// </summary>
         /// <param name="data">View Model Data to compare</param>
         /// <param name="provider">View Model Key Provider</param>
         /// <returns>True if it matches, false if not</returns>
+        [Obsolete("Use IsMatch(IViewModelData, string) instead")]
         bool IsMatch(IViewModelData data, IViewModelKeyProvider provider);
+        bool IsMatch(IViewModelData data, string key);
     }
     /// <summary>
     /// An Attribute for identifying a Content View Model class

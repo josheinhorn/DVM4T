@@ -16,7 +16,7 @@ namespace DVM4T.Attributes
     /// </summary>
     public abstract class ModelPropertyAttributeBase : Attribute, IPropertyAttribute
     {
-        public abstract object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null);
+        public abstract object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null);
         /// <summary>
         /// When overriden in a derived class, this property returns the expected return type of the View Model property.
         /// </summary>
@@ -46,7 +46,7 @@ namespace DVM4T.Attributes
         {
             this.fieldName = fieldName;
         }
-        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
+        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
             if (model != null && model.ModelData != null)
@@ -76,7 +76,7 @@ namespace DVM4T.Attributes
 
                 if (fields != null && fields.ContainsKey(FieldName))
                 {
-                    result = this.GetFieldValue(fields[FieldName], propertyType, model.ModelData.Template, builder);
+                    result = this.GetFieldValue(fields[FieldName], propertyType, model.ModelData.Template, factory);
                 }
             }
             return result;
@@ -87,9 +87,9 @@ namespace DVM4T.Attributes
         /// <param name="field">The Field</param>
         /// <param name="propertyType">The concrete type of the view model property for this attribute</param>
         /// <param name="template">The Component Template to use</param>
-        /// <param name="builder">The View Model Builder</param>
+        /// <param name="factory">The View Model Builder</param>
         /// <returns></returns>
-        public abstract object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelBuilder builder = null);
+        public abstract object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null);
 
         /// <summary>
         /// The Tridion schema field name for this property
@@ -151,7 +151,7 @@ namespace DVM4T.Attributes
     /// </summary>
     public abstract class ComponentAttributeBase : ModelPropertyAttributeBase, IComponentAttribute
     {
-        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
+        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
             if (model != null && model.ModelData != null && model.ModelData is IComponentPresentationViewModelData)
@@ -160,7 +160,7 @@ namespace DVM4T.Attributes
                 if (cpData.ComponentPresentation != null)
                 {
                     result = GetPropertyValue(cpData.ComponentPresentation.Component, propertyType,
-                        cpData.ComponentPresentation.ComponentTemplate, builder);
+                        cpData.ComponentPresentation.ComponentTemplate, factory);
                 }
             }
             return result;
@@ -171,9 +171,9 @@ namespace DVM4T.Attributes
         /// <param name="component">Component for the View Model</param>
         /// <param name="propertyType">Actual return type for the Property</param>
         /// <param name="template">Component Template</param>
-        /// <param name="builder">View Model builder</param>
+        /// <param name="factory">View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelBuilder builder = null);
+        public abstract object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelFactory factory = null);
     }
 
     /// <summary>
@@ -186,42 +186,57 @@ namespace DVM4T.Attributes
         /// </summary>
         /// <param name="template">Component Template for the View Model</param>
         /// <param name="propertyType">Actual return type for the Property</param>
-        /// <param name="builder">View Model builder</param>
+        /// <param name="factory">View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract object GetPropertyValue(IComponentTemplateData template, Type propertyType, IViewModelBuilder builder = null);
+        public abstract object GetPropertyValue(IComponentTemplateData template, Type propertyType, IViewModelFactory factory = null);
 
-        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
+        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
             if (model != null && model is IViewModel && model.ModelData.Template != null)
             {
-                result = this.GetPropertyValue(model.ModelData.Template as IComponentTemplateData, propertyType, builder);
+                result = this.GetPropertyValue(model.ModelData.Template as IComponentTemplateData, propertyType, factory);
             }
             return result;
         }
     }
 
+    //public abstract class KeywordMetadataFieldAttributeBase : FieldAttributeBase //TODO: Make interface
+    //{
+    //    public abstract object GetKeywordValues(IList<IKeywordData> keywords, Type propertyType, IViewModelFactory factory = null);
+
+    //    public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
+    //    {
+    //        object result = null;
+    //        if (field.Keywords != null)
+    //        {
+    //            result =  GetKeywordValues(field.Keywords, propertyType, factory);
+    //        }
+    //        return result;
+    //    }
+    //}
+
     /// <summary>
     /// A Base class for an Attribute identifying a Property that represents some part of a Page
     /// </summary>
-    public abstract class PageAttributeBase : ModelPropertyAttributeBase
+    public abstract class PageAttributeBase : ModelPropertyAttributeBase, IPageAttribute
     {
         /// <summary>
         /// When overriden in a derived class, this gets the value of the Property for a given Page
         /// </summary>
         /// <param name="page">Page for the View Model</param>
         /// <param name="propertyType">Actual return type for the Property</param>
-        /// <param name="builder">View Model builder</param>
+        /// <param name="factory">View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract object GetPropertyValue(IPageData page, Type propertyType, IViewModelBuilder builder = null);
+        public abstract object GetPropertyValue(IPageData page, Type propertyType, IViewModelFactory factory = null);
 
-        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
+        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
             if (model != null && model != null && model.ModelData is IPageViewModelData)
             {
                 var pageModel = (model.ModelData as IPageViewModelData).Page;
-                result = this.GetPropertyValue(pageModel, propertyType, builder);
+                result = this.GetPropertyValue(pageModel, propertyType, factory);
             }
             return result;
         }
@@ -238,17 +253,17 @@ namespace DVM4T.Attributes
         /// </summary>
         /// <param name="cps">Component Presentations for the Page Model</param>
         /// <param name="propertyType">Actual return type of the Property</param>
-        /// <param name="builder">A View Model builder</param>
+        /// <param name="factory">A View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, Type propertyType, IViewModelBuilder builder = null);
+        public abstract IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, Type propertyType, IViewModelFactory factory = null);
 
-        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelBuilder builder = null)
+        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
             if (model != null && model != null && model.ModelData is IPageViewModelData)
             {
                 var cpModels = (model.ModelData as IPageViewModelData).Page.ComponentPresentations;
-                result = GetPresentationValues(cpModels, propertyType, builder);
+                result = GetPresentationValues(cpModels, propertyType, factory);
             }
             return result;
         }
@@ -360,13 +375,20 @@ namespace DVM4T.Attributes
 
         public bool IsMatch(IViewModelData data, IViewModelKeyProvider provider)
         {
+            var key = provider.GetViewModelKey(data);
+            return IsMatch(data, key);
+        }
+
+
+        public bool IsMatch(IViewModelData data, string key)
+        {
             bool result = false;
             if (data is IContentViewModelData)
             {
                 var contentData = data as IContentViewModelData;
                 var compare = new ViewModelAttribute(contentData.Schema.Title, false)
                 {
-                    ViewModelKeys = new string[] { provider.GetViewModelKey(contentData) }
+                    ViewModelKeys = new string[] { key }
                 };
                 result = this.Equals(compare);
             }
@@ -391,11 +413,18 @@ namespace DVM4T.Attributes
 
         public bool IsMatch(IViewModelData data, IViewModelKeyProvider provider)
         {
+            string key = provider.GetViewModelKey(data);
+            return IsMatch(data, key);
+        }
+
+
+        public bool IsMatch(IViewModelData data, string key)
+        {
+
             bool result = false;
             if (data is IPageViewModelData)
             {
                 var contentData = data as IPageViewModelData;
-                var key = provider.GetViewModelKey(data);
                 return ViewModelKeys.Any(x => x.Equals(key));
             }
             return result;

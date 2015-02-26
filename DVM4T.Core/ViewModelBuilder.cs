@@ -35,6 +35,15 @@ namespace DVM4T.Core
             this.resolver = resolver;
         }
         #region IViewModelBuilder
+        public IViewModel BuildModel(Type type, IViewModelData modelData)
+        {
+            IViewModel viewModel = null;
+            viewModel = resolver.ResolveModel(type, modelData);
+            viewModel.ModelData = modelData;
+            ProcessViewModel(viewModel, type, modelData.Template);
+            return viewModel;
+        }
+        
         public IViewModelKeyProvider ViewModelKeyProvider { get { return keyProvider; } }
         /// <summary>
         /// Loads View Model Types from an Assembly. Use minimally due to reflection overhead.
@@ -71,14 +80,8 @@ namespace DVM4T.Core
         }
         public IViewModel BuildCPViewModel(Type type, IComponentPresentationData cp)
         {
-            IViewModel viewModel = null;
-            //TODO: This is a Constructor Constraint, look at moving to Dependency/Constructor Injection
             var modelData = new ComponentPresentationViewModelData(cp, this);
-            viewModel = resolver.ResolveModel(type, modelData);
-            viewModel.ModelData = modelData;
-            IFieldsData fields = cp.Component.Fields;
-            ProcessViewModel(viewModel, type, cp.ComponentTemplate);
-            return viewModel;
+            return BuildModel(type, modelData);
         }
         public T BuildCPViewModel<T>(IComponentPresentationData cp) where T : class, IViewModel
         {
@@ -122,12 +125,8 @@ namespace DVM4T.Core
         public IViewModel BuildEmbeddedViewModel(Type type, IFieldsData embeddedFields, ISchemaData schema, ITemplateData template)
         {
             if (type == null) throw new ArgumentNullException("type");
-            //TODO: This is a Constructor Constraint, look at moving to Dependency/Constructor Injection
             var modelData = new ContentViewModelData(embeddedFields, schema, template, this);
-            IViewModel viewModel = resolver.ResolveModel(type, modelData);
-            viewModel.ModelData = modelData;
-            ProcessViewModel(viewModel, type, template);
-            return viewModel;
+            return BuildModel(type, modelData);
         }
         public T BuildPageViewModel<T>(IPageData page) where T : IViewModel
         {
@@ -137,12 +136,8 @@ namespace DVM4T.Core
         public IViewModel BuildPageViewModel(Type type, IPageData page)
         {
             if (type == null) throw new ArgumentNullException("type");
-            //TODO: This is a Constructor Constraint, look at moving to Dependency/Constructor Injection
             var modelData = new PageViewModelData(page, this);
-            IViewModel viewModel = resolver.ResolveModel(type, modelData);
-            viewModel.ModelData = modelData;
-            ProcessViewModel(viewModel, type, page.PageTemplate);
-            return viewModel;
+            return BuildModel(type, modelData);
         }
         public IViewModel BuildPageViewModel(IPageData page)
         {
@@ -156,6 +151,20 @@ namespace DVM4T.Core
                 result = BuildPageViewModel(type, page);
             }
             return result;
+        }
+        public IViewModel BuildViewModel<T>(IViewModelData modelData) where T : IModelAttribute
+        {
+            IViewModel result = null;
+            Type type = FindViewModelByAttribute<T>(modelData);
+            if (type != null)
+            {
+                result = BuildModel(type, modelData);
+            }
+            return result;
+        }
+        public IViewModel BuildViewModel(IViewModelData modelData)
+        {
+            return BuildViewModel<IModelAttribute>(modelData);
         }
         #endregion
 

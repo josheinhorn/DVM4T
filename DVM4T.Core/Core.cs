@@ -21,7 +21,14 @@ namespace DVM4T.Core
         //Singletons
         private static readonly IViewModelKeyProvider keyProvider =
             new WebConfigViewModelKeyProvider("DVM4T.ViewModelKeyFieldName");
-        private static readonly IViewModelBuilder viewModelBuilder = new ViewModelBuilder(keyProvider, ReflectionUtility.ModelResolver);
+        
+        private static readonly IReflectionHelper reflectionHelper = new ReflectionOptimizer();
+        private static readonly IViewModelResolver resolver = new DefaultViewModelResolver(reflectionHelper);
+        //private static readonly IViewModelBuilder viewModelBuilder = new ViewModelBuilder(keyProvider, resolver);
+        private static readonly IViewModelFactory factory = new ViewModelFactory(keyProvider, resolver);
+        
+
+
         /// <summary>
         /// Default View Model Builder. 
         /// <remarks>
@@ -29,7 +36,7 @@ namespace DVM4T.Core
         /// with key "DVM4T.ViewModelKeyFieldName". Defaults to field name "viewModelKey".
         /// </remarks>
         /// </summary>
-        public static IViewModelBuilder Builder { get { return viewModelBuilder; } }
+        public static IViewModelFactory Factory { get { return factory; } }
         /// <summary>
         /// Default View Model Key Provider. 
         /// <remarks>
@@ -39,6 +46,16 @@ namespace DVM4T.Core
         /// </remarks>
         /// </summary>
         public static IViewModelKeyProvider ViewModelKeyProvider { get { return keyProvider; } }
+        /// <summary>
+        /// Default View Model Resolver
+        /// </summary>
+        /// <remarks>Resolves View Models with default parameterless constructor. If none 
+        /// exists, it will throw an Exception.</remarks>
+        public static IViewModelResolver ModelResolver { get { return resolver; } }
+        /// <summary>
+        /// Optimized Reflection Helper that caches resuslts of resource-heavy tasks (e.g. MemberInfo.GetCustomAttributes)
+        /// </summary>
+        public static IReflectionHelper ReflectionCache { get { return reflectionHelper; } }
     }
 
     /// <summary>
@@ -77,10 +94,37 @@ namespace DVM4T.Core
         }
     }
 
+    /// <summary>
+    /// Data structure for efficient use of Properties marked with a IPropertyAttribute Custom Attribute
+    /// </summary>
+    public class ModelProperty : IModelProperty
+    {
+        /// <summary>
+        /// Name of the Property
+        /// </summary>
+        public string Name { get; set; }
+        /// <summary>
+        /// Setter delegate
+        /// </summary>
+        public Action<object, object> Set { get; set; }
+        /// <summary>
+        /// Getter delegate
+        /// </summary>
+        public Func<object, object> Get { get; set; }
+        /// <summary>
+        /// The DVM4T PropertyAttribute of the Property
+        /// </summary>
+        public IPropertyAttribute PropertyAttribute { get; set; }
+        /// <summary>
+        /// The return Type of the Property
+        /// </summary>
+        public Type PropertyType { get; set; }
+    }
+
     #region View Model Data
     public abstract class ViewModelDataBase : IViewModelData
     {
-        public IViewModelBuilder Builder
+        public IViewModelFactory Builder
         {
             get;
             protected set;
@@ -112,7 +156,7 @@ namespace DVM4T.Core
     }
     public class PageViewModelData : ViewModelDataBase, IPageViewModelData
     {
-        public PageViewModelData(IPageData pageData, IViewModelBuilder builder)
+        public PageViewModelData(IPageData pageData, IViewModelFactory builder)
         {
             Builder = builder;
             Metadata = pageData.Metadata;
@@ -130,7 +174,7 @@ namespace DVM4T.Core
     }
     public class ComponentPresentationViewModelData : ContentViewModelData, IComponentPresentationViewModelData
     {
-        public ComponentPresentationViewModelData(IComponentPresentationData cpData, IViewModelBuilder builder)
+        public ComponentPresentationViewModelData(IComponentPresentationData cpData, IViewModelFactory builder)
             : base (cpData, builder)
         {
             ComponentPresentation = cpData;
@@ -143,7 +187,7 @@ namespace DVM4T.Core
     }
     public class ContentViewModelData : ViewModelDataBase, IContentViewModelData
     {
-        public ContentViewModelData(IComponentPresentationData cpData, IViewModelBuilder builder)
+        public ContentViewModelData(IComponentPresentationData cpData, IViewModelFactory builder)
         {
             Builder = builder;
             Metadata = cpData.Component.MetadataFields;
@@ -153,7 +197,7 @@ namespace DVM4T.Core
             ContentData = cpData.Component.Fields;
             BaseData = cpData;
         }
-        public ContentViewModelData(IFieldsData fieldsData, ISchemaData schema, ITemplateData template, IViewModelBuilder builder)
+        public ContentViewModelData(IFieldsData fieldsData, ISchemaData schema, ITemplateData template, IViewModelFactory builder)
         {
             Builder = builder;
             Metadata = null;

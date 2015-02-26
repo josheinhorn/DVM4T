@@ -1,5 +1,6 @@
 ﻿using DVM4T.Attributes;
 using DVM4T.Contracts;
+using DVM4T.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,25 +11,27 @@ using System.Text;
 
 namespace DVM4T.Reflection
 {
-    public static class ReflectionUtility
-    {
-        private static readonly ReflectionOptimizer reflectionCache = new ReflectionOptimizer();
-        public static IReflectionHelper ReflectionCache { get { return reflectionCache; } }
-        public static IViewModelResolver ModelResolver { get { return reflectionCache; } }
-    }
+    //public static class ReflectionUtility
+    //{
+    //    private static readonly ReflectionOptimizer reflectionCache = new ReflectionOptimizer();
+    //    public static IReflectionHelper ReflectionCache { get { return reflectionCache; } }
+    //    public static IViewModelResolver ModelResolver { get { return reflectionCache; } }
+    //}
 
-    public class ReflectionOptimizer : IReflectionHelper, IViewModelResolver
+    public class DefaultViewModelResolver : IViewModelResolver
     {
-        private Dictionary<Type, List<ModelAttributeProperty>> modelProperties = new Dictionary<Type, List<ModelAttributeProperty>>();
-        private Dictionary<Type, Func<object>> constructors = new Dictionary<Type, Func<object>>();
+        private Dictionary<Type, List<IModelProperty>> modelProperties = new Dictionary<Type, List<IModelProperty>>();
         //private Dictionary<Type, ViewModelAttribute> viewModelAttributes = new Dictionary<Type, ViewModelAttribute>();
         private Dictionary<Type, IModelAttribute> modelAttributes = new Dictionary<Type, IModelAttribute>();
-
-        internal ReflectionOptimizer() { }
-
-        public IList<ModelAttributeProperty> GetModelProperties(Type type)
+        private readonly IReflectionHelper helper;
+        public DefaultViewModelResolver(IReflectionHelper helper)
         {
-            List<ModelAttributeProperty> result;
+            this.helper = helper;
+        }
+
+        public IList<IModelProperty> GetModelProperties(Type type)
+        {
+            List<IModelProperty> result;
             if (!modelProperties.TryGetValue(type, out result))
             {
                 lock (modelProperties)
@@ -36,18 +39,18 @@ namespace DVM4T.Reflection
                     if (!modelProperties.TryGetValue(type, out result))
                     {
                         PropertyInfo[] props = type.GetProperties();
-                        result = new List<ModelAttributeProperty>();
+                        result = new List<IModelProperty>();
                         foreach (var prop in props)
                         {
                             ModelPropertyAttributeBase propAttribute = prop.GetCustomAttributes(typeof(ModelPropertyAttributeBase), true).FirstOrDefault() as ModelPropertyAttributeBase;
                             if (propAttribute != null) //only add properties that have the custom attribute
                             {
-                                result.Add(new ModelAttributeProperty
+                                result.Add(new ModelProperty
                                 {
                                     Name = prop.Name,
                                     PropertyAttribute = propAttribute,
-                                    Set = BuildSetter(prop),
-                                    Get = BuildGetter(prop),
+                                    Set = helper.BuildSetter(prop),
+                                    Get = helper.BuildGetter(prop),
                                     PropertyType = prop.PropertyType
                                 });
                             }
@@ -74,6 +77,28 @@ namespace DVM4T.Reflection
             }
             return (T)result;
         }
+        /// <summary>
+        /// This implementation requires the View Model Type to have a public parameterless constructor
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public IViewModel ResolveModel(Type type, IViewModelData data)
+        {
+            //Use explicit cast or "as" cast? Using as will result in null return value if the Type passed in doesn't implement IViewModel
+            //Using explicit cast (IViewModel) will result in InvalidCastException if Type doesn't implement IViewModel
+            return (IViewModel)helper.CreateInstance(type);
+        }
+    }
+
+    public class ReflectionOptimizer : IReflectionHelper
+    {
+        private Dictionary<Type, List<IModelProperty>> modelProperties = new Dictionary<Type, List<IModelProperty>>();
+        private Dictionary<Type, Func<object>> constructors = new Dictionary<Type, Func<object>>();
+        //private Dictionary<Type, ViewModelAttribute> viewModelAttributes = new Dictionary<Type, ViewModelAttribute>();
+        private Dictionary<Type, IModelAttribute> modelAttributes = new Dictionary<Type, IModelAttribute>();
+
+        internal ReflectionOptimizer() { }
 
         public object CreateInstance(Type objectType)
         {
@@ -167,20 +192,5 @@ namespace DVM4T.Reflection
         {
             return GetPropertyInfo<TSource, TProperty>(propertyLambda);
         }
-
-        /// <summary>
-        /// This implementation requires the View Model Type to have a public parameterless constructor
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="data"></param>
-        /// <returns></returns>
-        public IViewModel ResolveModel(Type type, IViewModelData data)
-        {
-            //Use explicit cast or "as" cast? Using as will result in null return value if the Type passed in doesn't implement IViewModel
-            //Using explicit cast (IViewModel) will result in InvalidCastException if Type doesn't implement IViewModel
-            return (IViewModel)this.CreateInstance(type); 
-        }
     }
-
-
 }

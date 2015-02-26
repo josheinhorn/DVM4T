@@ -95,17 +95,17 @@ namespace DVM4T.ModelGeneratorApp
             switch (schema.Purpose)
             {
                 case SchemaPurpose.Embedded:
-                    model.BaseClass = typeof(EmbeddedSchemaViewModelBase);
+                    model.BaseClass = typeof(ViewModelBase);
                     model.ModelType = ModelType.EmbeddedSchemaFields;
                     break;
                 case SchemaPurpose.Component:
-                    model.BaseClass = typeof(ComponentPresentationViewModelBase);
+                    model.BaseClass = typeof(ViewModelBase);
                     model.ModelType = ModelType.ComponentPresentation;
                     break;
                 case SchemaPurpose.Metadata:
                     return null;
                 case SchemaPurpose.Multimedia:
-                    model.BaseClass = typeof(ComponentPresentationViewModelBase); //testing
+                    model.BaseClass = typeof(ViewModelBase);
                     model.ModelType = ModelType.MultimediaComponent;
                     break;
                 case SchemaPurpose.Protocol:

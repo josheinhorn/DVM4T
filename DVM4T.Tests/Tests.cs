@@ -72,11 +72,11 @@ namespace DVM4T.Testing
         public void TestBuildCPViewModelGeneric()
         {
             ContentContainerViewModel model = null;
-            IViewModelBuilder builder = ViewModelDefaults.Builder;
+            IViewModelFactory builder = ViewModelDefaults.Factory;
             for (int i = 0; i < 10000; i++)
             {
                 Dynamic.IComponentPresentation cp = GetMockCp(GetMockModel());
-                model = builder.BuildCPViewModel<ContentContainerViewModel>(new ComponentPresentation(cp));
+                model = builder.BuildViewModel<ContentContainerViewModel>(new ComponentPresentationViewModelData(new ComponentPresentation(cp), ViewModelDefaults.Factory));
             }
             Assert.IsNotNull(model); //Any better Assertions to make?
         }
@@ -85,12 +85,12 @@ namespace DVM4T.Testing
         {
 
             ContentContainerViewModel model = null;
-            IViewModelBuilder builder = ViewModelDefaults.Builder;
+            IViewModelFactory builder = ViewModelDefaults.Factory;
             for (int i = 0; i < 10000; i++)
             {
                 Dynamic.IComponentPresentation cp = GetMockCp(GetMockModel());
                 builder.LoadViewModels(Assembly.GetAssembly(typeof(ContentContainerViewModel)));
-                model = (ContentContainerViewModel)builder.BuildCPViewModel(new ComponentPresentation(cp));
+                model = (ContentContainerViewModel)builder.BuildViewModel(new ComponentPresentationViewModelData(new ComponentPresentation(cp), ViewModelDefaults.Factory));
             }
             Assert.IsNotNull(model); //Any better Assertions to make?
         }
@@ -99,7 +99,7 @@ namespace DVM4T.Testing
         public void TestBasicXpmMarkup()
         {
             var cp = GetMockCp(GetMockModel());
-            ContentContainerViewModel model = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(new ComponentPresentation(cp));
+            ContentContainerViewModel model = ViewModelDefaults.Factory.BuildViewModel<ContentContainerViewModel>(new ComponentPresentationViewModelData(new ComponentPresentation(cp), ViewModelDefaults.Factory));
             var titleMarkup = model.XpmMarkupFor(m => m.Title);
             Assert.IsNotNull(titleMarkup);
         }
@@ -108,7 +108,7 @@ namespace DVM4T.Testing
         public void TestLinkedComponentXpmMarkup()
         {
             var cp = GetMockCp(GetMockModel());
-            ContentContainerViewModel model = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(new ComponentPresentation(cp));
+            ContentContainerViewModel model = ViewModelDefaults.Factory.BuildViewModel<ContentContainerViewModel>(new ComponentPresentationViewModelData(new ComponentPresentation(cp), ViewModelDefaults.Factory));
             var markup = ((GeneralContentViewModel)model.ContentList[0]).XpmMarkupFor(m => m.Body);
             Assert.IsNotNull(markup);
         }
@@ -116,7 +116,7 @@ namespace DVM4T.Testing
         public void TestEmbeddedXpmMarkup()
         {
             var cp = GetMockCp(GetMockModel());
-            ContentContainerViewModel model = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(new ComponentPresentation(cp));
+            ContentContainerViewModel model = ViewModelDefaults.Factory.BuildViewModel<ContentContainerViewModel>(new ComponentPresentationViewModelData(new ComponentPresentation(cp), ViewModelDefaults.Factory));
             var embeddedTest = ((EmbeddedLinkViewModel)model.Links[0]).XpmMarkupFor(m => m.LinkText);
             Assert.IsNotNull(embeddedTest);
         }
@@ -124,7 +124,7 @@ namespace DVM4T.Testing
         public void TestXpmEditingZone()
         {
             var cp = GetMockCp(GetMockModel());
-            ContentContainerViewModel model = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(new ComponentPresentation(cp));
+            ContentContainerViewModel model = ViewModelDefaults.Factory.BuildViewModel<ContentContainerViewModel>(new ComponentPresentationViewModelData(new ComponentPresentation(cp), ViewModelDefaults.Factory));
             var compMarkup = model.StartXpmEditingZone();
             Assert.IsNotNull(compMarkup);
         }
@@ -133,7 +133,8 @@ namespace DVM4T.Testing
         public void TestEditableField()
         {
             var cp = GetMockCp(GetMockModel());
-            ContentContainerViewModel model = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(new ComponentPresentation(cp));
+            ContentContainerViewModel model = ViewModelDefaults.Factory.BuildViewModel<ContentContainerViewModel>(
+                new ComponentPresentationViewModelData(new ComponentPresentation(cp), ViewModelDefaults.Factory));
             HtmlString contentMarkup;
             foreach (var content in model.ContentList)
             {
@@ -157,7 +158,7 @@ namespace DVM4T.Testing
         {
             string expectedString = autoMocker.Create<string>();
             var cp = GetCPMockup<MockModels.GeneralContentViewModel, MvcHtmlString>(x => x.Body, new MvcHtmlString(expectedString));
-            var newModel = ViewModelDefaults.Builder.BuildCPViewModel<GeneralContentViewModel>(new ComponentPresentation(cp));
+            var newModel = ViewModelDefaults.Factory.BuildViewModel<GeneralContentViewModel>(new ComponentPresentationViewModelData(new ComponentPresentation(cp), ViewModelDefaults.Factory));
             Assert.AreEqual(expectedString, newModel.Body.ToHtmlString());
         }
 
@@ -223,7 +224,7 @@ namespace DVM4T.Testing
             var cp = GetManuallyBuiltCp();
             cp.Component.Id = expectedString;
             //exercise
-            var newModel = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(new ComponentPresentation(cp));
+            var newModel = ViewModelDefaults.Factory.BuildViewModel<ContentContainerViewModel>(new ComponentPresentationViewModelData(new ComponentPresentation(cp), ViewModelDefaults.Factory));
             //test
             Assert.AreEqual(3, newModel.Links.Count);
             Assert.AreEqual(cp.Component.Fields["links"].EmbeddedValues[0]["internalLink"].LinkedComponentValues[0].Id,
@@ -238,7 +239,7 @@ namespace DVM4T.Testing
                 x => x.Body, new MvcHtmlString(expectedString));
             var cp = GetCPMockup<MockModels.ContentContainerViewModel, Mock.ViewModelList<MockModels.GeneralContentViewModel>>(
                 x => x.Content, new Mock.ViewModelList<MockModels.GeneralContentViewModel> { linkedCompModel });
-            var newModel = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(new ComponentPresentation(cp));
+            var newModel = ViewModelDefaults.Factory.BuildViewModel<ContentContainerViewModel>(new ComponentPresentationViewModelData(new ComponentPresentation(cp), ViewModelDefaults.Factory));
             Assert.AreEqual(expectedString,
                 newModel.ContentList.FirstOrDefault<GeneralContentViewModel>().Body.ToHtmlString());
         }
@@ -256,7 +257,7 @@ namespace DVM4T.Testing
                  .Create();
             var cp = GetCPMockup<MockModels.ContentContainerViewModel, Mock.ViewModelList<MockModels.EmbeddedLinkViewModel>>(
                 x => x.Links, new Mock.ViewModelList<MockModels.EmbeddedLinkViewModel> { linkedCompModel });
-            var newModel = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(new ComponentPresentation(cp));
+            var newModel = ViewModelDefaults.Factory.BuildViewModel<ContentContainerViewModel>(new ComponentPresentationViewModelData(new ComponentPresentation(cp), ViewModelDefaults.Factory));
             Assert.AreEqual(expectedString,
                 newModel.Links.FirstOrDefault<EmbeddedLinkViewModel>().LinkText);
         }
@@ -265,7 +266,7 @@ namespace DVM4T.Testing
         public void TestViewModelKey()
         {
             string viewModelKey = "TitleOnly";
-            ViewModelDefaults.Builder.LoadViewModels(typeof(GeneralContentViewModel).Assembly);
+            ViewModelDefaults.Factory.LoadViewModels(typeof(GeneralContentViewModel).Assembly);
             var cp = GetMockCp(GetMockModel());
             ((Dynamic.ComponentTemplate)cp.ComponentTemplate).MetadataFields = new Dynamic.FieldSet
             {
@@ -277,7 +278,7 @@ namespace DVM4T.Testing
             ((Dynamic.Component)cp.Component).Title = "test title";
 
             //exercise
-            var model = ViewModelDefaults.Builder.BuildCPViewModel(new ComponentPresentation(cp));
+            var model = ViewModelDefaults.Factory.BuildViewModel(new ComponentPresentationViewModelData(new ComponentPresentation(cp), ViewModelDefaults.Factory));
 
             //test
             Assert.IsInstanceOfType(model, typeof(TitleViewModel));
@@ -288,7 +289,7 @@ namespace DVM4T.Testing
         public void TestViewModelTypeNotFoundException()
         {
             string viewModelKey = "Non-existent View Model Key";
-            ViewModelDefaults.Builder.LoadViewModels(typeof(GeneralContentViewModel).Assembly);
+            ViewModelDefaults.Factory.LoadViewModels(typeof(GeneralContentViewModel).Assembly);
             var cp = GetMockCp(GetMockModel());
             ((Dynamic.ComponentTemplate)cp.ComponentTemplate).MetadataFields = new Dynamic.FieldSet
             {
@@ -300,7 +301,7 @@ namespace DVM4T.Testing
             ((Dynamic.Component)cp.Component).Title = "test title";
 
             //exercise
-            var model = ViewModelDefaults.Builder.BuildCPViewModel(new ComponentPresentation(cp));
+            var model = ViewModelDefaults.Factory.BuildViewModel(new ComponentPresentationViewModelData(new ComponentPresentation(cp), ViewModelDefaults.Factory));
 
             //test
             //Assert.IsInstanceOfType(model, typeof(TitleViewModel));
@@ -319,9 +320,10 @@ namespace DVM4T.Testing
             };
             cp.Component.Schema = new Dynamic.Schema { Title = "ContentContainer" };
             var provider = new CustomKeyProvider(key);
-            var builder = new ViewModelBuilder(provider, ReflectionUtility.ModelResolver);
+            var builder = new ViewModelFactory(provider, ViewModelDefaults.ModelResolver);
             builder.LoadViewModels(typeof(ContentContainerViewModel).Assembly);
-            var model = builder.BuildCPViewModel(new ComponentPresentation(cp));
+            var model = builder.BuildViewModel(new ComponentPresentationViewModelData(
+                new ComponentPresentation(cp), ViewModelDefaults.Factory));
 
             Assert.IsInstanceOfType(model, typeof(TitleViewModel));
         }
@@ -332,16 +334,16 @@ namespace DVM4T.Testing
             string expectedString = autoMocker.Create<string>();
             var cp = GetCPMockup<MockModels.GeneralContentViewModel, string>(
                 x => x.Title, expectedString);
-            var newModel = ViewModelDefaults.Builder.BuildCPViewModel<BrokenViewModel>(new ComponentPresentation(cp)); //should throw exception
+            var newModel = ViewModelDefaults.Factory.BuildViewModel<BrokenViewModel>(new ComponentPresentationViewModelData(new ComponentPresentation(cp), ViewModelDefaults.Factory)); //should throw exception
         }
 
         [TestMethod]
         public void TestOOXPM()
         {
-            ContentContainerViewModel model = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(
-                new ComponentPresentation(GetMockCp(GetMockModel())));
+            ContentContainerViewModel model = ViewModelDefaults.Factory.BuildViewModel<ContentContainerViewModel>(
+                new ComponentPresentationViewModelData(new ComponentPresentation(GetMockCp(GetMockModel())), ViewModelDefaults.Factory));
             //make sure the nested component gets a mock ID - used to test if site edit is enabled for component
-            var generalContentXpm = new XpmRenderer<GeneralContentViewModel>((GeneralContentViewModel)model.ContentList[0], new XpmMarkupService(), ReflectionUtility.ModelResolver);
+            var generalContentXpm = new XpmRenderer<GeneralContentViewModel>((GeneralContentViewModel)model.ContentList[0], new XpmMarkupService(), ViewModelDefaults.ModelResolver);
             var markup = generalContentXpm.XpmMarkupFor(m => m.Body);
             Assert.IsNotNull(markup);
         }
@@ -399,8 +401,8 @@ namespace DVM4T.Testing
                     cp
                 }
             };
-            ViewModelDefaults.Builder.LoadViewModels(typeof(Homepage).Assembly);
-            var pageModel = ViewModelDefaults.Builder.BuildPageViewModel(new Page(page));
+            ViewModelDefaults.Factory.LoadViewModels(typeof(Homepage).Assembly);
+            var pageModel = ViewModelDefaults.Factory.BuildViewModel(new PageViewModelData(new Page(page), ViewModelDefaults.Factory));
             Assert.IsNotNull(pageModel);
         }
 
