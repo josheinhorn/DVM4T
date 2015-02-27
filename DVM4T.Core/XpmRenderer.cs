@@ -20,15 +20,15 @@ namespace DVM4T.XPM
     {
         //This is just an OO implementation of the static extension methods... which one is better
         private readonly IViewModel model;
-        private readonly IContentViewModelData contentData = null;
+        private readonly IContentData contentData = null;
         private readonly IXpmMarkupService xpmMarkupService;
         private readonly IViewModelResolver resolver;
         public XpmRenderer(IViewModel model, IXpmMarkupService service, IViewModelResolver resolver)
         {
             this.model = model;
-            if (model.ModelData is IContentViewModelData)
+            if (model.ModelData is IContentData)
             {
-                contentData = model.ModelData as IContentViewModelData;
+                contentData = model.ModelData as IContentData;
             }
             this.xpmMarkupService = service;
             this.resolver = resolver;
@@ -57,7 +57,7 @@ namespace DVM4T.XPM
             if (modelProp.PropertyAttribute is IFieldAttribute)
             {
                 var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
-                var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : contentData.ContentData;
+                var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : contentData.Content;
                 result = SiteEditable<TProp>(model, fields, modelProp, index);
             }
             return result;
@@ -85,7 +85,7 @@ namespace DVM4T.XPM
             if (modelProp.PropertyAttribute is IFieldAttribute)
             {
                 var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
-                var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : contentData.ContentData;
+                var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : contentData.Content;
                 int index = IndexOf(modelProp, model, item);
                 result = SiteEditable<TProp>(model, fields, modelProp, index);
             }
@@ -110,7 +110,7 @@ namespace DVM4T.XPM
                 if (modelProp.PropertyAttribute is IFieldAttribute)
                 {
                     var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
-                    var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : contentData.ContentData;
+                    var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : contentData.Content;
                     result = XpmMarkupFor(fields, modelProp, index);
                 }
             }
@@ -143,7 +143,7 @@ namespace DVM4T.XPM
                 if (modelProp.PropertyAttribute is IFieldAttribute)
                 {
                     var fieldProp = modelProp.PropertyAttribute as IFieldAttribute;
-                    var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : contentData.ContentData;
+                    var fields = fieldProp.IsMetadata ? model.ModelData.Metadata : contentData.Content;
                     int index = IndexOf(modelProp, model, item);
                     result = XpmMarkupFor(fields, modelProp, index);
                 }
@@ -158,8 +158,8 @@ namespace DVM4T.XPM
         /// <returns>XPM Markup</returns>
         public HtmlString StartXpmEditingZone(string region = null)
         {
-            if (model.ModelData is IComponentPresentationViewModelData)
-                return new HtmlString(XpmMarkupService.RenderXpmMarkupForComponent(((IComponentPresentationViewModelData)model.ModelData).ComponentPresentation, region));
+            if (model.ModelData is IContentPresentationData)
+                return new HtmlString(XpmMarkupService.RenderXpmMarkupForComponent(((IContentPresentationData)model.ModelData), region));
             else return null;
         }
         #endregion

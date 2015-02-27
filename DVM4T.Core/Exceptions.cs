@@ -8,13 +8,18 @@ namespace DVM4T.Exceptions
 {
     public class ViewModelTypeNotFoundException : Exception
     {
-        public ViewModelTypeNotFoundException(IContentViewModelData data)
+        public ViewModelTypeNotFoundException(IContentData data)
             : base(String.Format("Could not find view model for schema '{0}' and Template '{1}' or default for schema '{0}' in loaded assemblies."
                     , data.Schema.Title, data.Template.Title)) 
         { }
 
-        public ViewModelTypeNotFoundException(IViewModelData data)
+        public ViewModelTypeNotFoundException(ITemplatedViewModelData data)
             : base(String.Format("Could not find view model for item with Template '{0}' and Publication ID '{1}'", data.Template.Title, data.PublicationId))
+        { }
+
+        //TODO: REfactor to check type and use other overloads
+        public ViewModelTypeNotFoundException(IViewModelData data)
+            : base(String.Format("Could not find view model for item with Publication ID '{0}'", data.PublicationId))
         { }
     }
 

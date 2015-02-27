@@ -113,7 +113,7 @@ namespace DVM4T.DD4T.XPM
         public static HtmlString StartXpmEditingZone(this IViewModel model, string region = null)
         {
             HtmlString result = null;
-            if (model.ModelData is IContentViewModelData)
+            if (model.ModelData is IContentData)
             {
                 var renderer = new XpmRenderer<IViewModel>(model, XpmMarkupService, resolver);
                 result = renderer.StartXpmEditingZone(region);

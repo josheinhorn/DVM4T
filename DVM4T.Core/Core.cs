@@ -27,8 +27,6 @@ namespace DVM4T.Core
         //private static readonly IViewModelBuilder viewModelBuilder = new ViewModelBuilder(keyProvider, resolver);
         private static readonly IViewModelFactory factory = new ViewModelFactory(keyProvider, resolver);
         
-
-
         /// <summary>
         /// Default View Model Builder. 
         /// <remarks>
@@ -37,6 +35,11 @@ namespace DVM4T.Core
         /// </remarks>
         /// </summary>
         public static IViewModelFactory Factory { get { return factory; } }
+        /// <summary>
+        /// For legacy support - renamed to Factory
+        /// </summary>
+        [Obsolete("Use ViewModelDefaults.Factory instead")]
+        public static IViewModelFactory Builder { get { return factory; } }
         /// <summary>
         /// Default View Model Key Provider. 
         /// <remarks>
@@ -68,12 +71,17 @@ namespace DVM4T.Core
         public string GetViewModelKey(IViewModelData modelData)
         {
             string result = null;
-            if (modelData != null
-                    && modelData.Template != null
-                    && modelData.Template.Metadata != null
-                    && modelData.Template.Metadata.ContainsKey(ViewModelKeyField))
+            var templatedData = modelData as ITemplatedViewModelData;
+            if (templatedData != null
+                    && templatedData.Template != null
+                    && templatedData.Template.Metadata != null
+                    && templatedData.Template.Metadata.ContainsKey(ViewModelKeyField))
             {
-                result = modelData.Template.Metadata[ViewModelKeyField].Values.Cast<string>().FirstOrDefault();
+                result = templatedData.Template.Metadata[ViewModelKeyField].Values.Cast<string>().FirstOrDefault();
+            }
+            else
+            {
+                result = modelData.Metadata[ViewModelKeyField].Values.Cast<string>().FirstOrDefault();
             }
 
             return result;
@@ -121,103 +129,94 @@ namespace DVM4T.Core
         public Type PropertyType { get; set; }
     }
 
-    #region View Model Data
-    public abstract class ViewModelDataBase : IViewModelData
-    {
-        public IViewModelFactory Builder
-        {
-            get;
-            protected set;
-        }
+    #region Old View Model Data Basic Implementations
+    //public abstract class ViewModelDataBase : IViewModelData
+    //{
+    //    public IFieldsData Metadata
+    //    {
+    //        get;
+    //        protected set;
+    //    }
 
-        public IFieldsData Metadata
-        {
-            get;
-            protected set;
-        }
+    //    public ITemplateData Template
+    //    {
+    //        get;
+    //        protected set;
+    //    }
 
-        public ITemplateData Template
-        {
-            get;
-            protected set;
-        }
+    //    public int PublicationId
+    //    {
+    //        get;
+    //        protected set;
+    //    }
 
-        public int PublicationId
-        {
-            get;
-            protected set;
-        }
+    //    public object BaseData
+    //    {
+    //        get;
+    //        protected set;
+    //    }
+    //}
+    //public class PageViewModelData : ViewModelDataBase, IPageViewModelData
+    //{
+    //    public PageViewModelData(IPageData pageData)
+    //    {
+    //        Metadata = pageData.Metadata;
+    //        PublicationId = pageData.PublicationId;
+    //        Template = pageData.Template;
+    //        Page = pageData;
+    //        BaseData = pageData;
+    //    }
 
-        public object BaseData
-        {
-            get;
-            protected set;
-        }
-    }
-    public class PageViewModelData : ViewModelDataBase, IPageViewModelData
-    {
-        public PageViewModelData(IPageData pageData, IViewModelFactory builder)
-        {
-            Builder = builder;
-            Metadata = pageData.Metadata;
-            PublicationId = pageData.PublicationId;
-            Template = pageData.PageTemplate;
-            Page = pageData;
-            BaseData = pageData;
-        }
+    //    public IPageData Page
+    //    {
+    //        get;
+    //        private set;
+    //    }
+    //}
+    //public class ComponentPresentationViewModelData : ContentViewModelData, IComponentPresentationViewModelData
+    //{
+    //    public ComponentPresentationViewModelData(IContentPresentationData cpData)
+    //        : base (cpData)
+    //    {
+    //        ComponentPresentation = cpData;
+    //    }
+    //    public IContentPresentationData ComponentPresentation
+    //    {
+    //        get;
+    //        private set;
+    //    }
+    //}
+    //public class ContentViewModelData : ViewModelDataBase, IContentViewModelData
+    //{
+    //    public ContentViewModelData(IContentPresentationData cpData)
+    //    {
+    //        Metadata = cpData.Metadata;
+    //        PublicationId = cpData.PublicationId;
+    //        Template = cpData.Template;
+    //        Schema = cpData.Schema;
+    //        Content = cpData.Content;
+    //        BaseData = cpData;
+    //    }
+    //    public ContentViewModelData(IFieldsData fieldsData, ISchemaData schema, ITemplateData template)
+    //    {
+    //        Metadata = null;
+    //        PublicationId = template.PublicationId;
+    //        Template = template;
+    //        Schema = schema;
+    //        Content = fieldsData;
+    //        BaseData = fieldsData;
+    //    }
+    //    public ISchemaData Schema
+    //    {
+    //        get;
+    //        private set;
+    //    }
 
-        public IPageData Page
-        {
-            get;
-            private set;
-        }
-    }
-    public class ComponentPresentationViewModelData : ContentViewModelData, IComponentPresentationViewModelData
-    {
-        public ComponentPresentationViewModelData(IComponentPresentationData cpData, IViewModelFactory builder)
-            : base (cpData, builder)
-        {
-            ComponentPresentation = cpData;
-        }
-        public IComponentPresentationData ComponentPresentation
-        {
-            get;
-            private set;
-        }
-    }
-    public class ContentViewModelData : ViewModelDataBase, IContentViewModelData
-    {
-        public ContentViewModelData(IComponentPresentationData cpData, IViewModelFactory builder)
-        {
-            Builder = builder;
-            Metadata = cpData.Component.MetadataFields;
-            PublicationId = cpData.Component.PublicationId;
-            Template = cpData.ComponentTemplate;
-            Schema = cpData.Component.Schema;
-            ContentData = cpData.Component.Fields;
-            BaseData = cpData;
-        }
-        public ContentViewModelData(IFieldsData fieldsData, ISchemaData schema, ITemplateData template, IViewModelFactory builder)
-        {
-            Builder = builder;
-            Metadata = null;
-            PublicationId = template.PublicationId;
-            Template = template;
-            Schema = schema;
-            ContentData = fieldsData;
-            BaseData = fieldsData;
-        }
-        public ISchemaData Schema
-        {
-            get;
-            private set;
-        }
-
-        public IFieldsData ContentData
-        {
-            get;
-            private set;
-        }
-    }
+    //    public IFieldsData Content
+    //    {
+    //        get;
+    //        private set;
+    //    }
+    //}
     #endregion
 }

@@ -53,46 +53,58 @@ namespace DVM4T.Contracts
     {
         object BaseData { get; }
     }
+
     public interface ITridionItemData : IHaveData
     {
         string TcmUri { get; }
         string Title { get; }
-        int PublicationId { get; }
+        //int PublicationId { get; }
     }
-    public interface IPageData : ITridionItemData
+    public interface IContentData : ITemplatedViewModelData
     {
-        IList<IComponentPresentationData> ComponentPresentations { get; }
-        IPageTemplateData PageTemplate { get; }
-        IFieldsData Metadata { get; }
+        IFieldsData Content { get; }
+        //ITemplateData Template { get; }
+        ISchemaData Schema { get; }
+    }
+    public interface IPageData : ITridionItemData, ITemplatedViewModelData
+    {
+        IList<IContentPresentationData> ComponentPresentations { get; }
+        //IPageTemplateData PageTemplate { get; }
         string FileName { get; }
-    }
-    public interface IComponentPresentationData : IHaveData
+        //IFieldsData Metadata { get; }
+    }   
+    public interface IContentPresentationData : ITridionItemData, IContentData //This is essentially a replacement for IComponent
     {
+        //IComponentData Component { get; }
+        //IComponentTemplateData ComponentTemplate { get; }
         IComponentData Component { get; }
-        IComponentTemplateData ComponentTemplate { get; }
+        IMultimediaData MultimediaData { get; }
     }
 
-    public interface IComponentData : ITridionItemData
+    //Deprecated?? - use IContentPresentationData
+    public interface IComponentData : ITridionItemData, IViewModelData 
     {
-        IFieldsData Fields { get; }
-        IFieldsData MetadataFields { get; }
+        IFieldsData Content { get; }
+        //IFieldsData Metadata { get; }
         ISchemaData Schema { get; }
         IMultimediaData MultimediaData { get; }
     }
-    public interface ITemplateData : ITridionItemData
+    public interface ITemplateData : ITridionItemData, IViewModelData
     {
-        IFieldsData Metadata { get; }
+        //IFieldsData Metadata { get; }
         DateTime RevisionDate { get; }
     }
-    public interface IComponentTemplateData : ITemplateData
-    {
-        //Anything specific to this?
-    }
+    //TODO: Remove these 2, we don't need to differentiate between them
+    //public interface IComponentTemplateData : ITemplateData
+    //{
+    //    //Anything specific to this?
+    //}
+    //public interface IPageTemplateData : ITemplateData
+    //{
+    //    //Anything specific to this?
+    //}
 
-    public interface IPageTemplateData : ITemplateData
-    {
-        //Anything specific to this?
-    }
+
     public interface IMultimediaData : IHaveData
     {
         string Url { get; }
@@ -134,11 +146,10 @@ namespace DVM4T.Contracts
         IList<IKeywordData> Keywords { get; }
     }
 
-    public interface IKeywordData : ITridionItemData
+    public interface IKeywordData : ITridionItemData, IViewModelData
     {
-        string Title { get; }
         string Key { get; }
-        IFieldsData Metadata { get; }
+        //IFieldsData Metadata { get; }
     }
 
     #endregion
@@ -162,7 +173,7 @@ namespace DVM4T.Contracts
         /// <summary>
         /// The underlying data object that the View Model represents
         /// </summary>
-        IViewModelFactory Builder { get; }
+        //IViewModelFactory Builder { get; } //This isn't actually needed anywhere
         /// <summary>
         /// Metadata for the View Model
         /// </summary>
@@ -170,44 +181,58 @@ namespace DVM4T.Contracts
         /// <summary>
         /// Template for the View Model
         /// </summary>
-        ITemplateData Template { get; } //This might present a problem with creating a Model for Keywords . . . there is no template
+        //ITemplateData Template { get; } //This might present a problem with creating a Model for Keywords . . . there is no template
         /// <summary>
         /// Publication ID of the underlying Tridion item
         /// </summary>
         int PublicationId { get; }
     }
 
-    /// <summary>
-    /// View Model Data for a Content-driven Model
-    /// </summary>
-    public interface IContentViewModelData : IViewModelData
+    public interface ITemplatedViewModelData : IViewModelData
     {
-        ISchemaData Schema { get; }
-        IFieldsData ContentData { get; }
-    }
-    /// <summary>
-    /// View Model Data for a Component Presentation Model
-    /// </summary>
-    public interface IComponentPresentationViewModelData : IContentViewModelData
-    {
-        IComponentPresentationData ComponentPresentation { get; }
+        /// <summary>
+        /// Template for the View Model
+        /// </summary>
+        ITemplateData Template { get; } 
     }
 
-    /// <summary>
-    /// View Model Data for an Embedded Schema Model
-    /// </summary>
-    public interface IEmbeddedSchemaViewModelData : IContentViewModelData
-    {
-        //??
-    }
-    /// <summary>
-    /// View Model Data for a Page Model
-    /// </summary>
-    public interface IPageViewModelData : IViewModelData
-    {
-        IPageData Page { get; }
-    }
-    
+    #region Deprecated
+    ///// <summary>
+    ///// View Model Data for a Content-driven Model
+    ///// </summary>
+    //public interface IContentViewModelData : ITemplatedData
+    //{
+    //    ISchemaData Schema { get; }
+    //    IFieldsData Content { get; }
+    //}
+    ///// <summary>
+    ///// View Model Data for a Component Presentation Model
+    ///// </summary>
+    //public interface IComponentPresentationViewModelData : IContentViewModelData
+    //{
+    //    IContentPresentationData ComponentPresentation { get; }
+    //}
+
+    ///// <summary>
+    ///// View Model Data for an Embedded Schema Model
+    ///// </summary>
+    //public interface IEmbeddedSchemaViewModelData : IContentViewModelData
+    //{
+    //    //??
+    //}
+    ///// <summary>
+    ///// View Model Data for a Page Model
+    ///// </summary>
+    //public interface IPageViewModelData : IViewModelData
+    //{
+    //    IPageData Page { get; }
+    //}
+    //public interface IKeywordViewModelData : IViewModelData
+    //{
+    //    IKeywordData Keyword { get; }
+    //}
+    #endregion
+
     public interface IViewModelResolver
     {
         /// <summary>
@@ -233,6 +258,13 @@ namespace DVM4T.Contracts
 
         //Possible to do something like this? How to make the parameters generic?
         //T GetModelData<T>(data parameters) where T : IViewModelData
+    }
+    /// <summary>
+    /// A suggested interface for generating View Model Data
+    /// </summary>
+    public interface IModelDataFactory
+    {
+        T GetModelData<T>(params object[] data) where T : IViewModelData;
     }
 
     public interface IViewModelFactory
@@ -280,7 +312,7 @@ namespace DVM4T.Contracts
         /// The LoadViewModels method must be called with the desired View Model Types in order for this to return a valid object.
         /// </remarks>
         /// <returns>Component Presentation View Model</returns>
-        IViewModel BuildCPViewModel(IComponentPresentationData componentPresentation); //A way to build view model without passing type -- type is inferred using loaded assemblies
+        IViewModel BuildCPViewModel(IContentPresentationData componentPresentation); //A way to build view model without passing type -- type is inferred using loaded assemblies
         /// <summary>
         /// Builds a View Model from a FieldSet using the schema determine the View Model class to use.
         /// </summary>
@@ -295,7 +327,7 @@ namespace DVM4T.Contracts
         /// <param name="type">Type of View Model class to return</param>
         /// <param name="cp">Component Presentation</param>
         /// <returns>Component Presentation View Model</returns>
-        IViewModel BuildCPViewModel(Type type, IComponentPresentationData componentPresentation);
+        IViewModel BuildCPViewModel(Type type, IContentPresentationData componentPresentation);
         /// <summary>
         /// Builds a View Model from a FieldSet using the generic type to determine the View Model class to use.
         /// </summary>
@@ -310,7 +342,7 @@ namespace DVM4T.Contracts
         /// <typeparam name="T">Type of View Model class to return</typeparam>
         /// <param name="cp">Component Presentation</param>
         /// <returns>Component Presentation View Model</returns>
-        T BuildCPViewModel<T>(IComponentPresentationData componentPresentation) where T : class, IViewModel;
+        T BuildCPViewModel<T>(IContentPresentationData componentPresentation) where T : class, IViewModel;
         /// <summary>
         /// Builds a View Model from a FieldSet using the generic type to determine the View Model class to use.
         /// </summary>
@@ -369,7 +401,7 @@ namespace DVM4T.Contracts
         /// <param name="cp">Component Presentation</param>
         /// <param name="region">Optional region</param>
         /// <returns>XPM Markup</returns>
-        string RenderXpmMarkupForComponent(IComponentPresentationData cp, string region = null);
+        string RenderXpmMarkupForComponent(IContentPresentationData cp, string region = null);
         /// <summary>
         /// Determines if Site Edit is enabled for a particular item
         /// </summary>
@@ -618,7 +650,7 @@ namespace DVM4T.Contracts
         /// <param name="template">The Template for this Model</param>
         /// <param name="builder">A View Model builder</param>
         /// <returns>The Property value</returns>
-        object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelFactory builder = null);
+        object GetPropertyValue(IComponentData component, Type propertyType, ITemplateData template, IViewModelFactory builder = null);
     }
     /// <summary>
     /// An Attribtue for a Property representing some part of a Component Template
@@ -632,7 +664,7 @@ namespace DVM4T.Contracts
         /// <param name="propertyType">The actual return type of this Property</param>
         /// <param name="builder">A View Model builder</param>
         /// <returns>The Property value</returns>
-        object GetPropertyValue(IComponentTemplateData template, Type propertyType, IViewModelFactory builder = null);
+        object GetPropertyValue(ITemplateData template, Type propertyType, IViewModelFactory builder = null);
     }
     /// <summary>
     /// An Attribute for a Property representing some part of a Page
@@ -660,7 +692,7 @@ namespace DVM4T.Contracts
         /// <param name="propertyType">The actual return type of this Property</param>
         /// <param name="builder">A View Model builder</param>
         /// <returns>The Property value</returns>
-        object GetPropertyValue(IPageTemplateData pageTemplate, Type propertyType, IViewModelFactory builder = null);
+        object GetPropertyValue(ITemplateData pageTemplate, Type propertyType, IViewModelFactory builder = null);
     }
     /// <summary>
     /// An Attribute for identifying a View Model class

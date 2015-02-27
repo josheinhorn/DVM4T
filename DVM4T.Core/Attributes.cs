@@ -53,17 +53,18 @@ namespace DVM4T.Attributes
             {
                 //need null checks on Template
                 IFieldsData fields = null;
-                if (IsTemplateMetadata)
+                if (IsTemplateMetadata && model.ModelData is ITemplatedViewModelData)
                 {
-                    fields =  model.ModelData.Template != null ? model.ModelData.Template.Metadata : null;
+                    var templateData = model.ModelData as ITemplatedViewModelData;
+                    fields = templateData.Template != null ? templateData.Template.Metadata : null;
                 }
                 else if (IsMetadata)
                 {
                     fields = model.ModelData.Metadata;
                 }
-                else if (model.ModelData is IContentViewModelData)
+                else if (model.ModelData is IContentData)
                 {
-                    fields = (model.ModelData as IContentViewModelData).ContentData;
+                    fields = (model.ModelData as IContentData).Content;
                 }
                 else
                 {
@@ -76,7 +77,9 @@ namespace DVM4T.Attributes
 
                 if (fields != null && fields.ContainsKey(FieldName))
                 {
-                    result = this.GetFieldValue(fields[FieldName], propertyType, model.ModelData.Template, factory);
+                    var template = model.ModelData is ITemplatedViewModelData ? (model.ModelData as ITemplatedViewModelData).Template
+                        : null;
+                    result = this.GetFieldValue(fields[FieldName], propertyType, template, factory);
                 }
             }
             return result;
@@ -154,13 +157,13 @@ namespace DVM4T.Attributes
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
-            if (model != null && model.ModelData != null && model.ModelData is IComponentPresentationViewModelData)
+            if (model != null && model.ModelData != null && model.ModelData is IContentPresentationData)
             {
-                var cpData = model.ModelData as IComponentPresentationViewModelData;
-                if (cpData.ComponentPresentation != null)
+                var cpData = model.ModelData as IContentPresentationData;
+                if (cpData != null)
                 {
-                    result = GetPropertyValue(cpData.ComponentPresentation.Component, propertyType,
-                        cpData.ComponentPresentation.ComponentTemplate, factory);
+                    result = GetPropertyValue(cpData.Component, propertyType,
+                        cpData.Template, factory);
                 }
             }
             return result;
@@ -173,7 +176,7 @@ namespace DVM4T.Attributes
         /// <param name="template">Component Template</param>
         /// <param name="factory">View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelFactory factory = null);
+        public abstract object GetPropertyValue(IComponentData component, Type propertyType, ITemplateData template, IViewModelFactory factory = null);
     }
 
     /// <summary>
@@ -188,14 +191,16 @@ namespace DVM4T.Attributes
         /// <param name="propertyType">Actual return type for the Property</param>
         /// <param name="factory">View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract object GetPropertyValue(IComponentTemplateData template, Type propertyType, IViewModelFactory factory = null);
+        public abstract object GetPropertyValue(ITemplateData template, Type propertyType, IViewModelFactory factory = null);
 
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
-            if (model != null && model is IViewModel && model.ModelData.Template != null)
+            if (model != null && model.ModelData is IContentData 
+                && (model.ModelData as IContentData).Template is ITemplateData)
             {
-                result = this.GetPropertyValue(model.ModelData.Template as IComponentTemplateData, propertyType, factory);
+                var templateData = (model.ModelData as IContentData).Template as ITemplateData;
+                result = this.GetPropertyValue(templateData, propertyType, factory);
             }
             return result;
         }
@@ -233,9 +238,9 @@ namespace DVM4T.Attributes
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
-            if (model != null && model != null && model.ModelData is IPageViewModelData)
+            if (model != null && model != null && model.ModelData is IPageData)
             {
-                var pageModel = (model.ModelData as IPageViewModelData).Page;
+                var pageModel = (model.ModelData as IPageData);
                 result = this.GetPropertyValue(pageModel, propertyType, factory);
             }
             return result;
@@ -255,14 +260,14 @@ namespace DVM4T.Attributes
         /// <param name="propertyType">Actual return type of the Property</param>
         /// <param name="factory">A View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, Type propertyType, IViewModelFactory factory = null);
+        public abstract IEnumerable GetPresentationValues(IList<IContentPresentationData> cps, Type propertyType, IViewModelFactory factory = null);
 
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
-            if (model != null && model != null && model.ModelData is IPageViewModelData)
+            if (model != null && model != null && model.ModelData is IPageData)
             {
-                var cpModels = (model.ModelData as IPageViewModelData).Page.ComponentPresentations;
+                var cpModels = (model.ModelData as IPageData).ComponentPresentations;
                 result = GetPresentationValues(cpModels, propertyType, factory);
             }
             return result;
@@ -300,7 +305,7 @@ namespace DVM4T.Attributes
         //Possible failure: if the same model was meant to represent similar parts of multiple schemas (should however
         //be covered by decent Schema design i.e. use of Embedded Schemas and Linked Components. Same fields shouldn't
         //occur repeatedly)
-        //Possible failure: 
+        
         public string SchemaName
         {
             get
@@ -383,9 +388,9 @@ namespace DVM4T.Attributes
         public bool IsMatch(IViewModelData data, string key)
         {
             bool result = false;
-            if (data is IContentViewModelData)
+            if (data is IContentData)
             {
-                var contentData = data as IContentViewModelData;
+                var contentData = data as IContentData;
                 var compare = new ViewModelAttribute(contentData.Schema.Title, false)
                 {
                     ViewModelKeys = new string[] { key }
@@ -422,9 +427,9 @@ namespace DVM4T.Attributes
         {
 
             bool result = false;
-            if (data is IPageViewModelData)
+            if (data is IPageData)
             {
-                var contentData = data as IPageViewModelData;
+                var contentData = data as IPageData;
                 return ViewModelKeys.Any(x => x.Equals(key));
             }
             return result;

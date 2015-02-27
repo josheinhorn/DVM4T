@@ -5,6 +5,7 @@ using System.Text;
 using DVM4T.Contracts;
 using DD4T.ContentModel;
 using System.Collections;
+
 namespace DVM4T.DD4T
 {
     //TODO: Consider creating Factory or Provider to create these, especially ComponentPresentation
@@ -237,6 +238,52 @@ namespace DVM4T.DD4T
             get { return fieldset; }
         }
     }
+
+    public class ContentData : IContentData
+    {
+        private readonly IFieldsData content;
+        private readonly ISchemaData schema;
+        private readonly ITemplateData template;
+        private readonly int publicationId;
+        public ContentData(IFieldsData content, ISchemaData schema, ITemplateData template)
+        {
+            this.content = content;
+            this.schema = schema;
+            this.template = template;
+            publicationId = template.PublicationId;
+        }
+
+        public IFieldsData Content
+        {
+            get { return content; }
+        }
+
+        public ISchemaData Schema
+        {
+            get { return schema; }
+        }
+
+        public ITemplateData Template
+        {
+            get { return template; }
+        }
+
+        public IFieldsData Metadata
+        {
+            get { return null; }
+        }
+
+        public int PublicationId
+        {
+            get { return publicationId; }
+        }
+
+        public object BaseData
+        {
+            get { return content; }
+        }
+    }
+
     public class MultimediaData : IMultimediaData
     {
         private IMultimedia multimedia;
@@ -267,6 +314,7 @@ namespace DVM4T.DD4T
             get { return multimedia; }
         }
     }
+    
     public class Component : TridionItemBase, IComponentData
     {
         private IFieldsData fields;
@@ -287,12 +335,12 @@ namespace DVM4T.DD4T
             this.multimedia = new MultimediaData(dd4t.Multimedia);
         }
 
-        public IFieldsData Fields
+        public IFieldsData Content
         {
             get { return fields; }
         }
 
-        public IFieldsData MetadataFields
+        public IFieldsData Metadata
         {
             get
             {
@@ -319,7 +367,7 @@ namespace DVM4T.DD4T
         }
     }
 
-    public class ComponentTemplate : TridionItemBase, IComponentTemplateData
+    public class ComponentTemplate : TridionItemBase, ITemplateData
     {
         private readonly IComponentTemplate template;
         private readonly IFieldsData metadataFields;
@@ -351,28 +399,37 @@ namespace DVM4T.DD4T
         }
     }
 
-    public class ComponentPresentation : IComponentPresentationData
+    public class ComponentPresentation : IContentPresentationData
     {
-        private IComponentData component;
-        private IComponentTemplateData template;
-        private IComponentPresentation cp;
+        private readonly IComponentData component;
+        private readonly ITemplateData template;
+        private readonly IComponentPresentation cp;
+
         public ComponentPresentation(IComponentPresentation cp)
         {
             this.cp = cp;
             component = new Component(cp.Component);
             template = new ComponentTemplate(cp.ComponentTemplate);
         }
-        public ComponentPresentation(IComponentData component, IComponentTemplateData template)
+        public ComponentPresentation(IComponent component, IComponentTemplate template)
+        {
+            this.cp = Helper.BuildComponentPresentation(component, template); //Helps get around naming conflicts
+            this.component = new Component(component);
+            this.template = new ComponentTemplate(template);
+        }
+        public ComponentPresentation(IComponentData component, ITemplateData template)
         {
             this.component = component;
             this.template = template;
+            this.cp = Helper.BuildComponentPresentation(component.BaseData as IComponent, template.BaseData as IComponentTemplate);
         }
+        
         public IComponentData Component
         {
             get { return component; }
         }
-
-        public IComponentTemplateData ComponentTemplate
+        [Obsolete("Use Template instead")]
+        public ITemplateData ComponentTemplate
         {
             get { return template; }
         }
@@ -381,8 +438,48 @@ namespace DVM4T.DD4T
         {
             get { return cp; }
         }
+
+        public IMultimediaData MultimediaData
+        {
+            get { return component == null ? null : component.MultimediaData; }
+        }
+
+        public string TcmUri
+        {
+            get { return component == null ? null : component.TcmUri; }
+        }
+
+        public string Title
+        {
+            get { return component == null ? null : component.Title; }
+        }
+
+        public IFieldsData Content
+        {
+            get { return component == null ? null : component.Content; }
+        }
+
+        public ISchemaData Schema
+        {
+            get { return component == null ? null : component.Schema; }
+        }
+
+        public ITemplateData Template
+        {
+            get { return template; }
+        }
+
+        public IFieldsData Metadata
+        {
+            get { return component == null ? null : component.Metadata; }
+        }
+
+        public int PublicationId
+        {
+            get { return component == null ? 0 : component.PublicationId; }
+        }
     }
-    public class PageTemplate : TridionItemBase, IPageTemplateData
+    public class PageTemplate : TridionItemBase, ITemplateData
     {
         private readonly IPageTemplate template;
         private readonly IFieldsData metadataFields;
@@ -430,19 +527,26 @@ namespace DVM4T.DD4T
         public Page(IPage page)
         {
             this.page = page;
-            ComponentPresentations = page.ComponentPresentations.Select(x => new ComponentPresentation(x) as IComponentPresentationData).ToList();
+            ComponentPresentations = page.ComponentPresentations.Select(x => new ComponentPresentation(x) as IContentPresentationData).ToList();
             Metadata = new FieldSet(page.MetadataFields);
             FileName = page.Filename;
-            PageTemplate = new PageTemplate(page.PageTemplate);
+            Template = new PageTemplate(page.PageTemplate);
+            PageTemplate = Template;
         }
 
-        public IList<IComponentPresentationData> ComponentPresentations
+        public IList<IContentPresentationData> ComponentPresentations
+        {
+            get;
+            private set;
+        }
+        [Obsolete("Use Template instead")]
+        public ITemplateData PageTemplate
         {
             get;
             private set;
         }
 
-        public IPageTemplateData PageTemplate
+        public ITemplateData Template
         {
             get;
             private set;

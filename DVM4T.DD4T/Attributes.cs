@@ -10,6 +10,7 @@ using DD4T.Mvc.Html;
 using System.Web.Mvc;
 using DVM4T.Core;
 using DVM4T.Exceptions;
+using DD4T.ContentModel;
 
 namespace DVM4T.DD4T.Attributes
 {
@@ -53,7 +54,8 @@ namespace DVM4T.DD4T.Attributes
         public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
         {
             object fieldValue = null;
-            var linkedComponentValues = field.Values.Cast<Dynamic.IComponent>().ToList();
+            var linkedComps = field.Values.Cast<Dynamic.IComponent>();
+            var linkedComponentValues = linkedComps.Select(x => Dependencies.DataFactory.GetModelData(x)).ToList();
             if (linkedComponentValues != null && linkedComponentValues.Count > 0)
             {
                 if (AllowMultipleValues)
@@ -64,12 +66,11 @@ namespace DVM4T.DD4T.Attributes
                     }
                     else
                     {
-                        var linkedComps = linkedComponentValues.Select(x => new Component(x));
                         //Property must implement IList<IComponentPresentationViewModel> -- use ComponentViewModelList<T>
                         IList<IViewModel> list =
                             (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType);
 
-                        foreach (var component in linkedComps)
+                        foreach (var component in linkedComponentValues)
                         {
                             var model = BuildLinkedComponent(component, template, factory);
                             if (model != null)
@@ -80,8 +81,8 @@ namespace DVM4T.DD4T.Attributes
                 }
                 else
                 {
-                    fieldValue = linkedComponentTypes == null ? (object)linkedComponentValues[0]
-                        : (object)BuildLinkedComponent(new Component(linkedComponentValues[0]), template, factory);
+                    fieldValue = linkedComponentTypes == null ? (object)linkedComps.First()
+                        : (object)BuildLinkedComponent(linkedComponentValues[0], template, factory);
                 }
             }
             return fieldValue;
@@ -103,18 +104,13 @@ namespace DVM4T.DD4T.Attributes
         }
         private IViewModel BuildLinkedComponent(IComponentData component, ITemplateData template, IViewModelFactory factory)
         {
-            IComponentPresentationData linkedCp = new ComponentPresentation
-            (
-                component as Component,
-                template as ComponentTemplate
-            );
-            //need to determine schema to choose the Type
+            IContentPresentationData linkedCp = Dependencies.DataFactory.GetModelData(
+                Dependencies.DD4TFactory.BuildComponentPresentation(component, template)); //Lots of dependencies here
             Type type = GetViewModelType(linkedCp, factory);
-            //linkedModel = BuildCPViewModel(linkedType, linkedCp);
             if (type == null) return null;
-            else return factory.BuildViewModel(type, new ComponentPresentationViewModelData(linkedCp, factory));
+            else return factory.BuildViewModel(type, linkedCp);
         }
-        private Type GetViewModelType(IComponentPresentationData cp, IViewModelFactory factory)
+        private Type GetViewModelType(IContentPresentationData cp, IViewModelFactory factory)
         {
             //Create some algorithm to determine the proper view model type, perhaps build a static collection of all Types with the
             //View Model Attribute and set the key to the schema name + template name?
@@ -124,7 +120,7 @@ namespace DVM4T.DD4T.Attributes
             try
             {
                 result = factory.FindViewModelByAttribute<IContentModelAttribute>(
-                    new ComponentPresentationViewModelData(cp, factory), LinkedComponentTypes);
+                    cp, LinkedComponentTypes);
             }
             catch (ViewModelTypeNotFoundException)
             {
@@ -132,8 +128,6 @@ namespace DVM4T.DD4T.Attributes
             }
             return result;
         }
-
-
     }
     /// <summary>
     /// An Attribute for a Property representing the Link Resolved URL for a Linked or Multimedia Component
@@ -186,25 +180,31 @@ namespace DVM4T.DD4T.Attributes
         public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
         {
             object fieldValue = null;
-            var embeddedValues = field.Values.Cast<Dynamic.FieldSet>().Select(x => new FieldSet(x)).ToList();
+            var embeddedValues = field.Values.Cast<Dynamic.IFieldSet>().ToList();
             if (embeddedValues != null && embeddedValues.Count > 0)
             {
                 if (AllowMultipleValues)
                 {
-                    //Property must implement IList<IEmbeddedSchemaViewModel> -- use EmbeddedViewModelList<T>
+                    //Property must implement IList<IEmbeddedSchemaViewModel> -- use ViewModelList<T>
                     IList<IViewModel> list = (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType);
                     foreach (var fieldSet in embeddedValues)
                     {
                         list.Add(factory.BuildViewModel(
                             EmbeddedSchemaType,
-                            new ContentViewModelData(fieldSet, field.EmbeddedSchema, template, factory)));
+                            Dependencies.DataFactory.GetModelData(
+                                fieldSet,
+                                field.EmbeddedSchema.BaseData as ISchema, //Assuming it's DD4T implemented
+                                template.BaseData as IComponentTemplate)));
                     }
                     fieldValue = list;
                 }
                 else
                 {
                     fieldValue = factory.BuildViewModel(EmbeddedSchemaType,
-                        new ContentViewModelData(embeddedValues[0], field.EmbeddedSchema, template, factory));
+                        Dependencies.DataFactory.GetModelData(
+                                embeddedValues[0],
+                                field.EmbeddedSchema.BaseData as ISchema, //Assuming it's DD4T implemented
+                                template.BaseData as IComponentTemplate));
                 }
             }
             return fieldValue;
@@ -494,7 +494,7 @@ namespace DVM4T.DD4T.Attributes
     /// </summary>
     public class MultimediaUrlAttribute : ComponentAttributeBase
     {
-        public override object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelFactory factory = null)
+        public override object GetPropertyValue(IComponentData component, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
         {
             string result = null;
             if (component != null && component.MultimediaData != null)
@@ -515,7 +515,7 @@ namespace DVM4T.DD4T.Attributes
     public class MultimediaAttribute : ComponentAttributeBase
     {
 
-        public override object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelFactory factory = null)
+        public override object GetPropertyValue(IComponentData component, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
         {
             IMultimediaData result = null;
             if (component != null && component.MultimediaData != null)
@@ -535,7 +535,7 @@ namespace DVM4T.DD4T.Attributes
     /// </summary>
     public class ComponentTitleAttribute : ComponentAttributeBase
     {
-        public override object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelFactory factory = null)
+        public override object GetPropertyValue(IComponentData component, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
         {
             return component.Title;
         }
@@ -552,7 +552,7 @@ namespace DVM4T.DD4T.Attributes
     {
         //Example of using the BaseData object
 
-        public override object GetPropertyValue(IComponentData component, Type propertyType, IComponentTemplateData template, IViewModelFactory factory = null)
+        public override object GetPropertyValue(IComponentData component, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
         {
             Dynamic.IMultimedia result = null;
             if (component != null && component.MultimediaData != null)
@@ -573,18 +573,18 @@ namespace DVM4T.DD4T.Attributes
     /// <remarks>Use with ViewModelList</remarks>
     public class PresentationsByViewAttribute : ComponentPresentationsAttributeBase
     {
-        public override System.Collections.IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, Type propertyType, IViewModelFactory factory = null)
+        public override System.Collections.IEnumerable GetPresentationValues(IList<IContentPresentationData> cps, Type propertyType, IViewModelFactory factory = null)
         {
             IList<IViewModel> result = ViewModelDefaults.ReflectionCache.CreateInstance(propertyType) as IList<IViewModel>;
             string view = null;
             foreach (var cp in cps)
             {
-                if (cp.ComponentTemplate != null && cp.ComponentTemplate.Metadata != null && cp.ComponentTemplate.Metadata.ContainsKey("view"))
+                if (cp.Template != null && cp.Template.Metadata != null && cp.Template.Metadata.ContainsKey("view"))
                 {
-                    view = cp.ComponentTemplate.Metadata["view"].Values.Cast<string>().FirstOrDefault(); //DD4T Convention for view name
+                    view = cp.Template.Metadata["view"].Values.Cast<string>().FirstOrDefault(); //DD4T Convention for view name
                     if (view != null && view.StartsWith(ViewPrefix))
                     {
-                        result.Add(factory.BuildViewModel(new ComponentPresentationViewModelData(cp, factory)));
+                        result.Add(factory.BuildViewModel((cp)));
                     }
                 }
             }

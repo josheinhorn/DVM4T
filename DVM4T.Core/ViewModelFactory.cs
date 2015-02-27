@@ -78,7 +78,7 @@ namespace DVM4T.Core
             IViewModel viewModel = null;
             viewModel = resolver.ResolveModel(type, modelData);
             viewModel.ModelData = modelData;
-            ProcessViewModel(viewModel, type, modelData.Template);
+            ProcessViewModel(viewModel, type);
             return viewModel;
         }
 
@@ -95,7 +95,7 @@ namespace DVM4T.Core
         #region Private methods
 
 
-        private void ProcessViewModel(IViewModel viewModel, Type type, ITemplateData template)
+        private void ProcessViewModel(IViewModel viewModel, Type type)
         {
             //PropertyInfo[] props = type.GetProperties();
             var props = resolver.GetModelProperties(type);
