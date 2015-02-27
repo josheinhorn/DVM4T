@@ -157,13 +157,20 @@ namespace DVM4T.Attributes
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
-            if (model != null && model.ModelData != null && model.ModelData is IContentPresentationData)
+            if (model != null && model.ModelData != null)
             {
-                var cpData = model.ModelData as IContentPresentationData;
-                if (cpData != null)
+                if (model.ModelData is IContentPresentationData)
                 {
-                    result = GetPropertyValue(cpData.Component, propertyType,
-                        cpData.Template, factory);
+                    var cpData = model.ModelData as IContentPresentationData;
+                    if (cpData != null)
+                    {
+                        result = GetPropertyValue(cpData.Component, propertyType,
+                            cpData.Template, factory);
+                    }
+                }
+                else if (model.ModelData is IComponentData) //Not all components come with Templates
+                {
+                    result = GetPropertyValue(model.ModelData as IComponentData, propertyType, null, factory);
                 }
             }
             return result;
@@ -182,7 +189,7 @@ namespace DVM4T.Attributes
     /// <summary>
     ///  A Base class for an Attribute identifying a Property that represents some part of a Component Template
     /// </summary>
-    public abstract class ComponentTemplateAttributeBase : ModelPropertyAttributeBase, IComponentTemplateAttribute
+    public abstract class ComponentTemplateAttributeBase : ModelPropertyAttributeBase, ITemplateAttribute
     {
         /// <summary>
         /// When overriden in a derived class, this gets the value of the Property for a given Component Template
@@ -196,7 +203,7 @@ namespace DVM4T.Attributes
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
-            if (model != null && model.ModelData is IContentData 
+            if (model != null && model.ModelData is IContentData
                 && (model.ModelData as IContentData).Template is ITemplateData)
             {
                 var templateData = (model.ModelData as IContentData).Template as ITemplateData;
@@ -250,6 +257,7 @@ namespace DVM4T.Attributes
     /// <summary>
     /// A Base class for an Attribute identifying a Property that represents a set of Component Presentations
     /// </summary>
+    /// <remarks>The View Model must be a Page</remarks>
     public abstract class ComponentPresentationsAttributeBase : ModelPropertyAttributeBase //For use in a PageModel
     {
         //Really leaving the bulk of the work to implementer -- they must both find out if the CP matches this attribute and then construct an object with it
@@ -305,7 +313,7 @@ namespace DVM4T.Attributes
         //Possible failure: if the same model was meant to represent similar parts of multiple schemas (should however
         //be covered by decent Schema design i.e. use of Embedded Schemas and Linked Components. Same fields shouldn't
         //occur repeatedly)
-        
+
         public string SchemaName
         {
             get
@@ -430,6 +438,39 @@ namespace DVM4T.Attributes
             if (data is IPageData)
             {
                 var contentData = data as IPageData;
+                return ViewModelKeys.Any(x => x.Equals(key));
+            }
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// An Attribute for identifying a Keyword View Model
+    /// </summary>
+    public class KeywordViewModelAttribute : Attribute, IKeywordModelAttribute
+    {
+        public KeywordViewModelAttribute(string[] viewModelKeys)
+        {
+            ViewModelKeys = viewModelKeys;
+        }
+        public string[] ViewModelKeys
+        {
+            get;
+            set;
+        }
+
+        public bool IsMatch(IViewModelData data, IViewModelKeyProvider provider)
+        {
+            string key = provider.GetViewModelKey(data);
+            return IsMatch(data, key);
+        }
+
+        public bool IsMatch(IViewModelData data, string key)
+        {
+            bool result = false;
+            if (data is IKeywordData)
+            {
+                //var contentData = data as IKeywordData;
                 return ViewModelKeys.Any(x => x.Equals(key));
             }
             return result;

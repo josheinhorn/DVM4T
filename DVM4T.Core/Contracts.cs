@@ -58,52 +58,34 @@ namespace DVM4T.Contracts
     {
         string TcmUri { get; }
         string Title { get; }
-        //int PublicationId { get; }
     }
     public interface IContentData : ITemplatedViewModelData
     {
         IFieldsData Content { get; }
-        //ITemplateData Template { get; }
         ISchemaData Schema { get; }
     }
     public interface IPageData : ITridionItemData, ITemplatedViewModelData
     {
         IList<IContentPresentationData> ComponentPresentations { get; }
-        //IPageTemplateData PageTemplate { get; }
         string FileName { get; }
-        //IFieldsData Metadata { get; }
     }   
     public interface IContentPresentationData : ITridionItemData, IContentData //This is essentially a replacement for IComponent
     {
-        //IComponentData Component { get; }
-        //IComponentTemplateData ComponentTemplate { get; }
         IComponentData Component { get; }
         IMultimediaData MultimediaData { get; }
     }
 
-    //Deprecated?? - use IContentPresentationData
+    //Deprecated?? - use IContentPresentationData instead? 
     public interface IComponentData : ITridionItemData, IViewModelData 
     {
         IFieldsData Content { get; }
-        //IFieldsData Metadata { get; }
         ISchemaData Schema { get; }
         IMultimediaData MultimediaData { get; }
     }
     public interface ITemplateData : ITridionItemData, IViewModelData
     {
-        //IFieldsData Metadata { get; }
         DateTime RevisionDate { get; }
     }
-    //TODO: Remove these 2, we don't need to differentiate between them
-    //public interface IComponentTemplateData : ITemplateData
-    //{
-    //    //Anything specific to this?
-    //}
-    //public interface IPageTemplateData : ITemplateData
-    //{
-    //    //Anything specific to this?
-    //}
-
 
     public interface IMultimediaData : IHaveData
     {
@@ -149,7 +131,6 @@ namespace DVM4T.Contracts
     public interface IKeywordData : ITridionItemData, IViewModelData
     {
         string Key { get; }
-        //IFieldsData Metadata { get; }
     }
 
     #endregion
@@ -195,43 +176,6 @@ namespace DVM4T.Contracts
         /// </summary>
         ITemplateData Template { get; } 
     }
-
-    #region Deprecated
-    ///// <summary>
-    ///// View Model Data for a Content-driven Model
-    ///// </summary>
-    //public interface IContentViewModelData : ITemplatedData
-    //{
-    //    ISchemaData Schema { get; }
-    //    IFieldsData Content { get; }
-    //}
-    ///// <summary>
-    ///// View Model Data for a Component Presentation Model
-    ///// </summary>
-    //public interface IComponentPresentationViewModelData : IContentViewModelData
-    //{
-    //    IContentPresentationData ComponentPresentation { get; }
-    //}
-
-    ///// <summary>
-    ///// View Model Data for an Embedded Schema Model
-    ///// </summary>
-    //public interface IEmbeddedSchemaViewModelData : IContentViewModelData
-    //{
-    //    //??
-    //}
-    ///// <summary>
-    ///// View Model Data for a Page Model
-    ///// </summary>
-    //public interface IPageViewModelData : IViewModelData
-    //{
-    //    IPageData Page { get; }
-    //}
-    //public interface IKeywordViewModelData : IViewModelData
-    //{
-    //    IKeywordData Keyword { get; }
-    //}
-    #endregion
 
     public interface IViewModelResolver
     {
@@ -645,9 +589,9 @@ namespace DVM4T.Contracts
         /// <summary>
         /// Gets a value for this Property based on a Component
         /// </summary>
-        /// <param name="component">The Component object for this Model</param>
+        /// <param name="contentPresentation">The Component object for this Model</param>
         /// <param name="propertyType">The actual return type of this Property</param>
-        /// <param name="template">The Template for this Model</param>
+        /// 
         /// <param name="builder">A View Model builder</param>
         /// <returns>The Property value</returns>
         object GetPropertyValue(IComponentData component, Type propertyType, ITemplateData template, IViewModelFactory builder = null);
@@ -655,7 +599,7 @@ namespace DVM4T.Contracts
     /// <summary>
     /// An Attribtue for a Property representing some part of a Component Template
     /// </summary>
-    public interface IComponentTemplateAttribute : IPropertyAttribute
+    public interface ITemplateAttribute : IPropertyAttribute
     {
         /// <summary>
         /// Gets a value for this Property based on a Component Template
@@ -680,20 +624,20 @@ namespace DVM4T.Contracts
         /// <returns>The Property value</returns>
         object GetPropertyValue(IPageData page, Type propertyType, IViewModelFactory builder = null);
     }
-    /// <summary>
-    /// An Attribute for a Property representing some part of a Page Template
-    /// </summary>
-    public interface IPageTemplateAttribute : IPropertyAttribute
-    {
-        /// <summary>
-        /// Gets a value for this Property based on a Page Template
-        /// </summary>
-        /// <param name="pageTemplate">The Page Template for this Model</param>
-        /// <param name="propertyType">The actual return type of this Property</param>
-        /// <param name="builder">A View Model builder</param>
-        /// <returns>The Property value</returns>
-        object GetPropertyValue(ITemplateData pageTemplate, Type propertyType, IViewModelFactory builder = null);
-    }
+    ///// <summary>
+    ///// An Attribute for a Property representing some part of a Page Template
+    ///// </summary>
+    //public interface IPageTemplateAttribute : IPropertyAttribute
+    //{
+    //    /// <summary>
+    //    /// Gets a value for this Property based on a Page Template
+    //    /// </summary>
+    //    /// <param name="pageTemplate">The Page Template for this Model</param>
+    //    /// <param name="propertyType">The actual return type of this Property</param>
+    //    /// <param name="builder">A View Model builder</param>
+    //    /// <returns>The Property value</returns>
+    //    object GetPropertyValue(ITemplateData pageTemplate, Type propertyType, IViewModelFactory builder = null);
+    //}
     /// <summary>
     /// An Attribute for identifying a View Model class
     /// </summary>
@@ -704,14 +648,16 @@ namespace DVM4T.Contracts
         /// </summary>
         string[] ViewModelKeys { get; set; }
         
+        
+        //[Obsolete("Use IsMatch(IViewModelData, string) instead")]
+        //bool IsMatch(IViewModelData data, IViewModelKeyProvider provider);
+
         /// <summary>
         /// Checks if this Model is a match for a specific View Model Data
         /// </summary>
         /// <param name="data">View Model Data to compare</param>
-        /// <param name="provider">View Model Key Provider</param>
+        /// <param name="key">View Model Key</param>
         /// <returns>True if it matches, false if not</returns>
-        [Obsolete("Use IsMatch(IViewModelData, string) instead")]
-        bool IsMatch(IViewModelData data, IViewModelKeyProvider provider);
         bool IsMatch(IViewModelData data, string key);
     }
     /// <summary>
@@ -738,5 +684,10 @@ namespace DVM4T.Contracts
     public interface IPageModelAttribute : IModelAttribute
     {
         //What Properties go here to identify a Page Model?
+    }
+
+    public interface IKeywordModelAttribute : IModelAttribute
+    {
+        //Anything?
     }
 }

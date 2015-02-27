@@ -380,9 +380,10 @@ namespace DVM4T.DD4T.Attributes
     /// <summary>
     /// A Keyword field
     /// </summary>
-    public class KeywordFieldAttribute : FieldAttributeBase
+    [Obsolete]
+    public class KeywordFieldAttributeOld : FieldAttributeBase
     {
-        public KeywordFieldAttribute(string fieldName) : base(fieldName) { }
+        public KeywordFieldAttributeOld(string fieldName) : base(fieldName) { }
         public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
         {
             object fieldValue = null;
@@ -602,5 +603,85 @@ namespace DVM4T.DD4T.Attributes
             get { return typeof(IList<IViewModel>); }
         }
     }
+
+    public class KeywordFieldAttribute : FieldAttributeBase
+    {
+        public KeywordFieldAttribute(string fieldName)
+            : base(fieldName)
+        {
+        }
+        public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
+        {
+            object fieldValue = null;
+            var keywords = field.Values.Cast<Dynamic.IKeyword>().ToList();
+            if (keywords != null && keywords.Count > 0)
+            {
+                if (AllowMultipleValues)
+                {
+                    if (KeywordType == null)
+                        fieldValue = keywords;
+                    else
+                    {
+                        //Property must implement IList<IEmbeddedSchemaViewModel> -- use ViewModelList<T>
+                        IList<IViewModel> list = (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType);
+                        foreach (var keyword in keywords)
+                        {
+                            list.Add(factory.BuildViewModel(
+                                KeywordType,
+                                Dependencies.DataFactory.GetModelData(keyword)));
+                        }
+                        fieldValue = list;
+                    }
+                }
+                else
+                {
+                    fieldValue = KeywordType == null ? (object)keywords[0] : 
+                        factory.BuildViewModel(KeywordType, Dependencies.DataFactory.GetModelData(keywords[0]));
+                }
+            }
+            return fieldValue;
+        }
+
+        public override Type ExpectedReturnType
+        {
+            get
+            { //return AllowMultipleValues ? typeof(IList<IViewModel>) : typeof(IViewModel); }
+
+                if (AllowMultipleValues)
+                {
+                    return KeywordType == null ? typeof(IList<Dynamic.IKeyword>) : typeof(IList<IViewModel>);
+                }
+                else
+                {
+                    return KeywordType == null ? typeof(Dynamic.IKeyword) : typeof(IViewModel);
+                }
+            }
+        }
+
+        public Type KeywordType
+        {
+            get;
+            set;
+        }
+    }
+
+    public class KeywordDataAttribute : ModelPropertyAttributeBase
+    {
+        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
+        {
+            object result = null;
+            if (model != null && model.ModelData != null && model.ModelData is IKeywordData)
+            {
+                result = model.ModelData as IKeywordData;
+            }
+            return result;
+        }
+
+        public override Type ExpectedReturnType
+        {
+            get { return typeof(IKeywordData); }
+        }
+    }
+    
     
 }

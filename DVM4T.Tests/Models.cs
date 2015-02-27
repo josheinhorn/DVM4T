@@ -40,6 +40,9 @@ namespace DVM4T.Testing.Models
 
         [TextField("view", IsTemplateMetadata = true)]
         public string ViewName { get; set; }
+
+        [KeywordField("backgroundColor", KeywordType = typeof(Color))]
+        public Color BackgroundColor { get; set; }
     }
 
     [ViewModel("Image", true)]
@@ -120,5 +123,18 @@ namespace DVM4T.Testing.Models
 
         [TextField("javascript", IsMetadata = true)]
         public String Javascript { get; set; }
+    }
+
+    [KeywordViewModel(new string[] {"Keyword"})]
+    public class Color : ViewModelBase
+    {
+        [KeywordData]
+        public IKeywordData Keyword { get; set; }
+
+        [TextField("rgbValue", IsMetadata = true)]
+        public string RgbValue { get; set; }
+
+        [NumberField("decimalValue", IsMetadata = true)]
+        public double NumericValue { get; set; }
     }
 }
