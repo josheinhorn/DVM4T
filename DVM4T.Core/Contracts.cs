@@ -188,8 +188,9 @@ namespace DVM4T.Contracts
         int PublicationId { get; }
     }
 
-
-
+    /// <summary>
+    /// A Resolver for View Models
+    /// </summary>
     public interface IViewModelResolver
     {
         /// <summary>
@@ -217,28 +218,60 @@ namespace DVM4T.Contracts
         //T GetModelData<T>(data parameters) where T : IViewModelData
     }
 
+    /// <summary>
+    /// A Factory for building View Models with input base data
+    /// </summary>
     public interface IViewModelFactory
     {
         /// <summary>
-        /// Loads all View Model classes from an assembly
+        /// Loads all View Model classes from an assembly.
         /// </summary>
         /// <param name="assembly">The Assembly with the view model Types to load</param>
         /// <remarks>
         /// Required for use of builder methods that don't require a Type parameter or generic.
-        /// The Builder will only use Types tagged with the ViewModelAttribute class.
+        /// The Builder will only use Types tagged with an IModelAttribute Attribute.
         /// </remarks>
         void LoadViewModels(Assembly assembly);
         /// <summary>
-        /// Finds a View Model with the specified Type using the input Data
+        /// Finds a View Model with the specified Type using the input Data.
         /// </summary>
         /// <typeparam name="T">Type of View Model Attribute</typeparam>
         /// <param name="data">View Model Data to search for</param>
         /// <param name="typesToSearch">Optional array of possible Types to search through</param>
-        /// <returns></returns>
+        /// <returns>View Model Type</returns>
         Type FindViewModelByAttribute<T>(IViewModelData data, Type[] typesToSearch = null) where T : IModelAttribute;
+        /// <summary>
+        /// Builds a View Model, inferring the Type based on the Model Data.
+        /// </summary>
+        /// <param name="modelData">Model Data</param>
+        /// <returns>A View Model</returns>
+        /// <remarks>Requires LoadViewModels to have been used.</remarks>
         IViewModel BuildViewModel(IViewModelData modelData);
+        /// <summary>
+        /// Builds a View Model, inferring the Type based on the Model Data and filtering possible Model Types by an Attribute.
+        /// </summary>
+        /// <typeparam name="T">The Model Attribute to filter Model Types by</typeparam>
+        /// <param name="modelData">Model Data</param>
+        /// <returns>View Model</returns>
+        /// <remarks>
+        /// One can use a Model Attribute Type to filter to only certain types of models such as Page Models
+        /// or Keyword Models to increase performance.
+        /// Requires LoadViewModels to have been used.
+        /// </remarks>
         IViewModel BuildViewModelByAttribute<T>(IViewModelData modelData) where T : IModelAttribute;
-        IViewModel BuildViewModel(Type type, IViewModelData modelData);
+        /// <summary>
+        /// Builds a View Model of the specified type.
+        /// </summary>
+        /// <param name="type">Specific type of View Model to build - must implement IViewModel</param>
+        /// <param name="modelData">Model Data</param>
+        /// <returns>View Model</returns>
+        IViewModel BuildViewModel(Type type, IViewModelData modelData); //Does this need to be publicly exposed?
+        /// <summary>
+        /// Builds a View Model of the specified type.
+        /// </summary>
+        /// <typeparam name="T">Specific type of View Model to build</typeparam>
+        /// <param name="modelData">Model Data</param>
+        /// <returns>View Model</returns>
         T BuildViewModel<T>(IViewModelData modelData) where T : IViewModel;
     }
 
@@ -366,7 +399,10 @@ namespace DVM4T.Contracts
         bool IsSiteEditEnabled(int publicationId);
     }
 
-    //TODO: Instantiate and add these to the IViewModel using System.Reflection's MakeGenericType
+    /// <summary>
+    /// An object that renders XPM Markup for a specific Model
+    /// </summary>
+    /// <typeparam name="TModel">Type of Model</typeparam>
     public interface IXpmRenderer<TModel> where TModel : IViewModel
     {
         /// <summary>
@@ -447,6 +483,9 @@ namespace DVM4T.Contracts
         string GetViewModelKey(IViewModelData model);
     }
 
+    /// <summary>
+    /// Object can be a Boolean
+    /// </summary>
     public interface ICanBeBoolean
     {
         /// <summary>
@@ -529,6 +568,9 @@ namespace DVM4T.Contracts
         Type PropertyType { get; }
     }
   
+    /// <summary>
+    /// An attribute for a Property of a View Model
+    /// </summary>
     public interface IPropertyAttribute
     {
         /// <summary>
@@ -584,7 +626,6 @@ namespace DVM4T.Contracts
         bool IsTemplateMetadata { get; set; }
     }
 
-    //TODO: Anyway to merge all three interfaces into one? They're so similar
     //TODO: Use these interfaces in the builder
     
     /// <summary>
@@ -630,20 +671,6 @@ namespace DVM4T.Contracts
         /// <returns>The Property value</returns>
         object GetPropertyValue(IPageData page, Type propertyType, IViewModelFactory builder = null);
     }
-    ///// <summary>
-    ///// An Attribute for a Property representing some part of a Page Template
-    ///// </summary>
-    //public interface IPageTemplateAttribute : IPropertyAttribute
-    //{
-    //    /// <summary>
-    //    /// Gets a value for this Property based on a Page Template
-    //    /// </summary>
-    //    /// <param name="pageTemplate">The Page Template for this Model</param>
-    //    /// <param name="propertyType">The actual return type of this Property</param>
-    //    /// <param name="builder">A View Model builder</param>
-    //    /// <returns>The Property value</returns>
-    //    object GetPropertyValue(ITemplateData pageTemplate, Type propertyType, IViewModelFactory builder = null);
-    //}
     /// <summary>
     /// An Attribute for identifying a View Model class
     /// </summary>
@@ -692,7 +719,9 @@ namespace DVM4T.Contracts
     {
         //What Properties go here to identify a Page Model?
     }
-
+    /// <summary>
+    /// An Attribute for identifying a Keyword Model class
+    /// </summary>
     public interface IKeywordModelAttribute : IModelAttribute
     {
         //Anything?

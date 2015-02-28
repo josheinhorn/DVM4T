@@ -386,7 +386,7 @@ namespace DVM4T.Attributes
                 var definedData = data as IDefinedData;
                 var compare = new ViewModelAttribute(definedData.Schema.Title, false)
                 {
-                    ViewModelKeys = new string[] { key }
+                    ViewModelKeys = key == null ? null : new string[] { key }
                 };
                 result = this.Equals(compare);
             }

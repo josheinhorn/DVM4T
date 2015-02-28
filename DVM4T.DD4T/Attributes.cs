@@ -613,36 +613,39 @@ namespace DVM4T.DD4T.Attributes
         public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
         {
             object fieldValue = null;
-            var keywords = field.Values.Cast<Dynamic.IKeyword>().ToList();
-            string categoryName = null;
-            var dd4tField = field as IField;
-            if (dd4tField != null)
+            if (field != null)
             {
-                categoryName = dd4tField.CategoryName;
-            }
-            if (keywords != null && keywords.Count > 0)
-            {
-                if (AllowMultipleValues)
+                var keywords = field.Values.Cast<Dynamic.IKeyword>().ToList();
+                string categoryName = null;
+                var dd4tField = field.BaseData as IField;
+                if (dd4tField != null)
                 {
-                    if (KeywordType == null)
-                        fieldValue = keywords;
+                    categoryName = dd4tField.CategoryName;
+                }
+                if (keywords != null && keywords.Count > 0)
+                {
+                    if (AllowMultipleValues)
+                    {
+                        if (KeywordType == null)
+                            fieldValue = keywords;
+                        else
+                        {
+                            //Property must implement IList<IEmbeddedSchemaViewModel> -- use ViewModelList<T>
+                            IList<IViewModel> list = (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType);
+                            foreach (var keyword in keywords)
+                            {
+                                list.Add(factory.BuildViewModel(
+                                    KeywordType,
+                                    Dependencies.DataFactory.GetModelData(keyword, categoryName)));
+                            }
+                            fieldValue = list;
+                        }
+                    }
                     else
                     {
-                        //Property must implement IList<IEmbeddedSchemaViewModel> -- use ViewModelList<T>
-                        IList<IViewModel> list = (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType);
-                        foreach (var keyword in keywords)
-                        {
-                            list.Add(factory.BuildViewModel(
-                                KeywordType,
-                                Dependencies.DataFactory.GetModelData(keyword, categoryName)));
-                        }
-                        fieldValue = list;
+                        fieldValue = KeywordType == null ? (object)keywords[0] :
+                            factory.BuildViewModel(KeywordType, Dependencies.DataFactory.GetModelData(keywords[0], categoryName));
                     }
-                }
-                else
-                {
-                    fieldValue = KeywordType == null ? (object)keywords[0] :
-                        factory.BuildViewModel(KeywordType, Dependencies.DataFactory.GetModelData(keywords[0], categoryName));
                 }
             }
             return fieldValue;

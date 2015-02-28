@@ -161,10 +161,59 @@ namespace DVM4T.Testing
             var newModel = ViewModelDefaults.Factory.BuildViewModel<GeneralContentViewModel>(new ComponentPresentation(cp));
             Assert.AreEqual(expectedString, newModel.Body.ToHtmlString());
         }
-
-        private Dynamic.ComponentPresentation GetManuallyBuiltCp()
+        private Dynamic.Component GetGeneralContentComponent()
+        {
+            return new Dynamic.Component
+            {
+                Id = "tcm:1-22",
+                ComponentType = Dynamic.ComponentType.Normal,
+                Schema = new Dynamic.Schema
+                {
+                    Title = "GeneralContent"
+                },
+                Fields = new Dynamic.FieldSet
+                {
+                    {
+                        "backgroundColor",
+                        new Dynamic.Field
+                        {
+                            FieldType = Dynamic.FieldType.Keyword,
+                            Keywords = new List<Dynamic.Keyword> { GetColorKeyword() },
+                            CategoryName = "Colors"
+                        }
+                    },
+                    {
+                        "title",
+                        new Dynamic.Field
+                        {
+                            FieldType = Dynamic.FieldType.Text,
+                            Values = new List<string> { "I'm general content"}
+                        }
+                    },
+                    {
+                        "body",
+                        new Dynamic.Field
+                        {
+                            FieldType = Dynamic.FieldType.Xhtml,
+                            Values = new List<string> { "<p>Rich text</p>" }
+                        }
+                    },
+                    {
+                        "someNumber",
+                        new Dynamic.Field
+                        {
+                            FieldType = Dynamic.FieldType.Number,
+                            NumericValues = new List<double> { 234 }
+                        }
+                    }
+                }
+            };
+        }
+        private Dynamic.ComponentPresentation GetContentContainerCp()
         {
             Dynamic.Component comp = new Dynamic.Component { Id = "tcm:1-23", ComponentType = Dynamic.ComponentType.Normal };
+            Dynamic.Component generalContent = GetGeneralContentComponent();
+
             var linksFieldSet = new Dynamic.FieldSet 
                 { 
                     {
@@ -187,18 +236,30 @@ namespace DVM4T.Testing
                 Component = new Dynamic.Component
                 {
                     Id = "tcm:1-45",
+                    Schema = new Dynamic.Schema
+                    {
+                        Title = "ContentContainer"
+                    },
                     Fields = new Dynamic.FieldSet
                     {
                         {
-                            "links", new Dynamic.Field
+                            "links", 
+                            new Dynamic.Field
                             {
                                 EmbeddedValues = links,
                                 FieldType = Dynamic.FieldType.Embedded,
                                 EmbeddedSchema = new Dynamic.Schema { Id = "tcm:1-354345-8", Title="EmbeddedLink" }
                             }
+                        },
+                        {
+                            "content",
+                            new Dynamic.Field
+                            {
+                                FieldType = Dynamic.FieldType.ComponentLink,
+                                LinkedComponentValues = new List<Dynamic.Component> { generalContent, generalContent }
+                            }
                         }
                     }
-
                 },
                 ComponentTemplate = new Dynamic.ComponentTemplate()
                 {
@@ -221,7 +282,7 @@ namespace DVM4T.Testing
         {
             //setup
             string expectedString = autoMocker.Create<string>();
-            var cp = GetManuallyBuiltCp();
+            var cp = GetContentContainerCp();
             cp.Component.Id = expectedString;
             //exercise
             var newModel = ViewModelDefaults.Factory.BuildViewModel<ContentContainerViewModel>(new ComponentPresentation(cp));
@@ -310,7 +371,7 @@ namespace DVM4T.Testing
         public void TestCustomKeyProvider()
         {
             string key = autoMocker.Create<string>();
-            var cp = GetManuallyBuiltCp();
+            var cp = GetContentContainerCp();
             cp.ComponentTemplate.MetadataFields = new Dynamic.FieldSet()
             {
                 {
@@ -408,7 +469,25 @@ namespace DVM4T.Testing
         [TestMethod]
         public void TestBuildKeywordModel()
         {
-            Dynamic.IKeyword keyword = new Dynamic.Keyword
+            Dynamic.IKeyword keyword = GetColorKeyword();
+            var modelData = Dependencies.DataFactory.GetModelData(keyword, "Colors");
+            ViewModelDefaults.Factory.LoadViewModels(this.GetType().Assembly);
+            var model = ViewModelDefaults.Factory.BuildViewModel(modelData);
+            Assert.IsInstanceOfType(model, typeof(Color));
+        }
+
+        [TestMethod]
+        public void TestNestedKeyword()
+        {
+            var cp = GetContentContainerCp();
+            var modelData = Dependencies.DataFactory.GetModelData(cp);
+            ViewModelDefaults.Factory.LoadViewModels(this.GetType().Assembly);
+            var model = ViewModelDefaults.Factory.BuildViewModel(modelData);
+            Assert.IsInstanceOfType(model, typeof(ContentContainerViewModel));
+        }
+        private Dynamic.Keyword GetColorKeyword()
+        {
+            return new Dynamic.Keyword
             {
                 Title = "Blue",
                 Key = "blue",
@@ -434,10 +513,6 @@ namespace DVM4T.Testing
                 },
                 TaxonomyId = "tcm:1-1-512"
             };
-            var modelData = Dependencies.DataFactory.GetModelData(keyword, "Colors");
-            ViewModelDefaults.Factory.LoadViewModels(this.GetType().Assembly);
-            var model = ViewModelDefaults.Factory.BuildViewModel(modelData);
-            Assert.IsInstanceOfType(model, typeof(Color));
         }
 
         private TModel GetCPModelMockup<TModel, TProp>(Expression<Func<TModel, TProp>> propLambda, TProp value)
