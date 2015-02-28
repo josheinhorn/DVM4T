@@ -41,7 +41,7 @@ namespace DVM4T.DD4T.XPM
             return result ?? string.Empty;
         }
 
-        public string RenderXpmMarkupForComponent(IContentPresentationData cp, string region = null)
+        public string RenderXpmMarkupForComponent(IComponentPresentationData cp, string region = null)
         {
             var dd4tCP = cp == null ? null : cp.BaseData as IComponentPresentation; //Will only work with DD4T implementation
             //new Dynamic.ComponentPresentation

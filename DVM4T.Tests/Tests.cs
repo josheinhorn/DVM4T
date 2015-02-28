@@ -405,6 +405,41 @@ namespace DVM4T.Testing
             Assert.IsNotNull(pageModel);
         }
 
+        [TestMethod]
+        public void TestBuildKeywordModel()
+        {
+            Dynamic.IKeyword keyword = new Dynamic.Keyword
+            {
+                Title = "Blue",
+                Key = "blue",
+                Id = "tcm:1-2-1024",
+                MetadataFields = new Dynamic.FieldSet
+                {
+                    {
+                        "rgbValue",
+                        new Dynamic.Field
+                        {
+                            FieldType = Dynamic.FieldType.Text,
+                            Values = new List<string> { "#0000FF"}
+                        }
+                    },
+                    {
+                        "decimalValue",
+                        new Dynamic.Field
+                        {
+                            FieldType = Dynamic.FieldType.Number,
+                            NumericValues = new List<double> { 255 }
+                        }
+                    }
+                },
+                TaxonomyId = "tcm:1-1-512"
+            };
+            var modelData = Dependencies.DataFactory.GetModelData(keyword, "Colors");
+            ViewModelDefaults.Factory.LoadViewModels(this.GetType().Assembly);
+            var model = ViewModelDefaults.Factory.BuildViewModel(modelData);
+            Assert.IsInstanceOfType(model, typeof(Color));
+        }
+
         private TModel GetCPModelMockup<TModel, TProp>(Expression<Func<TModel, TProp>> propLambda, TProp value)
             where TModel : MockContracts.IComponentPresentationViewModel
         {

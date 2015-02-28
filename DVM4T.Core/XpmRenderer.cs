@@ -20,15 +20,15 @@ namespace DVM4T.XPM
     {
         //This is just an OO implementation of the static extension methods... which one is better
         private readonly IViewModel model;
-        private readonly IContentData contentData = null;
+        private readonly IContentPresentationData contentData = null;
         private readonly IXpmMarkupService xpmMarkupService;
         private readonly IViewModelResolver resolver;
         public XpmRenderer(IViewModel model, IXpmMarkupService service, IViewModelResolver resolver)
         {
             this.model = model;
-            if (model.ModelData is IContentData)
+            if (model.ModelData is IContentPresentationData)
             {
-                contentData = model.ModelData as IContentData;
+                contentData = model.ModelData as IContentPresentationData;
             }
             this.xpmMarkupService = service;
             this.resolver = resolver;
@@ -158,8 +158,8 @@ namespace DVM4T.XPM
         /// <returns>XPM Markup</returns>
         public HtmlString StartXpmEditingZone(string region = null)
         {
-            if (model.ModelData is IContentPresentationData)
-                return new HtmlString(XpmMarkupService.RenderXpmMarkupForComponent(((IContentPresentationData)model.ModelData), region));
+            if (model.ModelData is IComponentPresentationData)
+                return new HtmlString(XpmMarkupService.RenderXpmMarkupForComponent(((IComponentPresentationData)model.ModelData), region));
             else return null;
         }
         #endregion

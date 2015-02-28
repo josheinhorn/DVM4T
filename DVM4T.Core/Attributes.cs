@@ -62,9 +62,9 @@ namespace DVM4T.Attributes
                 {
                     fields = model.ModelData.Metadata;
                 }
-                else if (model.ModelData is IContentData)
+                else if (model.ModelData is IContentPresentationData)
                 {
-                    fields = (model.ModelData as IContentData).Content;
+                    fields = (model.ModelData as IContentPresentationData).Content;
                 }
                 else
                 {
@@ -159,9 +159,9 @@ namespace DVM4T.Attributes
             object result = null;
             if (model != null && model.ModelData != null)
             {
-                if (model.ModelData is IContentPresentationData)
+                if (model.ModelData is IComponentPresentationData)
                 {
-                    var cpData = model.ModelData as IContentPresentationData;
+                    var cpData = model.ModelData as IComponentPresentationData;
                     if (cpData != null)
                     {
                         result = GetPropertyValue(cpData.Component, propertyType,
@@ -203,30 +203,15 @@ namespace DVM4T.Attributes
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
-            if (model != null && model.ModelData is IContentData
-                && (model.ModelData as IContentData).Template is ITemplateData)
+            if (model != null && model.ModelData is IContentPresentationData
+                && (model.ModelData as IContentPresentationData).Template is ITemplateData)
             {
-                var templateData = (model.ModelData as IContentData).Template as ITemplateData;
+                var templateData = (model.ModelData as IContentPresentationData).Template as ITemplateData;
                 result = this.GetPropertyValue(templateData, propertyType, factory);
             }
             return result;
         }
     }
-
-    //public abstract class KeywordMetadataFieldAttributeBase : FieldAttributeBase //TODO: Make interface
-    //{
-    //    public abstract object GetKeywordValues(IList<IKeywordData> keywords, Type propertyType, IViewModelFactory factory = null);
-
-    //    public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
-    //    {
-    //        object result = null;
-    //        if (field.Keywords != null)
-    //        {
-    //            result =  GetKeywordValues(field.Keywords, propertyType, factory);
-    //        }
-    //        return result;
-    //    }
-    //}
 
     /// <summary>
     /// A Base class for an Attribute identifying a Property that represents some part of a Page
@@ -268,7 +253,7 @@ namespace DVM4T.Attributes
         /// <param name="propertyType">Actual return type of the Property</param>
         /// <param name="factory">A View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract IEnumerable GetPresentationValues(IList<IContentPresentationData> cps, Type propertyType, IViewModelFactory factory = null);
+        public abstract IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, Type propertyType, IViewModelFactory factory = null);
 
         public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
         {
@@ -286,7 +271,7 @@ namespace DVM4T.Attributes
     /// <summary>
     /// An Attribute for identifying a Content View Model
     /// </summary>
-    public class ViewModelAttribute : Attribute, IContentModelAttribute //Should be re-named ContentViewModelAttribute
+    public class ViewModelAttribute : Attribute, IDefinedModelAttribute //Should be re-named ContentViewModelAttribute
     {
         //TODO: De-couple this from the Schema name specifically? What would make sense?
         //TOOD: Possibly change this to use purely ViewModelKey and make that an object, leave it to the key provider to assign objects with logical equals overrides
@@ -396,10 +381,10 @@ namespace DVM4T.Attributes
         public bool IsMatch(IViewModelData data, string key)
         {
             bool result = false;
-            if (data is IContentData)
+            if (data is IDefinedData)
             {
-                var contentData = data as IContentData;
-                var compare = new ViewModelAttribute(contentData.Schema.Title, false)
+                var definedData = data as IDefinedData;
+                var compare = new ViewModelAttribute(definedData.Schema.Title, false)
                 {
                     ViewModelKeys = new string[] { key }
                 };
@@ -453,12 +438,15 @@ namespace DVM4T.Attributes
         {
             ViewModelKeys = viewModelKeys;
         }
+        /// <summary>
+        /// View Model Keys for this Keyword
+        /// </summary>
+        /// <remarks>Common View Model Keys for Keywords are Metadata Schema Title or Category Title.</remarks>
         public string[] ViewModelKeys
         {
             get;
             set;
         }
-
         public bool IsMatch(IViewModelData data, IViewModelKeyProvider provider)
         {
             string key = provider.GetViewModelKey(data);
@@ -470,7 +458,6 @@ namespace DVM4T.Attributes
             bool result = false;
             if (data is IKeywordData)
             {
-                //var contentData = data as IKeywordData;
                 return ViewModelKeys.Any(x => x.Equals(key));
             }
             return result;

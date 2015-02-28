@@ -56,10 +56,15 @@ namespace DVM4T.DD4T
     {
         private readonly IKeyword keyword;
         private readonly IFieldsData metadata;
-        public Keyword(IKeyword keyword)
+        private readonly ISchemaData metadataSchema;
+        private readonly ICategoryData category;
+
+        public Keyword(IKeyword keyword, string categoryName = null)
         {
             this.keyword = keyword;
             this.metadata = new FieldSet(keyword.MetadataFields);
+            //DD4T provides no way to retrieve Category
+            this.category = new CategoryData(keyword.TaxonomyId, categoryName);
         }
 
         protected override IItem Item
@@ -72,7 +77,6 @@ namespace DVM4T.DD4T
             get { return keyword; }
         }
 
-
         public string Key
         {
             get { return keyword.Key; }
@@ -81,6 +85,48 @@ namespace DVM4T.DD4T
         public IFieldsData Metadata
         {
             get { return metadata; }
+        }
+
+        public ISchemaData MetadataSchema
+        {
+            get { return metadataSchema; } //No DD4T Metadata Schema
+        }
+
+        public ICategoryData Category
+        {
+            get { return category; } //Only limited DD4T Category Data - TcmUri only!
+        }
+    }
+
+    public class CategoryData : TridionItemBase, ICategoryData
+    {
+        private ICategory category;
+
+        public CategoryData(string taxonomyId, string categoryTitle)
+        {
+            category = new Category
+            {
+                Id = taxonomyId,
+                Title = categoryTitle
+            };
+        }
+        public CategoryData(ICategory category)
+        {
+            this.category = category;
+        }
+        public string XmlName
+        {
+            get { return null; } //No XmlName available in DD4T
+        }
+
+        protected override IItem Item
+        {
+            get { return category; }
+        }
+
+        public override object BaseData
+        {
+            get { return category; }
         }
     }
 
@@ -124,7 +170,7 @@ namespace DVM4T.DD4T
             this.fieldType = field.FieldType.ToString();
             this.xpath = field.XPath;
             this.name = field.Name;
-            this.keywords = field.Keywords != null ? field.Keywords.Select(x => new Keyword(x) as IKeywordData).ToList()
+            this.keywords = field.Keywords != null ? field.Keywords.Select(x => new Keyword(x, field.CategoryName) as IKeywordData).ToList()
                 : null;
         }
         public IEnumerable Values
@@ -239,13 +285,13 @@ namespace DVM4T.DD4T
         }
     }
 
-    public class ContentData : IContentData
+    public class ContentPresentationData : IContentPresentationData
     {
         private readonly IFieldsData content;
         private readonly ISchemaData schema;
         private readonly ITemplateData template;
         private readonly int publicationId;
-        public ContentData(IFieldsData content, ISchemaData schema, ITemplateData template)
+        public ContentPresentationData(IFieldsData content, ISchemaData schema, ITemplateData template)
         {
             this.content = content;
             this.schema = schema;
@@ -399,7 +445,7 @@ namespace DVM4T.DD4T
         }
     }
 
-    public class ComponentPresentation : IContentPresentationData
+    public class ComponentPresentation : IComponentPresentationData
     {
         private readonly IComponentData component;
         private readonly ITemplateData template;
@@ -439,20 +485,20 @@ namespace DVM4T.DD4T
             get { return cp; }
         }
 
-        public IMultimediaData MultimediaData
-        {
-            get { return component == null ? null : component.MultimediaData; }
-        }
+        //public IMultimediaData MultimediaData
+        //{
+        //    get { return component == null ? null : component.MultimediaData; }
+        //}
 
-        public string TcmUri
-        {
-            get { return component == null ? null : component.TcmUri; }
-        }
+        //public string TcmUri
+        //{
+        //    get { return component == null ? null : component.TcmUri; }
+        //}
 
-        public string Title
-        {
-            get { return component == null ? null : component.Title; }
-        }
+        //public string Title
+        //{
+        //    get { return component == null ? null : component.Title; }
+        //}
 
         public IFieldsData Content
         {
@@ -527,14 +573,14 @@ namespace DVM4T.DD4T
         public Page(IPage page)
         {
             this.page = page;
-            ComponentPresentations = page.ComponentPresentations.Select(x => new ComponentPresentation(x) as IContentPresentationData).ToList();
+            ComponentPresentations = page.ComponentPresentations.Select(x => new ComponentPresentation(x) as IComponentPresentationData).ToList();
             Metadata = new FieldSet(page.MetadataFields);
             FileName = page.Filename;
             Template = new PageTemplate(page.PageTemplate);
             PageTemplate = Template;
         }
 
-        public IList<IContentPresentationData> ComponentPresentations
+        public IList<IComponentPresentationData> ComponentPresentations
         {
             get;
             private set;

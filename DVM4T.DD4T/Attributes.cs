@@ -104,13 +104,13 @@ namespace DVM4T.DD4T.Attributes
         }
         private IViewModel BuildLinkedComponent(IComponentData component, ITemplateData template, IViewModelFactory factory)
         {
-            IContentPresentationData linkedCp = Dependencies.DataFactory.GetModelData(
+            IComponentPresentationData linkedCp = Dependencies.DataFactory.GetModelData(
                 Dependencies.DD4TFactory.BuildComponentPresentation(component, template)); //Lots of dependencies here
             Type type = GetViewModelType(linkedCp, factory);
             if (type == null) return null;
             else return factory.BuildViewModel(type, linkedCp);
         }
-        private Type GetViewModelType(IContentPresentationData cp, IViewModelFactory factory)
+        private Type GetViewModelType(IComponentPresentationData cp, IViewModelFactory factory)
         {
             //Create some algorithm to determine the proper view model type, perhaps build a static collection of all Types with the
             //View Model Attribute and set the key to the schema name + template name?
@@ -119,7 +119,7 @@ namespace DVM4T.DD4T.Attributes
             Type result = null;
             try
             {
-                result = factory.FindViewModelByAttribute<IContentModelAttribute>(
+                result = factory.FindViewModelByAttribute<IDefinedModelAttribute>(
                     cp, LinkedComponentTypes);
             }
             catch (ViewModelTypeNotFoundException)
@@ -574,7 +574,7 @@ namespace DVM4T.DD4T.Attributes
     /// <remarks>Use with ViewModelList</remarks>
     public class PresentationsByViewAttribute : ComponentPresentationsAttributeBase
     {
-        public override System.Collections.IEnumerable GetPresentationValues(IList<IContentPresentationData> cps, Type propertyType, IViewModelFactory factory = null)
+        public override System.Collections.IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, Type propertyType, IViewModelFactory factory = null)
         {
             IList<IViewModel> result = ViewModelDefaults.ReflectionCache.CreateInstance(propertyType) as IList<IViewModel>;
             string view = null;
@@ -614,6 +614,12 @@ namespace DVM4T.DD4T.Attributes
         {
             object fieldValue = null;
             var keywords = field.Values.Cast<Dynamic.IKeyword>().ToList();
+            string categoryName = null;
+            var dd4tField = field as IField;
+            if (dd4tField != null)
+            {
+                categoryName = dd4tField.CategoryName;
+            }
             if (keywords != null && keywords.Count > 0)
             {
                 if (AllowMultipleValues)
@@ -628,15 +634,15 @@ namespace DVM4T.DD4T.Attributes
                         {
                             list.Add(factory.BuildViewModel(
                                 KeywordType,
-                                Dependencies.DataFactory.GetModelData(keyword)));
+                                Dependencies.DataFactory.GetModelData(keyword, categoryName)));
                         }
                         fieldValue = list;
                     }
                 }
                 else
                 {
-                    fieldValue = KeywordType == null ? (object)keywords[0] : 
-                        factory.BuildViewModel(KeywordType, Dependencies.DataFactory.GetModelData(keywords[0]));
+                    fieldValue = KeywordType == null ? (object)keywords[0] :
+                        factory.BuildViewModel(KeywordType, Dependencies.DataFactory.GetModelData(keywords[0], categoryName));
                 }
             }
             return fieldValue;

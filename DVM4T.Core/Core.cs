@@ -79,7 +79,13 @@ namespace DVM4T.Core
             {
                 result = templatedData.Template.Metadata[ViewModelKeyField].Values.Cast<string>().FirstOrDefault();
             }
-            else
+            else if (modelData is IKeywordData)
+            {
+                var keyword = modelData as IKeywordData;
+                if (keyword != null && keyword.Category != null)
+                    result = keyword.Category.Title;
+            }
+            else if (modelData != null && modelData.Metadata != null && modelData.Metadata.ContainsKey(ViewModelKeyField))
             {
                 result = modelData.Metadata[ViewModelKeyField].Values.Cast<string>().FirstOrDefault();
             }

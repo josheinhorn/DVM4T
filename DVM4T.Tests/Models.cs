@@ -125,7 +125,7 @@ namespace DVM4T.Testing.Models
         public String Javascript { get; set; }
     }
 
-    [KeywordViewModel(new string[] {"Keyword"})]
+    [KeywordViewModel(new string[] {"Colors"})]
     public class Color : ViewModelBase
     {
         [KeywordData]

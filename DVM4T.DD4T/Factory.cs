@@ -14,14 +14,14 @@ namespace DVM4T.DD4T
             return new Component(component);
         }
 
-        public IContentPresentationData GetModelData(Dynamic.IComponentPresentation cp)
+        public IComponentPresentationData GetModelData(Dynamic.IComponentPresentation cp)
         {
             return new ComponentPresentation(cp);
         }
 
-        public IContentData GetModelData(Dynamic.IFieldSet fields, Dynamic.ISchema schema, Dynamic.IComponentTemplate template)
+        public IContentPresentationData GetModelData(Dynamic.IFieldSet fields, Dynamic.ISchema schema, Dynamic.IComponentTemplate template)
         {
-            return new ContentData(new FieldSet(fields), new Schema(schema), new ComponentTemplate(template));
+            return new ContentPresentationData(new FieldSet(fields), new Schema(schema), new ComponentTemplate(template));
         }
 
         public IPageData GetModelData(Dynamic.IPage page)
@@ -29,45 +29,45 @@ namespace DVM4T.DD4T
             return new Page(page);
         }
 
-        public IKeywordData GetModelData(Dynamic.IKeyword keyword)
+        public IKeywordData GetModelData(Dynamic.IKeyword keyword, string categoryName)
         {
-            return new Keyword(keyword);
+            return new Keyword(keyword, categoryName);
         }
     }
 
-    public class DIModelFactory : IModelDataFactory
-    {
-        private IModelDataResolver resolver;
-        public DIModelFactory(IModelDataResolver resolver)
-        {
-            this.resolver = resolver;
-        }
+    //public class DIModelFactory : IModelDataFactory
+    //{
+    //    private IModelDataResolver resolver;
+    //    public DIModelFactory(IModelDataResolver resolver)
+    //    {
+    //        this.resolver = resolver;
+    //    }
 
-        public IContentPresentationData GetModelData(Dynamic.IComponentPresentation cp)
-        {
-            return resolver.GetViewModelData<IContentPresentationData>(cp);
-        }
+    //    public IComponentPresentationData GetModelData(Dynamic.IComponentPresentation cp)
+    //    {
+    //        return resolver.GetViewModelData<IComponentPresentationData>(cp);
+    //    }
 
-        public IContentData GetModelData(Dynamic.IFieldSet fields, Dynamic.ISchema schema, Dynamic.IComponentTemplate template)
-        {
-            return resolver.GetViewModelData<IContentData>(fields, schema, template);
-        }
+    //    public IContentPresentationData GetModelData(Dynamic.IFieldSet fields, Dynamic.ISchema schema, Dynamic.IComponentTemplate template)
+    //    {
+    //        return resolver.GetViewModelData<IContentPresentationData>(fields, schema, template);
+    //    }
 
-        public IPageData GetModelData(Dynamic.IPage page)
-        {
-            return resolver.GetViewModelData<IPageData>(page);
-        }
+    //    public IPageData GetModelData(Dynamic.IPage page)
+    //    {
+    //        return resolver.GetViewModelData<IPageData>(page);
+    //    }
 
-        public IKeywordData GetModelData(Dynamic.IKeyword keyword)
-        {
-            return resolver.GetViewModelData<IKeywordData>(keyword);
-        }
+    //    public IKeywordData GetModelData(Dynamic.IKeyword keyword)
+    //    {
+    //        return resolver.GetViewModelData<IKeywordData>(keyword);
+    //    }
 
-        public IComponentData GetModelData(Dynamic.IComponent component)
-        {
-            return resolver.GetViewModelData<IComponentData>(component);
-        }
-    }
+    //    public IComponentData GetModelData(Dynamic.IComponent component)
+    //    {
+    //        return resolver.GetViewModelData<IComponentData>(component);
+    //    }
+    //}
 
     public class DefaultDD4TFactory : IDD4TFactory
     {
@@ -91,10 +91,10 @@ namespace DVM4T.DD4T
     public interface IModelDataFactory
     {
         IComponentData GetModelData(Dynamic.IComponent component);
-        IContentPresentationData GetModelData(Dynamic.IComponentPresentation cp);
-        IContentData GetModelData(Dynamic.IFieldSet fields, Dynamic.ISchema schema, Dynamic.IComponentTemplate template);
+        IComponentPresentationData GetModelData(Dynamic.IComponentPresentation cp);
+        IContentPresentationData GetModelData(Dynamic.IFieldSet fields, Dynamic.ISchema schema, Dynamic.IComponentTemplate template);
         IPageData GetModelData(Dynamic.IPage page);
-        IKeywordData GetModelData(Dynamic.IKeyword keyword);
+        IKeywordData GetModelData(Dynamic.IKeyword keyword, string categoryName);
     }
     /// <summary>
     /// Factory for creating DD4T Objects
@@ -124,6 +124,7 @@ namespace DVM4T.DD4T
             }
             set
             {
+                if (value == null) throw new ArgumentNullException("DataFactory");
                 factory = value;
             }
         }
@@ -138,6 +139,7 @@ namespace DVM4T.DD4T
             }
             set
             {
+                if (value == null) throw new ArgumentNullException("DD4TFactory");
                 dd4tFactory = value;
             }
         }

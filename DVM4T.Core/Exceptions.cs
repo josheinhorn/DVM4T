@@ -8,7 +8,7 @@ namespace DVM4T.Exceptions
 {
     public class ViewModelTypeNotFoundException : Exception
     {
-        public ViewModelTypeNotFoundException(IContentData data)
+        public ViewModelTypeNotFoundException(IContentPresentationData data)
             : base(String.Format("Could not find view model for schema '{0}' and Template '{1}' or default for schema '{0}' in loaded assemblies."
                     , data.Schema.Title, data.Template.Title)) 
         { }

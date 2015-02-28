@@ -59,27 +59,39 @@ namespace DVM4T.Contracts
         string TcmUri { get; }
         string Title { get; }
     }
-    public interface IContentData : ITemplatedViewModelData
+    public interface IDefinedData : IViewModelData
+    {
+        ISchemaData Schema { get; }
+    }
+    public interface ITemplatedViewModelData : IViewModelData
+    {
+        /// <summary>
+        /// Template for the View Model
+        /// </summary>
+        ITemplateData Template { get; }
+    }
+    public interface IContentPresentationData : IDefinedData, ITemplatedViewModelData
     {
         IFieldsData Content { get; }
-        ISchemaData Schema { get; }
     }
     public interface IPageData : ITridionItemData, ITemplatedViewModelData
     {
-        IList<IContentPresentationData> ComponentPresentations { get; }
+        IList<IComponentPresentationData> ComponentPresentations { get; }
         string FileName { get; }
     }   
-    public interface IContentPresentationData : ITridionItemData, IContentData //This is essentially a replacement for IComponent
+    //public interface IComponentPresentationData : ITridionItemData, IContentPresentationData //This is essentially a replacement for IComponent
+    //{
+    //    IComponentData Component { get; }
+    //    IMultimediaData MultimediaData { get; } //redundant
+    //}
+    public interface IComponentPresentationData : IContentPresentationData //This is essentially a replacement for IComponent
     {
         IComponentData Component { get; }
-        IMultimediaData MultimediaData { get; }
     }
-
     //Deprecated?? - use IContentPresentationData instead? 
-    public interface IComponentData : ITridionItemData, IViewModelData 
+    public interface IComponentData : ITridionItemData, IDefinedData, IViewModelData 
     {
-        IFieldsData Content { get; }
-        ISchemaData Schema { get; }
+        IFieldsData Content { get; } //Slightly redundant with IContentPresentationData ...
         IMultimediaData MultimediaData { get; }
     }
     public interface ITemplateData : ITridionItemData, IViewModelData
@@ -130,7 +142,14 @@ namespace DVM4T.Contracts
 
     public interface IKeywordData : ITridionItemData, IViewModelData
     {
+        ISchemaData MetadataSchema { get; }
         string Key { get; }
+        ICategoryData Category { get; }
+    }
+ 
+    public interface ICategoryData : ITridionItemData
+    {
+        string XmlName { get; }
     }
 
     #endregion
@@ -169,13 +188,7 @@ namespace DVM4T.Contracts
         int PublicationId { get; }
     }
 
-    public interface ITemplatedViewModelData : IViewModelData
-    {
-        /// <summary>
-        /// Template for the View Model
-        /// </summary>
-        ITemplateData Template { get; } 
-    }
+
 
     public interface IViewModelResolver
     {
@@ -202,13 +215,6 @@ namespace DVM4T.Contracts
 
         //Possible to do something like this? How to make the parameters generic?
         //T GetModelData<T>(data parameters) where T : IViewModelData
-    }
-    /// <summary>
-    /// A suggested interface for generating View Model Data
-    /// </summary>
-    public interface IModelDataFactory
-    {
-        T GetModelData<T>(params object[] data) where T : IViewModelData;
     }
 
     public interface IViewModelFactory
@@ -256,7 +262,7 @@ namespace DVM4T.Contracts
         /// The LoadViewModels method must be called with the desired View Model Types in order for this to return a valid object.
         /// </remarks>
         /// <returns>Component Presentation View Model</returns>
-        IViewModel BuildCPViewModel(IContentPresentationData componentPresentation); //A way to build view model without passing type -- type is inferred using loaded assemblies
+        IViewModel BuildCPViewModel(IComponentPresentationData componentPresentation); //A way to build view model without passing type -- type is inferred using loaded assemblies
         /// <summary>
         /// Builds a View Model from a FieldSet using the schema determine the View Model class to use.
         /// </summary>
@@ -271,7 +277,7 @@ namespace DVM4T.Contracts
         /// <param name="type">Type of View Model class to return</param>
         /// <param name="cp">Component Presentation</param>
         /// <returns>Component Presentation View Model</returns>
-        IViewModel BuildCPViewModel(Type type, IContentPresentationData componentPresentation);
+        IViewModel BuildCPViewModel(Type type, IComponentPresentationData componentPresentation);
         /// <summary>
         /// Builds a View Model from a FieldSet using the generic type to determine the View Model class to use.
         /// </summary>
@@ -286,7 +292,7 @@ namespace DVM4T.Contracts
         /// <typeparam name="T">Type of View Model class to return</typeparam>
         /// <param name="cp">Component Presentation</param>
         /// <returns>Component Presentation View Model</returns>
-        T BuildCPViewModel<T>(IContentPresentationData componentPresentation) where T : class, IViewModel;
+        T BuildCPViewModel<T>(IComponentPresentationData componentPresentation) where T : class, IViewModel;
         /// <summary>
         /// Builds a View Model from a FieldSet using the generic type to determine the View Model class to use.
         /// </summary>
@@ -345,7 +351,7 @@ namespace DVM4T.Contracts
         /// <param name="cp">Component Presentation</param>
         /// <param name="region">Optional region</param>
         /// <returns>XPM Markup</returns>
-        string RenderXpmMarkupForComponent(IContentPresentationData cp, string region = null);
+        string RenderXpmMarkupForComponent(IComponentPresentationData cp, string region = null);
         /// <summary>
         /// Determines if Site Edit is enabled for a particular item
         /// </summary>
@@ -661,9 +667,9 @@ namespace DVM4T.Contracts
         bool IsMatch(IViewModelData data, string key);
     }
     /// <summary>
-    /// An Attribute for identifying a Content View Model class
+    /// An Attribute for identifying a Defined (has a Schema) View Model class
     /// </summary>
-    public interface IContentModelAttribute : IModelAttribute
+    public interface IDefinedModelAttribute : IModelAttribute
     {
         /// <summary>
         /// XML Name of the Schema
@@ -672,6 +678,7 @@ namespace DVM4T.Contracts
         /// <summary>
         /// Is Inline Editable - for semantic purposes only
         /// </summary>
+        [Obsolete]
         bool InlineEditable { get; set; }
         /// <summary>
         /// Is this the default Model for this Schema
