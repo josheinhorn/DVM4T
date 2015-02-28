@@ -56,15 +56,19 @@ namespace DVM4T.DD4T
     {
         private readonly IKeyword keyword;
         private readonly IFieldsData metadata;
-        private readonly ISchemaData metadataSchema;
+        private readonly ISchemaData metadataSchema = null; //not implemented by DD4T at this time
         private readonly ICategoryData category;
 
         public Keyword(IKeyword keyword, string categoryName = null)
         {
             this.keyword = keyword;
-            this.metadata = new FieldSet(keyword.MetadataFields);
-            //DD4T provides no way to retrieve Category
-            this.category = new CategoryData(keyword.TaxonomyId, categoryName);
+            if (keyword != null)
+            {
+                this.metadata = new FieldSet(keyword.MetadataFields);
+                //DD4T provides no way to retrieve an ICategory object
+                this.category = new CategoryData(keyword.TaxonomyId, categoryName);
+            }
+            
         }
 
         protected override IItem Item
@@ -89,12 +93,12 @@ namespace DVM4T.DD4T
 
         public ISchemaData MetadataSchema
         {
-            get { return metadataSchema; } //No DD4T Metadata Schema
+            get { return metadataSchema; } //Null
         }
 
         public ICategoryData Category
         {
-            get { return category; } //Only limited DD4T Category Data - TcmUri only!
+            get { return category; } //Only limited DD4T Category Data - TcmUri and Title only!
         }
     }
 

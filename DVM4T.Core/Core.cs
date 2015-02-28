@@ -82,7 +82,11 @@ namespace DVM4T.Core
             else if (modelData is IKeywordData)
             {
                 var keyword = modelData as IKeywordData;
-                if (keyword != null && keyword.Category != null)
+                if (keyword.Metadata != null && keyword.MetadataSchema != null) //If there is a metadata schema
+                {
+                    result = keyword.MetadataSchema.Title;
+                }
+                else if (keyword != null && keyword.Category != null) //If there's no metadata schema fall back to the category title
                     result = keyword.Category.Title;
             }
             else if (modelData != null && modelData.Metadata != null && modelData.Metadata.ContainsKey(ViewModelKeyField))
