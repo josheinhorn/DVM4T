@@ -22,6 +22,7 @@ using DVM4T.DD4T.XPM;
 using DVM4T.Core;
 using DVM4T.Exceptions;
 using DVM4T.Reflection;
+using DVM4T.Experiments;
 
 namespace DVM4T.Testing
 {
@@ -479,10 +480,30 @@ namespace DVM4T.Testing
         [TestMethod]
         public void TestNestedKeyword()
         {
-            var cp = GetContentContainerCp();
-            var modelData = Dependencies.DataFactory.GetModelData(cp);
-            ViewModelDefaults.Factory.LoadViewModels(this.GetType().Assembly);
-            var model = ViewModelDefaults.Factory.BuildViewModel(modelData);
+            object model = null;
+            for (int i = 0; i < 100; i++)
+            {
+                var cp = GetContentContainerCp();
+                var modelData = Dependencies.DataFactory.GetModelData(cp);
+                ViewModelDefaults.Factory.LoadViewModels(this.GetType().Assembly);
+                model = ViewModelDefaults.Factory.BuildViewModel(modelData);
+            }
+            Assert.IsInstanceOfType(model, typeof(ContentContainerViewModel));
+        }
+
+        [TestMethod]
+        public void TestDependencyInjection()
+        {
+            object model = null;
+            for (int i = 0; i < 100; i++) //Loop to test performance
+            {
+                var factory = CompositionRoot.GetModelFactory("DVM4T.ViewModelKeyMetaFieldName");
+                factory.LoadViewModels(this.GetType().Assembly);
+                var dataFactory = CompositionRoot.Get<IModelDataFactory>();
+                var cp = GetContentContainerCp();
+                var modelData = dataFactory.GetModelData(cp);
+                model = factory.BuildViewModel(modelData);
+            }
             Assert.IsInstanceOfType(model, typeof(ContentContainerViewModel));
         }
         private Dynamic.Keyword GetColorKeyword()

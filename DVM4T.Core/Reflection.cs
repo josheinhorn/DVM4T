@@ -98,7 +98,7 @@ namespace DVM4T.Reflection
         //private Dictionary<Type, ViewModelAttribute> viewModelAttributes = new Dictionary<Type, ViewModelAttribute>();
         private Dictionary<Type, IModelAttribute> modelAttributes = new Dictionary<Type, IModelAttribute>();
 
-        internal ReflectionOptimizer() { }
+        public ReflectionOptimizer() { }
 
         public object CreateInstance(Type objectType)
         {

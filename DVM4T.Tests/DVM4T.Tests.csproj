@@ -140,6 +140,10 @@
       <Project>{9b3df9c0-0779-4a22-8b63-b6745da7edc3}</Project>
       <Name>DVM4T.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\DVM4T.Experiments\DVM4T.Experiments.csproj">
+      <Project>{b9350ba2-0176-4830-b726-f9d990360df6}</Project>
+      <Name>DVM4T.Experiments</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
