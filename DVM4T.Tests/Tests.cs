@@ -495,13 +495,18 @@ namespace DVM4T.Testing
         public void TestDependencyInjection()
         {
             object model = null;
+            var factory = CompositionRoot.GetModelFactory("DVM4T.ViewModelKeyMetaFieldName");
+            factory.LoadViewModels(this.GetType().Assembly);
+            var dataFactory = CompositionRoot.Get<IModelDataFactory>();
+            var cp = GetContentContainerCp();
+            var modelData = dataFactory.GetModelData(cp);
+            model = factory.BuildViewModel(modelData);
             for (int i = 0; i < 100; i++) //Loop to test performance
             {
-                var factory = CompositionRoot.GetModelFactory("DVM4T.ViewModelKeyMetaFieldName");
-                factory.LoadViewModels(this.GetType().Assembly);
-                var dataFactory = CompositionRoot.Get<IModelDataFactory>();
-                var cp = GetContentContainerCp();
-                var modelData = dataFactory.GetModelData(cp);
+                factory = CompositionRoot.GetModelFactory("DVM4T.ViewModelKeyMetaFieldName");
+                dataFactory = CompositionRoot.Get<IModelDataFactory>();
+                cp = GetContentContainerCp();
+                modelData = dataFactory.GetModelData(cp);
                 model = factory.BuildViewModel(modelData);
             }
             Assert.IsInstanceOfType(model, typeof(ContentContainerViewModel));
