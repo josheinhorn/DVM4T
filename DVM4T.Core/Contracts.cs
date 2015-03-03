@@ -189,7 +189,7 @@ namespace DVM4T.Contracts
     }
 
     /// <summary>
-    /// A Resolver for View Models
+    /// A Resolver for View Models and Model Properties
     /// </summary>
     public interface IViewModelResolver
     {
@@ -201,11 +201,34 @@ namespace DVM4T.Contracts
         /// <returns>An instance of a View Model of the input Type</returns>
         IViewModel ResolveModel(Type type, IViewModelData data);
         /// <summary>
-        /// Gets a list of Model Property objects for all Properties marked with a IPropertyAttribute Attribute for the given Type
+        /// Gets a list of Model Property objects for all Properties marked with an IPropertyAttribute Attribute for the given Type
         /// </summary>
         /// <param name="type">Type with the Properties to search</param>
         /// <returns>List of Model Properties</returns>
         IList<IModelProperty> GetModelProperties(Type type);
+        /// <summary>
+        /// Gets a single Model Property object
+        /// </summary>
+        /// <param name="propertyInfo">Property Info to build a Model Property object for</param>
+        /// <returns>Model Property</returns>
+        IModelProperty GetModelProperty(PropertyInfo propertyInfo);
+        /// <summary>
+        /// Gets a single Model Property object
+        /// </summary>
+        /// <typeparam name="TSource">Type of the Model</typeparam>
+        /// <typeparam name="TProperty">Type of the Property</typeparam>
+        /// <param name="source">Object for inferring TSource</param>
+        /// <param name="propertyLambda">Lambda Expression for the property to build a Model Property object for</param>
+        /// <returns>Model Property</returns>
+        IModelProperty GetModelProperty<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda);
+        /// <summary>
+        /// Gets a single Model Property object
+        /// </summary>
+        /// <typeparam name="TSource">Type of the Model</typeparam>
+        /// <typeparam name="TProperty">Type of the Property</typeparam>
+        /// <param name="propertyLambda">Lambda Expression for the property to build a Model Property object for</param>
+        /// <returns>Model Property</returns>
+        IModelProperty GetModelProperty<TSource, TProperty>(Expression<Func<TSource, TProperty>> propertyLambda);
         /// <summary>
         /// Gets a specfic Model Attribute in the given Type
         /// </summary>
@@ -213,9 +236,11 @@ namespace DVM4T.Contracts
         /// <param name="type">Type to search</param>
         /// <returns>A Model Attribute</returns>
         T GetCustomAttribute<T>(Type type) where T : IModelAttribute;
-
         //Possible to do something like this? How to make the parameters generic?
         //T GetModelData<T>(data parameters) where T : IViewModelData
+
+        IModelProperty GetModelProperty(PropertyInfo propertyInfo, IPropertyAttribute attribute); //Does this method belong here?
+        object ResolveModel(Type type);
     }
 
     /// <summary>
@@ -226,12 +251,12 @@ namespace DVM4T.Contracts
         /// <summary>
         /// Loads all View Model classes from an assembly.
         /// </summary>
-        /// <param name="assembly">The Assembly with the view model Types to load</param>
+        /// <param name="assemblies">The Assemblies with the view model Types to load</param>
         /// <remarks>
         /// Required for use of builder methods that don't require a Type parameter or generic.
         /// The Builder will only use Types tagged with an IModelAttribute Attribute.
         /// </remarks>
-        void LoadViewModels(Assembly assembly);
+        void LoadViewModels(params Assembly[] assemblies);
         /// <summary>
         /// Finds a View Model with the specified Type using the input Data.
         /// </summary>
@@ -240,6 +265,26 @@ namespace DVM4T.Contracts
         /// <param name="typesToSearch">Optional array of possible Types to search through</param>
         /// <returns>View Model Type</returns>
         Type FindViewModelByAttribute<T>(IViewModelData data, Type[] typesToSearch = null) where T : IModelAttribute;
+
+        void SetPropertyValue(object model, IViewModelData data, IModelProperty property);
+        /// <summary>
+        /// Sets the value of a single Model Property
+        /// </summary>
+        /// <param name="model">View Model</param>
+        /// <param name="property">Property to set</param>
+        /// <remarks>Intended use case is for lazy loading of individual properties instead of eager loading with BuildViewModel 
+        /// to load all properties</remarks>
+        void SetPropertyValue(IViewModel model, IModelProperty property);
+        /// <summary>
+        /// Sets the value of a single Model Property
+        /// </summary>
+        /// <typeparam name="TModel">Type of View Model</typeparam>
+        /// <typeparam name="TProperty">Type of Property</typeparam>
+        /// <param name="model">View Model</param>
+        /// <param name="propertyLambda">Lambda Expression for Property to set</param>
+        /// <remarks>Intended use case is for lazy loading of individual properties instead of eager loading with BuildViewModel 
+        /// to load all properties</remarks>
+        void SetPropertyValue<TModel, TProperty>(TModel model, Expression<Func<TModel, TProperty>> propertyLambda) where TModel : IViewModel;
         /// <summary>
         /// Builds a View Model, inferring the Type based on the Model Data.
         /// </summary>
@@ -273,6 +318,22 @@ namespace DVM4T.Contracts
         /// <param name="modelData">Model Data</param>
         /// <returns>View Model</returns>
         T BuildViewModel<T>(IViewModelData modelData) where T : IViewModel;
+        
+        //void AddModelMapping<T>(IModelMapping<T> mapping); //Doesn't seem possible to store a collection of different generics without making the whole Factory generic
+        //T BuildMappedModel<T>(IViewModelData modelData) where T : class, new();
+
+        T BuildMappedModel<T>(T model, IViewModelData modelData, IModelMapping<T> mapping) where T : class;
+        T BuildMappedModel<T>(IViewModelData modelData, IModelMapping<T> mapping) where T : class;
+    }
+    
+    public interface IModelMapping<TModel> where TModel : class //Should it be constrained to classes?
+    {
+        //Constructor should take IViewModelResolver
+
+        //Consider implementing a Factory for Model Mappings or just letting people instantiate their own? Would rely on
+        //people to implement their own singleton or caching
+        void AddMapping<TProp>(Expression<Func<TModel, TProp>> propertyLambda, IPropertyAttribute attribute);  //mappings.AddMapping(x => x.PropertyName, new PropertyAttribute(...));
+        IModelProperty[] ModelProperties { get; }
     }
 
     [Obsolete("Use IViewModelFactory instead")]
@@ -584,7 +645,7 @@ namespace DVM4T.Contracts
         /// <param name="propertyType">Actual return type of the Property</param>
         /// <param name="builder">A View Model Builder</param>
         /// <returns>Property value</returns>
-        object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory builder = null);
+        object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory builder = null);
     }
     /// <summary>
     /// An attribute for a Property representing a Field
@@ -680,7 +741,6 @@ namespace DVM4T.Contracts
         /// View Model Keys - a set of identifying values for this Model
         /// </summary>
         string[] ViewModelKeys { get; set; }
-        
         
         //[Obsolete("Use IsMatch(IViewModelData, string) instead")]
         //bool IsMatch(IViewModelData data, IViewModelKeyProvider provider);

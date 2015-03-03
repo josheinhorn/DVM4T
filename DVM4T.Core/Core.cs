@@ -10,6 +10,7 @@ using DVM4T.Exceptions;
 using DVM4T.Reflection;
 using DVM4T.Core;
 using System.Web.Configuration;
+using System.Linq.Expressions;
 
 namespace DVM4T.Core
 {
@@ -21,12 +22,12 @@ namespace DVM4T.Core
         //Singletons
         private static readonly IViewModelKeyProvider keyProvider =
             new WebConfigViewModelKeyProvider("DVM4T.ViewModelKeyFieldName");
-        
+
         private static readonly IReflectionHelper reflectionHelper = new ReflectionOptimizer();
         private static readonly IViewModelResolver resolver = new DefaultViewModelResolver(reflectionHelper);
         //private static readonly IViewModelBuilder viewModelBuilder = new ViewModelBuilder(keyProvider, resolver);
         private static readonly IViewModelFactory factory = new ViewModelFactory(keyProvider, resolver);
-        
+
         /// <summary>
         /// Default View Model Builder. 
         /// <remarks>
@@ -59,6 +60,15 @@ namespace DVM4T.Core
         /// Optimized Reflection Helper that caches resuslts of resource-heavy tasks (e.g. MemberInfo.GetCustomAttributes)
         /// </summary>
         public static IReflectionHelper ReflectionCache { get { return reflectionHelper; } }
+        /// <summary>
+        /// Creates a new Model Mapping object
+        /// </summary>
+        /// <typeparam name="T">Type of model for the model mapping</typeparam>
+        /// <returns>New Model Mapping</returns>
+        public static IModelMapping<T> CreateModelMapping<T>() where T : class
+        {
+            return new DefaultModelMapping<T>(resolver, reflectionHelper);
+        }
     }
 
     /// <summary>
@@ -95,6 +105,31 @@ namespace DVM4T.Core
             }
 
             return result;
+        }
+    }
+
+    public class DefaultModelMapping<TModel> : IModelMapping<TModel> where TModel : class
+    {
+        private readonly IList<IModelProperty> propertyList = new List<IModelProperty>();
+        private readonly IViewModelResolver resolver;
+        private readonly IReflectionHelper helper;
+        public DefaultModelMapping(IViewModelResolver resolver, IReflectionHelper helper)
+        {
+            if (helper == null) throw new ArgumentNullException("helper");
+            if (resolver == null) throw new ArgumentNullException("resolver");
+            this.helper = helper;
+            this.resolver = resolver;
+        }
+
+        public void AddMapping<TProp>(Expression<Func<TModel, TProp>> propertyLambda, IPropertyAttribute attribute)
+        {
+            var property = helper.GetPropertyInfo<TModel, TProp>(propertyLambda);
+            propertyList.Add(resolver.GetModelProperty(property, attribute));
+        }
+
+        public IModelProperty[] ModelProperties
+        {
+            get { return propertyList.ToArray(); }
         }
     }
 

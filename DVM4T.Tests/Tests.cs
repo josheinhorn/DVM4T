@@ -26,10 +26,11 @@ using DVM4T.Experiments;
 
 namespace DVM4T.Testing
 {
+    //TODO: Write new Unit Tests that are not hybrid unit/integration tests, as these ones are
+    
     //TODO: Clean up the tests, make them only test 1 thing at a time
     //TODO: Create multiple Tests files, this one is too long
 
-    
     //TODO: Remove or change the DD4T.ViewModels.Mocking stuff - it's super confusing
 
     [TestClass]
@@ -206,11 +207,50 @@ namespace DVM4T.Testing
                             FieldType = Dynamic.FieldType.Number,
                             NumericValues = new List<double> { 234 }
                         }
+                    },
+                    {
+                        "state",
+                        new Dynamic.Field
+                        {
+                            FieldType = Dynamic.FieldType.Text,
+                            Values = new List<string> { "PA", "VA" , "NY", "DE" }
+                        }
                     }
                 }
             };
         }
-        private Dynamic.ComponentPresentation GetContentContainerCp()
+        private Dynamic.Component GetImageComponent()
+        {
+            return new Dynamic.Component
+            {
+                ComponentType = Dynamic.ComponentType.Multimedia,
+                Multimedia = new Dynamic.Multimedia
+                {
+                    Url = "/path/to/image.png",
+                    AltText = "alt",
+                    FileName = "image.png",
+                    MimeType = "image/png"
+                },
+                MetadataFields = new Dynamic.FieldSet
+                {
+                    {
+                        "alt",
+                        new Dynamic.Field
+                        {
+                            FieldType = Dynamic.FieldType.Text,
+                            Values = new List<string> { "Alt text here!!" }
+                        }
+                    }
+                },
+                Schema = new Dynamic.Schema
+                {
+                    Title = "Image",
+                    Id = "tcm:1-12435-8"
+                }
+            };
+        }
+
+        public Dynamic.ComponentPresentation GetContentContainerCp()
         {
             Dynamic.Component comp = new Dynamic.Component { Id = "tcm:1-23", ComponentType = Dynamic.ComponentType.Normal };
             Dynamic.Component generalContent = GetGeneralContentComponent();
@@ -244,6 +284,14 @@ namespace DVM4T.Testing
                     Fields = new Dynamic.FieldSet
                     {
                         {
+                            "title", 
+                            new Dynamic.Field
+                            {
+                                Values = new List<string> { "I'm a title!!" },
+                                FieldType = Dynamic.FieldType.Text,
+                            }
+                        },
+                        {
                             "links", 
                             new Dynamic.Field
                             {
@@ -258,6 +306,14 @@ namespace DVM4T.Testing
                             {
                                 FieldType = Dynamic.FieldType.ComponentLink,
                                 LinkedComponentValues = new List<Dynamic.Component> { generalContent, generalContent }
+                            }
+                        },
+                        {
+                            "image",
+                            new Dynamic.Field
+                            {
+                                FieldType = Dynamic.FieldType.MultiMediaLink,
+                                LinkedComponentValues = new List<Dynamic.Component> { GetImageComponent() }
                             }
                         }
                     }
@@ -511,6 +567,17 @@ namespace DVM4T.Testing
             }
             Assert.IsInstanceOfType(model, typeof(ContentContainerViewModel));
         }
+
+        [TestMethod]
+        public void TestMultimediaComponent()
+        {
+            var cp = GetContentContainerCp();
+            var modelData = Dependencies.DataFactory.GetModelData(cp);
+            ViewModelDefaults.Factory.LoadViewModels(this.GetType().Assembly);
+            var model = ViewModelDefaults.Factory.BuildViewModel(modelData) as ContentContainerViewModel;
+            Assert.IsNotNull(model.Image);
+        }
+
         private Dynamic.Keyword GetColorKeyword()
         {
             return new Dynamic.Keyword

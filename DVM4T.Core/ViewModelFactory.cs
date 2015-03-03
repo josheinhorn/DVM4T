@@ -3,6 +3,7 @@ using DVM4T.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
@@ -14,6 +15,7 @@ namespace DVM4T.Core
         private readonly IList<Assembly> loadedAssemblies = new List<Assembly>();
         private readonly IViewModelResolver resolver;
         private readonly IViewModelKeyProvider keyProvider;
+
         /// <summary>
         /// New View Model Builder
         /// </summary>
@@ -29,18 +31,21 @@ namespace DVM4T.Core
         /// Loads View Model Types from an Assembly. Use minimally due to reflection overhead.
         /// </summary>
         /// <param name="assembly"></param>
-        public void LoadViewModels(Assembly assembly) //We assume we have a singleton of this instance, otherwise we incur a lot of overhead
+        public void LoadViewModels(params Assembly[] assemblies) //We assume we have a singleton of this instance, otherwise we incur a lot of overhead
         {
-            if (!loadedAssemblies.Contains(assembly))
+            foreach (var assembly in assemblies)
             {
-                loadedAssemblies.Add(assembly);
-                IModelAttribute viewModelAttr;
-                foreach (var type in assembly.GetTypes())
+                if (!loadedAssemblies.Contains(assembly))
                 {
-                    viewModelAttr = resolver.GetCustomAttribute<IModelAttribute>(type);
-                    if (viewModelAttr != null && !viewModels.ContainsKey(viewModelAttr))
+                    loadedAssemblies.Add(assembly);
+                    IModelAttribute viewModelAttr;
+                    foreach (var type in assembly.GetTypes())
                     {
-                        viewModels.Add(viewModelAttr, type);
+                        viewModelAttr = resolver.GetCustomAttribute<IModelAttribute>(type);
+                        if (viewModelAttr != null && !viewModels.ContainsKey(viewModelAttr))
+                        {
+                            viewModels.Add(viewModelAttr, type);
+                        }
                     }
                 }
             }
@@ -57,7 +62,28 @@ namespace DVM4T.Core
                     return type;
             }
             throw new ViewModelTypeNotFoundException(data);
-        }        
+        }
+
+        public void SetPropertyValue(object model, IViewModelData data, IModelProperty property)
+        {
+            if (property == null) throw new ArgumentNullException("property");
+            if (model != null && data != null && property.PropertyAttribute != null)
+            {
+                property.Set(model, property.PropertyAttribute.GetPropertyValue(data, property.PropertyType, this));
+            }
+        }
+
+        public void SetPropertyValue(IViewModel model, IModelProperty property)
+        {
+            SetPropertyValue(model, model.ModelData, property);
+        }
+
+        public void SetPropertyValue<TModel, TProperty>(TModel model, Expression<Func<TModel, TProperty>> propertyLambda) where TModel : IViewModel
+        {
+            var property = resolver.GetModelProperty(model, propertyLambda);
+            SetPropertyValue(model, property);
+        }
+
         public IViewModel BuildViewModel(IViewModelData modelData)
         {
             return BuildViewModelByAttribute<IModelAttribute>(modelData);
@@ -82,16 +108,25 @@ namespace DVM4T.Core
             return viewModel;
         }
 
-        T BuildViewModel<T>(IViewModelData modelData)
+        public T BuildViewModel<T>(IViewModelData modelData) where T : IViewModel 
         {
             return (T)BuildViewModel(typeof(T), modelData);
         }
 
-        T IViewModelFactory.BuildViewModel<T>(IViewModelData modelData)
+        public T BuildMappedModel<T>(IViewModelData modelData, IModelMapping<T> mapping) where T: class
         {
-            return (T)BuildViewModel(typeof(T), modelData);
+            T model = (T)resolver.ResolveModel(typeof(T));
+            return BuildMappedModel<T>(model, modelData, mapping);
         }
 
+        public T BuildMappedModel<T>(T model, IViewModelData modelData, IModelMapping<T> mapping) where T : class
+        {
+            foreach (var property in mapping.ModelProperties)
+            {
+                SetPropertyValue(model, modelData, property);
+            }
+            return model;
+        }
         #region Private methods
 
 
@@ -106,7 +141,7 @@ namespace DVM4T.Core
                 propAttribute = prop.PropertyAttribute;//prop.GetCustomAttributes(typeof(FieldAttributeBase), true).FirstOrDefault() as FieldAttributeBase;
                 if (propAttribute != null) //It has a FieldAttribute
                 {
-                    value = propAttribute.GetPropertyValue(viewModel, prop.PropertyType, this); //delegate all the real work to the Property Attribute object itself. Allows for custom attribute types to easily be added
+                    value = propAttribute.GetPropertyValue(viewModel.ModelData, prop.PropertyType, this); //delegate all the real work to the Property Attribute object itself. Allows for custom attribute types to easily be added
                     if (value != null)
                     {
                         try
@@ -132,5 +167,8 @@ namespace DVM4T.Core
 
 
 
+
+
+        
     }
 }

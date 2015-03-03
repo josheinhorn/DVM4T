@@ -16,7 +16,7 @@ namespace DVM4T.Attributes
     /// </summary>
     public abstract class ModelPropertyAttributeBase : Attribute, IPropertyAttribute
     {
-        public abstract object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null);
+        public abstract object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null);
         /// <summary>
         /// When overriden in a derived class, this property returns the expected return type of the View Model property.
         /// </summary>
@@ -46,38 +46,38 @@ namespace DVM4T.Attributes
         {
             this.fieldName = fieldName;
         }
-        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
+        public override object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
-            if (model != null && model.ModelData != null)
+            if (modelData != null)
             {
                 //need null checks on Template
                 IFieldsData fields = null;
-                if (IsTemplateMetadata && model.ModelData is ITemplatedViewModelData)
+                if (IsTemplateMetadata && modelData is ITemplatedViewModelData)
                 {
-                    var templateData = model.ModelData as ITemplatedViewModelData;
+                    var templateData = modelData as ITemplatedViewModelData;
                     fields = templateData.Template != null ? templateData.Template.Metadata : null;
                 }
                 else if (IsMetadata)
                 {
-                    fields = model.ModelData.Metadata;
+                    fields = modelData.Metadata;
                 }
-                else if (model.ModelData is IContentPresentationData)
+                else if (modelData is IContentPresentationData)
                 {
-                    fields = (model.ModelData as IContentPresentationData).Content;
+                    fields = (modelData as IContentPresentationData).Content;
                 }
                 else
                 {
-                    fields = model.ModelData.Metadata;
+                    fields = modelData.Metadata;
                 }
-                //var fields = IsTemplateMetadata && model.ModelData.Template != null ? model.ModelData.Template.Metadata
-                //    : IsMetadata ? model.ModelData.Metadata
-                //    : model.ModelData is IContentViewModelData ? (model.ModelData as IContentViewModelData).ContentData
-                //    : model.ModelData.Metadata; //If it isn't content data, just use Metadata no matter what
+                //var fields = IsTemplateMetadata && modelData.Template != null ? modelData.Template.Metadata
+                //    : IsMetadata ? modelData.Metadata
+                //    : modelData is IContentViewModelData ? (modelData as IContentViewModelData).ContentData
+                //    : modelData.Metadata; //If it isn't content data, just use Metadata no matter what
 
                 if (fields != null && fields.ContainsKey(FieldName))
                 {
-                    var template = model.ModelData is ITemplatedViewModelData ? (model.ModelData as ITemplatedViewModelData).Template
+                    var template = modelData is ITemplatedViewModelData ? (modelData as ITemplatedViewModelData).Template
                         : null;
                     result = this.GetFieldValue(fields[FieldName], propertyType, template, factory);
                 }
@@ -154,23 +154,23 @@ namespace DVM4T.Attributes
     /// </summary>
     public abstract class ComponentAttributeBase : ModelPropertyAttributeBase, IComponentAttribute
     {
-        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
+        public override object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
-            if (model != null && model.ModelData != null)
+            if (modelData != null)
             {
-                if (model.ModelData is IComponentPresentationData)
+                if (modelData is IComponentPresentationData)
                 {
-                    var cpData = model.ModelData as IComponentPresentationData;
+                    var cpData = modelData as IComponentPresentationData;
                     if (cpData != null)
                     {
                         result = GetPropertyValue(cpData.Component, propertyType,
                             cpData.Template, factory);
                     }
                 }
-                else if (model.ModelData is IComponentData) //Not all components come with Templates
+                else if (modelData is IComponentData) //Not all components come with Templates
                 {
-                    result = GetPropertyValue(model.ModelData as IComponentData, propertyType, null, factory);
+                    result = GetPropertyValue(modelData as IComponentData, propertyType, null, factory);
                 }
             }
             return result;
@@ -200,13 +200,13 @@ namespace DVM4T.Attributes
         /// <returns>The Property value</returns>
         public abstract object GetPropertyValue(ITemplateData template, Type propertyType, IViewModelFactory factory = null);
 
-        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
+        public override object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
-            if (model != null && model.ModelData is IContentPresentationData
-                && (model.ModelData as IContentPresentationData).Template is ITemplateData)
+            if (modelData is IContentPresentationData
+                && (modelData as IContentPresentationData).Template is ITemplateData)
             {
-                var templateData = (model.ModelData as IContentPresentationData).Template as ITemplateData;
+                var templateData = (modelData as IContentPresentationData).Template as ITemplateData;
                 result = this.GetPropertyValue(templateData, propertyType, factory);
             }
             return result;
@@ -227,12 +227,12 @@ namespace DVM4T.Attributes
         /// <returns>The Property value</returns>
         public abstract object GetPropertyValue(IPageData page, Type propertyType, IViewModelFactory factory = null);
 
-        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
+        public override object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
-            if (model != null && model != null && model.ModelData is IPageData)
+            if (modelData is IPageData)
             {
-                var pageModel = (model.ModelData as IPageData);
+                var pageModel = (modelData as IPageData);
                 result = this.GetPropertyValue(pageModel, propertyType, factory);
             }
             return result;
@@ -255,12 +255,12 @@ namespace DVM4T.Attributes
         /// <returns>The Property value</returns>
         public abstract IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, Type propertyType, IViewModelFactory factory = null);
 
-        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
+        public override object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
-            if (model != null && model != null && model.ModelData is IPageData)
+            if (modelData is IPageData)
             {
-                var cpModels = (model.ModelData as IPageData).ComponentPresentations;
+                var cpModels = (modelData as IPageData).ComponentPresentations;
                 result = GetPresentationValues(cpModels, propertyType, factory);
             }
             return result;

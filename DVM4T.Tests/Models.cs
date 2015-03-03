@@ -7,6 +7,7 @@ using DVM4T.DD4T.Attributes;
 using DVM4T.Core;
 using DVM4T.Contracts;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DVM4T.Testing.Models
 {
@@ -43,6 +44,17 @@ namespace DVM4T.Testing.Models
 
         [KeywordField("backgroundColor", KeywordType = typeof(Color))]
         public Color BackgroundColor { get; set; }
+
+        [TextEnumField("state", typeof(StateType), AllowMultipleValues = true)]
+        public ListAdapter<StateType> State { get; set; }
+    }
+
+    public class ListAdapter<T> : List<object>, IEnumerable<T> 
+    {
+        public new IEnumerator<T> GetEnumerator()
+        {
+            return this.ToArray().Cast<T>().GetEnumerator();
+        }
     }
 
     [ViewModel("Image", true)]
@@ -87,6 +99,10 @@ namespace DVM4T.Testing.Models
 
         [LinkedComponentField("internalLink")]
         public IComponent InternalLink { get; set; }
+
+        //Requires a LinkProvider to work
+        //[ResolvedUrlField("internalLink")]
+        //public string ResolvedInternalLink { get; set; }
 
         [TextField("externalLink")]
         public string ExternalLink { get; set; }
@@ -136,5 +152,15 @@ namespace DVM4T.Testing.Models
 
         [NumberField("decimalValue", IsMetadata = true)]
         public double NumericValue { get; set; }
+    }
+
+    public enum StateType
+    {
+        VA,
+        PA,
+        NY,
+        MA, 
+        MD,
+        DE
     }
 }

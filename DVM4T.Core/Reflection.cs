@@ -20,18 +20,20 @@ namespace DVM4T.Reflection
 
     public class DefaultViewModelResolver : IViewModelResolver
     {
-        private Dictionary<Type, List<IModelProperty>> modelProperties = new Dictionary<Type, List<IModelProperty>>();
+        private Dictionary<Type, IList<IModelProperty>> modelProperties = new Dictionary<Type, IList<IModelProperty>>();
         //private Dictionary<Type, ViewModelAttribute> viewModelAttributes = new Dictionary<Type, ViewModelAttribute>();
         private Dictionary<Type, IModelAttribute> modelAttributes = new Dictionary<Type, IModelAttribute>();
         private readonly IReflectionHelper helper;
         public DefaultViewModelResolver(IReflectionHelper helper)
         {
+            if (helper == null) throw new ArgumentNullException("helper");
             this.helper = helper;
         }
 
+        #region IViewModelResolver
         public IList<IModelProperty> GetModelProperties(Type type)
         {
-            List<IModelProperty> result;
+            IList<IModelProperty> result;
             if (!modelProperties.TryGetValue(type, out result))
             {
                 lock (modelProperties)
@@ -42,18 +44,8 @@ namespace DVM4T.Reflection
                         result = new List<IModelProperty>();
                         foreach (var prop in props)
                         {
-                            ModelPropertyAttributeBase propAttribute = prop.GetCustomAttributes(typeof(ModelPropertyAttributeBase), true).FirstOrDefault() as ModelPropertyAttributeBase;
-                            if (propAttribute != null) //only add properties that have the custom attribute
-                            {
-                                result.Add(new ModelProperty
-                                {
-                                    Name = prop.Name,
-                                    PropertyAttribute = propAttribute,
-                                    Set = helper.BuildSetter(prop),
-                                    Get = helper.BuildGetter(prop),
-                                    PropertyType = prop.PropertyType
-                                });
-                            }
+                            var modelProp = BuildModelProperty(prop);
+                            if (modelProp != null) result.Add(modelProp);
                         }
                         modelProperties.Add(type, result);
                     }
@@ -89,6 +81,88 @@ namespace DVM4T.Reflection
             //Using explicit cast (IViewModel) will result in InvalidCastException if Type doesn't implement IViewModel
             return (IViewModel)helper.CreateInstance(type);
         }
+        public object ResolveModel(Type type)
+        {
+            return helper.CreateInstance(type);
+        }
+        public IModelProperty GetModelProperty(PropertyInfo propertyInfo)
+        {
+            IModelProperty result = null;
+            IPropertyAttribute propAttribute = null;
+            IList<IModelProperty> allModelProperties;
+            if (modelProperties.TryGetValue(propertyInfo.DeclaringType, out allModelProperties))
+            {
+                result = FindOrBuildModelProperty(allModelProperties, propertyInfo);
+            }
+            else
+            {
+                lock (modelProperties)
+                {
+                    allModelProperties = GetModelProperties(propertyInfo.DeclaringType);
+                    result = FindOrBuildModelProperty(allModelProperties, propertyInfo);
+                }
+            }
+            
+            return result;
+        }
+
+        public IModelProperty GetModelProperty<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda)
+        {
+            return GetModelProperty<TSource,TProperty>(propertyLambda);
+        }
+
+        public IModelProperty GetModelProperty<TSource, TProperty>(Expression<Func<TSource, TProperty>> propertyLambda)
+        {
+            if (propertyLambda == null) throw new ArgumentNullException("propertyLambda");
+            return GetModelProperty(helper.GetPropertyInfo(propertyLambda));
+        }
+
+        public IModelProperty GetModelProperty(PropertyInfo propertyInfo, IPropertyAttribute attribute)
+        {
+            if (propertyInfo == null) throw new ArgumentNullException("propertyInfo");
+            //if (attribute == null) throw new ArgumentNullException("attribute");
+            return new ModelProperty
+            {
+                Name = propertyInfo.Name,
+                PropertyAttribute = attribute,
+                Set = helper.BuildSetter(propertyInfo),
+                Get = helper.BuildGetter(propertyInfo),
+                PropertyType = propertyInfo.PropertyType
+            };
+        }
+        #endregion
+
+        #region Private methods
+
+        private IModelProperty FindOrBuildModelProperty(IList<IModelProperty> allModelProperties, PropertyInfo propertyInfo)
+        {
+            IModelProperty result = null;
+            result = allModelProperties.FirstOrDefault(x => x.Name == propertyInfo.Name);
+            if (result == null)
+            {
+                result = BuildModelProperty(propertyInfo);
+                allModelProperties.Add(result);
+            }
+            return result;
+        }
+        
+        /// <summary>
+        /// Builds a new Model Property object. Uses Reflection (GetCustomAttributes)
+        /// </summary>
+        /// <param name="propertyInfo"></param>
+        /// <returns></returns>
+        private IModelProperty BuildModelProperty(PropertyInfo propertyInfo)
+        {
+            IModelProperty result = null;
+            var propAttribute = propertyInfo.GetCustomAttributes(typeof(IPropertyAttribute), true).FirstOrDefault() as IPropertyAttribute;
+            if (propAttribute != null) //only add properties that have the custom attribute
+            {
+                result = GetModelProperty(propertyInfo, propAttribute);
+            }
+            return result;
+        }
+
+        #endregion
     }
 
     public class ReflectionOptimizer : IReflectionHelper
@@ -131,7 +205,7 @@ namespace DVM4T.Reflection
         }
         public T CreateInstance<T>() where T : class, new()
         {
-            return CreateInstance(typeof(T)) as T;   
+            return CreateInstance(typeof(T)) as T;
         }
 
         public Action<object, object> BuildSetter(PropertyInfo propertyInfo)
@@ -165,7 +239,7 @@ namespace DVM4T.Reflection
         public PropertyInfo GetPropertyInfo<TSource, TProperty>(Expression<Func<TSource, TProperty>> propertyLambda)
         {
             //Type type = typeof(TSource);
-
+            if (propertyLambda == null) throw new ArgumentNullException("propertyLambda");
             MemberExpression member = propertyLambda.Body as MemberExpression;
             if (member == null)
                 throw new ArgumentException(string.Format(

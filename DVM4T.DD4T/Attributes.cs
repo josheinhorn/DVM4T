@@ -11,6 +11,7 @@ using System.Web.Mvc;
 using DVM4T.Core;
 using DVM4T.Exceptions;
 using DD4T.ContentModel;
+using System.Reflection;
 
 namespace DVM4T.DD4T.Attributes
 {
@@ -20,12 +21,16 @@ namespace DVM4T.DD4T.Attributes
     /// <example>
     /// To create a multi value linked component with a custom return Type:
     ///     [LinkedComponentField("content", LinkedComponentTypes = new Type[] { typeof(GeneralContentViewModel) }, AllowMultipleValues = true)]
-    ///     public ViewModelList'GeneralContentViewModel' Content { get; set; }
+    ///     public ViewModelList&lt;GeneralContentViewModel&gt; Content { get; set; }
     ///     
     /// To create a single linked component using the default DD4T type:
     ///     [LinkedComponentField("internalLink")]
     ///     public IComponent InternalLink { get; set; }
     /// </example>
+    /// <remarks>
+    /// This requires the Property to be a concrete type with a parameterless constructor that implements IList&lt;IViewModel&gt;.
+    /// ViewModelList&lt;T&gt; is the recommended adapter to use.
+    /// </remarks>
     public class LinkedComponentFieldAttribute : FieldAttributeBase
     {
         protected Type[] linkedComponentTypes;
@@ -68,7 +73,7 @@ namespace DVM4T.DD4T.Attributes
                     {
                         //Property must implement IList<IComponentPresentationViewModel> -- use ComponentViewModelList<T>
                         IList<IViewModel> list =
-                            (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType);
+                            (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType); //hidden dependency!! get this out
 
                         foreach (var component in linkedComponentValues)
                         {
@@ -133,9 +138,9 @@ namespace DVM4T.DD4T.Attributes
     /// An Attribute for a Property representing the Link Resolved URL for a Linked or Multimedia Component
     /// </summary>
     /// <remarks>Uses the default DD4T GetResolvedUrl helper method</remarks>
-    public class ResolvedUrlAttribute : FieldAttributeBase
+    public class ResolvedUrlFieldAttribute : FieldAttributeBase
     {
-        public ResolvedUrlAttribute(string fieldName) : base(fieldName) { }
+        public ResolvedUrlFieldAttribute(string fieldName) : base(fieldName) { }
         public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
         {
             object fieldValue = null;
@@ -186,7 +191,7 @@ namespace DVM4T.DD4T.Attributes
                 if (AllowMultipleValues)
                 {
                     //Property must implement IList<IEmbeddedSchemaViewModel> -- use ViewModelList<T>
-                    IList<IViewModel> list = (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType);
+                    IList<IViewModel> list = (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType); //Dependency!! Get this out
                     foreach (var fieldSet in embeddedValues)
                     {
                         list.Add(factory.BuildViewModel(
@@ -303,11 +308,11 @@ namespace DVM4T.DD4T.Attributes
             {
                 if (AllowMultipleValues)
                 {
-                    fieldValue = values.Select(v => v.ResolveRichText()).ToList();
+                    fieldValue = values.Select(v => v.ResolveRichText()).ToList(); //Hidden dependency on DD4T implementation
                 }
                 else
                 {
-                    fieldValue = values[0].ResolveRichText();
+                    fieldValue = values[0].ResolveRichText(); //Hidden dependency on DD4T implementation
                 }
             }
             return fieldValue;
@@ -375,36 +380,6 @@ namespace DVM4T.DD4T.Attributes
         public override Type ExpectedReturnType
         {
             get { return AllowMultipleValues ? typeof(IList<DateTime>) : typeof(DateTime); }
-        }
-    }
-    /// <summary>
-    /// A Keyword field
-    /// </summary>
-    [Obsolete]
-    public class KeywordFieldAttributeOld : FieldAttributeBase
-    {
-        public KeywordFieldAttributeOld(string fieldName) : base(fieldName) { }
-        public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
-        {
-            object fieldValue = null;
-            var values = field.Values.Cast<Dynamic.IKeyword>().ToList();
-            if (values != null && values.Count > 0)
-            {
-                if (AllowMultipleValues)
-                {
-                    fieldValue = values;
-                }
-                else
-                {
-                    fieldValue = values[0];
-                }
-            }
-            return fieldValue;
-        }
-
-        public override Type ExpectedReturnType
-        {
-            get { return AllowMultipleValues ? typeof(IList<Dynamic.IKeyword>) : typeof(Dynamic.IKeyword); }
         }
     }
     /// <summary>
@@ -515,7 +490,6 @@ namespace DVM4T.DD4T.Attributes
     /// </summary>
     public class MultimediaAttribute : ComponentAttributeBase
     {
-
         public override object GetPropertyValue(IComponentData component, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
         {
             IMultimediaData result = null;
@@ -676,12 +650,12 @@ namespace DVM4T.DD4T.Attributes
 
     public class KeywordDataAttribute : ModelPropertyAttributeBase
     {
-        public override object GetPropertyValue(IViewModel model, Type propertyType, IViewModelFactory factory = null)
+        public override object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null)
         {
             object result = null;
-            if (model != null && model.ModelData != null && model.ModelData is IKeywordData)
+            if (modelData != null && modelData is IKeywordData)
             {
-                result = model.ModelData as IKeywordData;
+                result = modelData as IKeywordData;
             }
             return result;
         }
@@ -692,5 +666,67 @@ namespace DVM4T.DD4T.Attributes
         }
     }
     
+    /// <summary>
+    /// Text field that is parsed into an Enum. Currently NOT optimized - relies heavily on reflection methods.
+    /// Use sparingly.
+    /// </summary>
+    /// <remarks>
+    /// Requires Property to be a concrete type with a parameterless constructor that implements IList&lt;object&gt;
+    /// </remarks>
+    public class TextEnumFieldAttribute : FieldAttributeBase
+    {
+        private Type genericType;
+        object genericHelper;
+        private MethodInfo safeParse; //GARBAGE
+        public TextEnumFieldAttribute(string fieldName, Type genericType) : base(fieldName)
+        {
+            if (!genericType.IsEnum)
+            {
+                throw new ArgumentException("genericType must be an enumerated type");
+            }
+            this.genericType = genericType;
+            var genericHelperType = typeof(GenericEnumHelper<>).MakeGenericType(genericType);
+            genericHelper = ViewModelDefaults.ReflectionCache.CreateInstance(genericHelperType);
+            safeParse = genericHelperType.GetMethod("SafeParse"); //GARBAGE: Needs reflection optimization
+        }
+        public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
+        {
+            object fieldValue = null;
+            var values = field.Values.Cast<string>().ToList();
+            if (values != null && values.Count > 0)
+            {
+                
+                if (AllowMultipleValues)
+                {
+                    var list = (IList<object>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType); //A trick to get around generics
+                    foreach (var value in values)
+                    {
+                        list.Add(safeParse.Invoke(genericHelper, new object[] { value }));
+                    }
+                    fieldValue = list;
+                }
+                else
+                {
+                    fieldValue = safeParse.Invoke(genericHelper, new object[] { values[0] }); //GARBAGE: Needs reflection optimization
+                }
+            }
+            return fieldValue;
+        }
+
+        public override Type ExpectedReturnType
+        {
+            get { return AllowMultipleValues ? typeof(IList<>).MakeGenericType(genericType) : genericType; }
+        }
+
+        public class GenericEnumHelper<TEnum> where TEnum: struct
+        {
+            public TEnum SafeParse(object value)
+            {
+                TEnum b;
+                Enum.TryParse<TEnum>(value.ToString(), out b);
+                return b; 
+            }
+        }
+    }
     
 }
