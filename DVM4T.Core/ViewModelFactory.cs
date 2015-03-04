@@ -127,6 +127,8 @@ namespace DVM4T.Core
             }
             return model;
         }
+
+        public IViewModelResolver ModelResolver { get { return resolver; } }
         #region Private methods
 
 

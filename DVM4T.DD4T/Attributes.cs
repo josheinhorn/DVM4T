@@ -56,6 +56,7 @@ namespace DVM4T.DD4T.Attributes
                 linkedComponentTypes = value;
             }
         }
+        //public IModelMapping<T> Mapping { get; set; } //Can't do this
         public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
         {
             object fieldValue = null;
@@ -72,16 +73,26 @@ namespace DVM4T.DD4T.Attributes
                     else
                     {
                         //Property must implement IList<IComponentPresentationViewModel> -- use ComponentViewModelList<T>
-                        IList<IViewModel> list =
-                            (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType); //hidden dependency!! get this out
-
+                        var propValue = factory.ModelResolver.ResolveModel(propertyType);
+                        IList<IViewModel> vmList = null;
+                        //IList<object> objList = null;
+                        //if (propValue is IList<IViewModel>)
+                        vmList = (IList<IViewModel>)propValue;
+                        //else
+                        //    objList = (IList<object>)propValue; //will throw InvalidCastException if Property doesn't implement this
+                        
                         foreach (var component in linkedComponentValues)
                         {
                             var model = BuildLinkedComponent(component, template, factory);
                             if (model != null)
-                                list.Add(model);
+                            {
+                                //if (vmList != null)
+                                    vmList.Add(model);
+                                //else
+                                //    objList.Add(model);
+                            }
                         }
-                        fieldValue = list;
+                        fieldValue = vmList; // ?? (object)objList;
                     }
                 }
                 else
@@ -99,11 +110,11 @@ namespace DVM4T.DD4T.Attributes
             {
                 if (AllowMultipleValues)
                 {
-                    return linkedComponentTypes == null ? typeof(IList<Dynamic.IComponent>) : typeof(IList<IViewModel>);
+                    return linkedComponentTypes == null ? typeof(IList<Dynamic.IComponent>) : typeof(IList<object>);
                 }
                 else
                 {
-                    return linkedComponentTypes == null ? typeof(Dynamic.IComponent) : typeof(IViewModel);
+                    return linkedComponentTypes == null ? typeof(Dynamic.IComponent) : typeof(object);
                 }
             }
         }
@@ -122,15 +133,22 @@ namespace DVM4T.DD4T.Attributes
             if (cp == null) throw new ArgumentNullException("cp");
             //string ctName;
             Type result = null;
-            try
-            {
-                result = factory.FindViewModelByAttribute<IDefinedModelAttribute>(
-                    cp, LinkedComponentTypes);
-            }
-            catch (ViewModelTypeNotFoundException)
-            {
-                result = null; //return null if it's not found instead of throwing exception
-            }
+            //if (LinkedComponentTypes.Length > 1)
+            //{
+                try
+                {
+                    result = factory.FindViewModelByAttribute<IDefinedModelAttribute>(
+                        cp, LinkedComponentTypes);
+                }
+                catch (ViewModelTypeNotFoundException)
+                {
+                    result = null; //return null if it's not found instead of throwing exception
+                }
+            //}
+            //else if (LinkedComponentTypes.Length == 1)
+            //{
+            //    result = linkedComponentTypes[0]; 
+            //}
             return result;
         }
     }
@@ -191,17 +209,29 @@ namespace DVM4T.DD4T.Attributes
                 if (AllowMultipleValues)
                 {
                     //Property must implement IList<IEmbeddedSchemaViewModel> -- use ViewModelList<T>
-                    IList<IViewModel> list = (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType); //Dependency!! Get this out
+                    //IList<IViewModel> list = (IList<IViewModel>)factory.ModelResolver.ResolveModel(propertyType); //Dependency!! Get this out
+                    var propValue = factory.ModelResolver.ResolveModel(propertyType); //hidden dependency!! get this out
+                    //How to not copy and paste all this identical code? 2 different generic lists...
+
+                    IList<IViewModel> vmList = null;
+                    
+                    vmList = (IList<IViewModel>)propValue;
+                    
+                    
                     foreach (var fieldSet in embeddedValues)
                     {
-                        list.Add(factory.BuildViewModel(
+                        var model = factory.BuildViewModel(
                             EmbeddedSchemaType,
                             Dependencies.DataFactory.GetModelData(
                                 fieldSet,
                                 field.EmbeddedSchema.BaseData as ISchema, //Assuming it's DD4T implemented
-                                template.BaseData as IComponentTemplate)));
+                                template.BaseData as IComponentTemplate));  //Assuming it's DD4T implemented
+                        if (model != null)
+                        {
+                            vmList.Add(model);
+                        }
                     }
-                    fieldValue = list;
+                    fieldValue = vmList;
                 }
                 else
                 {
@@ -209,12 +239,12 @@ namespace DVM4T.DD4T.Attributes
                         Dependencies.DataFactory.GetModelData(
                                 embeddedValues[0],
                                 field.EmbeddedSchema.BaseData as ISchema, //Assuming it's DD4T implemented
-                                template.BaseData as IComponentTemplate));
+                                template.BaseData as IComponentTemplate));  //Assuming it's DD4T implemented
                 }
             }
             return fieldValue;
         }
-
+       
         public override Type ExpectedReturnType
         {
             get { return AllowMultipleValues ? typeof(IList<IViewModel>) : typeof(IViewModel); }
@@ -550,7 +580,7 @@ namespace DVM4T.DD4T.Attributes
     {
         public override System.Collections.IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, Type propertyType, IViewModelFactory factory = null)
         {
-            IList<IViewModel> result = ViewModelDefaults.ReflectionCache.CreateInstance(propertyType) as IList<IViewModel>;
+            IList<IViewModel> result = factory.ModelResolver.ResolveModel(propertyType) as IList<IViewModel>;
             string view = null;
             foreach (var cp in cps)
             {
@@ -605,7 +635,7 @@ namespace DVM4T.DD4T.Attributes
                         else
                         {
                             //Property must implement IList<IEmbeddedSchemaViewModel> -- use ViewModelList<T>
-                            IList<IViewModel> list = (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType);
+                            IList<IViewModel> list = (IList<IViewModel>)factory.ModelResolver.ResolveModel(propertyType);
                             foreach (var keyword in keywords)
                             {
                                 list.Add(factory.BuildViewModel(
@@ -668,7 +698,7 @@ namespace DVM4T.DD4T.Attributes
     
     /// <summary>
     /// Text field that is parsed into an Enum. Currently NOT optimized - relies heavily on reflection methods.
-    /// Use sparingly.
+    /// Use sparingly - this is more or less a Proof of Concept.
     /// </summary>
     /// <remarks>
     /// Requires Property to be a concrete type with a parameterless constructor that implements IList&lt;object&gt;
@@ -676,8 +706,9 @@ namespace DVM4T.DD4T.Attributes
     public class TextEnumFieldAttribute : FieldAttributeBase
     {
         private Type genericType;
-        object genericHelper;
+        private object genericHelper;
         private MethodInfo safeParse; //GARBAGE
+        private Type genericHelperType;
         public TextEnumFieldAttribute(string fieldName, Type genericType) : base(fieldName)
         {
             if (!genericType.IsEnum)
@@ -685,12 +716,12 @@ namespace DVM4T.DD4T.Attributes
                 throw new ArgumentException("genericType must be an enumerated type");
             }
             this.genericType = genericType;
-            var genericHelperType = typeof(GenericEnumHelper<>).MakeGenericType(genericType);
-            genericHelper = ViewModelDefaults.ReflectionCache.CreateInstance(genericHelperType);
-            safeParse = genericHelperType.GetMethod("SafeParse"); //GARBAGE: Needs reflection optimization
+            genericHelperType = typeof(GenericEnumHelper<>).MakeGenericType(genericType);
         }
         public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
         {
+            genericHelper = factory.ModelResolver.ResolveModel(genericHelperType);
+            safeParse = genericHelperType.GetMethod("SafeParse"); //GARBAGE: Needs reflection optimization
             object fieldValue = null;
             var values = field.Values.Cast<string>().ToList();
             if (values != null && values.Count > 0)
@@ -698,7 +729,7 @@ namespace DVM4T.DD4T.Attributes
                 
                 if (AllowMultipleValues)
                 {
-                    var list = (IList<object>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType); //A trick to get around generics
+                    var list = (IList<object>)factory.ModelResolver.ResolveModel(propertyType); //A trick to get around generics
                     foreach (var value in values)
                     {
                         list.Add(safeParse.Invoke(genericHelper, new object[] { value }));
@@ -729,4 +760,65 @@ namespace DVM4T.DD4T.Attributes
         }
     }
     
+    public class EmbeddedModelAttribute<T> : NestedModelFieldAttributeBase<T> where T: class
+    {
+        public EmbeddedModelAttribute(string fieldName, IModelMapping<T> mapping)
+            : base(fieldName, mapping)
+        { }
+       
+        public override object[] GetValues(IFieldData field)
+        {
+           return field.Values.Cast<Dynamic.IFieldSet>().ToArray();
+        }
+
+        public override object BuildModel(IViewModelFactory factory, object value, IFieldData field, ITemplateData template)
+        {
+            return factory.BuildMappedModel<T>(
+                            Dependencies.DataFactory.GetModelData(
+                                (IFieldSet)value,
+                                field.EmbeddedSchema.BaseData as ISchema, //Assuming it's DD4T implemented
+                                template.BaseData as IComponentTemplate),
+                                ModelMapping);  //Assuming it's DD4T implemented
+        }
+    }
+
+    public class LinkedModelAttribute<T> : NestedModelFieldAttributeBase<T> where T : class
+    {
+        public LinkedModelAttribute(string fieldName, IModelMapping<T> mapping)
+            : base(fieldName, mapping)
+        { }
+        public override object[] GetValues(IFieldData field)
+        {
+            var linkedComps = field.Values.Cast<Dynamic.IComponent>();
+            return linkedComps.Select(x => Dependencies.DataFactory.GetModelData(x)).ToArray();
+        }
+
+        public override object BuildModel(IViewModelFactory factory, object value, IFieldData field, ITemplateData template)
+        {
+            var component = (IComponentData)value;
+            IComponentPresentationData linkedCp = Dependencies.DataFactory.GetModelData(
+                Dependencies.DD4TFactory.BuildComponentPresentation(component, template)); //Lots of dependencies here
+            return factory.BuildMappedModel<T>(linkedCp, ModelMapping);
+        }
+    }
+
+    public class KeywordModelAttribute<T> : NestedModelFieldAttributeBase<T> where T : class
+    {
+        public KeywordModelAttribute(string fieldName, IModelMapping<T> mapping)
+            : base(fieldName, mapping)
+        { }
+        public override object[] GetValues(IFieldData field)
+        {
+            return field.Values.Cast<Dynamic.IKeyword>().ToArray();
+        }
+
+        public override object BuildModel(IViewModelFactory factory, object value, IFieldData field, ITemplateData template)
+        {
+            var keyword = (IKeyword)value;
+            var categoryName = (field.BaseData as IField).CategoryName;
+            return factory.BuildMappedModel<T>(
+                            Dependencies.DataFactory.GetModelData(keyword, categoryName),
+                            ModelMapping);
+        }
+    }
 }

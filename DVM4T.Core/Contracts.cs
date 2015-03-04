@@ -324,6 +324,7 @@ namespace DVM4T.Contracts
 
         T BuildMappedModel<T>(T model, IViewModelData modelData, IModelMapping<T> mapping) where T : class;
         T BuildMappedModel<T>(IViewModelData modelData, IModelMapping<T> mapping) where T : class;
+        IViewModelResolver ModelResolver { get; }
     }
     
     public interface IModelMapping<TModel> where TModel : class //Should it be constrained to classes?
@@ -732,6 +733,11 @@ namespace DVM4T.Contracts
         /// <returns>The Property value</returns>
         object GetPropertyValue(IPageData page, Type propertyType, IViewModelFactory builder = null);
     }
+    public interface INestedModelAttribute<T> : IPropertyAttribute where T : class
+    {
+        IModelMapping<T> ModelMapping { get; }
+    }
+
     /// <summary>
     /// An Attribute for identifying a View Model class
     /// </summary>

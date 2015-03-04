@@ -8,6 +8,7 @@ using System.Web;
 using DVM4T.Reflection;
 using DVM4T.Exceptions;
 using System.Collections;
+using DVM4T.Core;
 
 namespace DVM4T.Attributes
 {
@@ -461,6 +462,149 @@ namespace DVM4T.Attributes
                 return ViewModelKeys.Any(x => x.Equals(key));
             }
             return result;
+        }
+    }
+
+    public abstract class FieldBase : IFieldAttribute
+    {
+        public FieldBase(string fieldName)
+        {
+            FieldName = fieldName;
+        }
+        public abstract object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory builder = null);
+
+        public string FieldName
+        {
+            get;
+            private set;
+        }
+
+        public bool AllowMultipleValues
+        {
+            get;
+            set;
+        }
+
+        public bool InlineEditable
+        {
+            get;
+            set;
+        }
+
+        public bool Mandatory
+        {
+            get;
+            set;
+        }
+
+        public bool IsMetadata
+        {
+            get;
+            set;
+        }
+
+        public bool IsTemplateMetadata
+        {
+            get;
+            set;
+        }
+
+        public abstract Type ExpectedReturnType { get; }
+
+        public object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null)
+        {
+            //Completely redundant code from FieldAttributeBase! need to reconcile all of this and relate these new
+            //mapping attributes to the custom attributes
+            object result = null;
+            if (modelData != null)
+            {
+                //need null checks on Template
+                IFieldsData fields = null;
+                if (IsTemplateMetadata && modelData is ITemplatedViewModelData)
+                {
+                    var templateData = modelData as ITemplatedViewModelData;
+                    fields = templateData.Template != null ? templateData.Template.Metadata : null;
+                }
+                else if (IsMetadata)
+                {
+                    fields = modelData.Metadata;
+                }
+                else if (modelData is IContentPresentationData)
+                {
+                    fields = (modelData as IContentPresentationData).Content;
+                }
+                else
+                {
+                    fields = modelData.Metadata;
+                }
+                //var fields = IsTemplateMetadata && modelData.Template != null ? modelData.Template.Metadata
+                //    : IsMetadata ? modelData.Metadata
+                //    : modelData is IContentViewModelData ? (modelData as IContentViewModelData).ContentData
+                //    : modelData.Metadata; //If it isn't content data, just use Metadata no matter what
+
+                if (fields != null && fields.ContainsKey(FieldName))
+                {
+                    var template = modelData is ITemplatedViewModelData ? (modelData as ITemplatedViewModelData).Template
+                        : null;
+                    result = this.GetFieldValue(fields[FieldName], propertyType, template, factory);
+                }
+            }
+            return result;
+        }
+    }
+
+    public abstract class NestedModelFieldAttributeBase<T> : FieldBase, INestedModelAttribute<T> where T : class
+    {
+        public NestedModelFieldAttributeBase(string fieldName, IModelMapping<T> mapping) : base(fieldName)
+        {
+            ModelMapping = mapping;
+        }
+        public IModelMapping<T> ModelMapping
+        {
+            get;
+            private set;
+        }
+
+        public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
+        {
+            
+            object fieldValue = null;
+            var values = GetValues(field);
+            if (values != null && values.Length > 0)
+            {
+                if (AllowMultipleValues)
+                {
+                    //Property must implement IList<IEmbeddedSchemaViewModel> -- use ViewModelList<T>
+                    //IList<IViewModel> list = (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType); //Dependency!! Get this out
+                    var propValue = factory.ModelResolver.ResolveModel(propertyType); //hidden dependency!! get this out
+                  
+                    IList<object> objList = null;
+                    objList = (IList<object>)propValue; //will throw InvalidCastException if Property doesn't implement this
+
+                    foreach (var value in values)
+                    {
+                        var model = BuildModel(factory, value, field, template);
+                        if (model != null)
+                        {
+                            objList.Add(model);
+                        }
+                    }
+                    fieldValue = objList;
+                }
+                else
+                {
+                    fieldValue = BuildModel(factory, values[0], field, template);
+                }
+            }
+            return fieldValue;
+        }
+        public abstract object[] GetValues(IFieldData field);
+
+        public abstract object BuildModel(IViewModelFactory factory, object value, IFieldData field, ITemplateData template);
+
+        public override Type ExpectedReturnType
+        {
+            get { return AllowMultipleValues ? typeof(IList<T>) : typeof(T); }
         }
     }
 }
