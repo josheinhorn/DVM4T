@@ -126,6 +126,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="BindingsMocks.cs" />
     <Compile Include="DomainModels.cs" />
     <Compile Include="DomainModelTests.cs" />
     <Compile Include="MockModels.cs" />

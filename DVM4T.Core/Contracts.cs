@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DVM4T.Core.Binding;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -239,8 +240,12 @@ namespace DVM4T.Contracts
         //Possible to do something like this? How to make the parameters generic?
         //T GetModelData<T>(data parameters) where T : IViewModelData
 
-        IModelProperty GetModelProperty(PropertyInfo propertyInfo, IPropertyAttribute attribute); //Does this method belong here?
+        IModelProperty GetModelProperty(PropertyInfo propertyInfo, IPropertyAttribute attribute);
+        IModelProperty GetModelProperty<TSource, TProperty>(Expression<Func<TSource, TProperty>> propertyLambda, IPropertyAttribute attribute);
         object ResolveModel(Type type);
+        T ResolveModel<T>(params object[] ctorArgs);
+
+        IReflectionHelper ReflectionHelper { get; }
     }
 
     /// <summary>
@@ -322,8 +327,10 @@ namespace DVM4T.Contracts
         //void AddModelMapping<T>(IModelMapping<T> mapping); //Doesn't seem possible to store a collection of different generics without making the whole Factory generic
         //T BuildMappedModel<T>(IViewModelData modelData) where T : class, new();
 
-        T BuildMappedModel<T>(T model, IViewModelData modelData, IModelMapping<T> mapping) where T : class;
-        T BuildMappedModel<T>(IViewModelData modelData, IModelMapping<T> mapping) where T : class;
+        T BuildMappedModel<T>(T model, IViewModelData modelData, IModelMapping mapping); //where T : class;
+        T BuildMappedModel<T>(IViewModelData modelData, IModelMapping mapping); //where T : class;
+        object BuildMappedModel(IViewModelData modelData, IModelMapping mapping);
+
         IViewModelResolver ModelResolver { get; }
     }
     
@@ -602,6 +609,9 @@ namespace DVM4T.Contracts
         /// <param name="propertyLambda">Lambda Expression representing a Property of the source Type</param>
         /// <returns>Property Info</returns>
         PropertyInfo GetPropertyInfo<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda);
+
+        Action<object, object> BuildAddMethod<TCollection>();        
+        Action<object, object> BuildAddMethod(Type collectionType);
     }
     /// <summary>
     /// A simple representation of a Model Property
@@ -640,13 +650,17 @@ namespace DVM4T.Contracts
         /// </summary>
         Type ExpectedReturnType { get; }
         /// <summary>
-        /// Gets the value for this property based on a View Model object
+        /// Gets the value for this property based on a View Model data object
         /// </summary>
         /// <param name="model">View Model this Property is in</param>
         /// <param name="propertyType">Actual return type of the Property</param>
         /// <param name="builder">A View Model Builder</param>
         /// <returns>Property value</returns>
         object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory builder = null);
+        /// <summary>
+        /// Optional mapping if the Property is a Complex Type
+        /// </summary>
+        IModelMapping ComplexTypeMapping { get; set; }
     }
     /// <summary>
     /// An attribute for a Property representing a Field

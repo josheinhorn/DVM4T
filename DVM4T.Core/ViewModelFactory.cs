@@ -1,4 +1,5 @@
 ﻿using DVM4T.Contracts;
+using DVM4T.Core.Binding;
 using DVM4T.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -113,13 +114,19 @@ namespace DVM4T.Core
             return (T)BuildViewModel(typeof(T), modelData);
         }
 
-        public T BuildMappedModel<T>(IViewModelData modelData, IModelMapping<T> mapping) where T: class
+        public object BuildMappedModel(IViewModelData modelData, IModelMapping mapping)
+        {
+            var model = resolver.ResolveModel(mapping.ModelType);
+            return BuildMappedModel(model, modelData, mapping);
+        }
+
+        public T BuildMappedModel<T>(IViewModelData modelData, IModelMapping mapping) //where T: class
         {
             T model = (T)resolver.ResolveModel(typeof(T));
             return BuildMappedModel<T>(model, modelData, mapping);
         }
 
-        public T BuildMappedModel<T>(T model, IViewModelData modelData, IModelMapping<T> mapping) where T : class
+        public T BuildMappedModel<T>(T model, IViewModelData modelData, IModelMapping mapping) //where T : class
         {
             foreach (var property in mapping.ModelProperties)
             {

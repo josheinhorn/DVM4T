@@ -52,6 +52,8 @@
   <ItemGroup>
     <Compile Include="Attributes.cs" />
     <Compile Include="BaseClasses.cs" />
+    <Compile Include="Binding.cs" />
+    <Compile Include="BindingImpl.cs" />
     <Compile Include="Contracts.cs" />
     <Compile Include="Core.cs" />
     <Compile Include="Exceptions.cs" />

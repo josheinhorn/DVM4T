@@ -130,6 +130,18 @@ namespace DVM4T.Reflection
                 PropertyType = propertyInfo.PropertyType
             };
         }
+
+        public IModelProperty GetModelProperty<TSource, TProperty>(Expression<Func<TSource, TProperty>> propertyLambda, IPropertyAttribute attribute)
+        {
+            return GetModelProperty(helper.GetPropertyInfo<TSource, TProperty>(propertyLambda), attribute);
+        }
+
+        public IReflectionHelper ReflectionHelper { get { return helper; } }
+
+        public T ResolveModel<T>(params object[] ctorArgs)
+        {
+            return (T)ResolveModel(typeof(T));
+        }
         #endregion
 
         #region Private methods
@@ -163,6 +175,9 @@ namespace DVM4T.Reflection
         }
 
         #endregion
+
+
+        
     }
 
     public class ReflectionOptimizer : IReflectionHelper
@@ -171,6 +186,9 @@ namespace DVM4T.Reflection
         private Dictionary<Type, Func<object>> constructors = new Dictionary<Type, Func<object>>();
         //private Dictionary<Type, ViewModelAttribute> viewModelAttributes = new Dictionary<Type, ViewModelAttribute>();
         private Dictionary<Type, IModelAttribute> modelAttributes = new Dictionary<Type, IModelAttribute>();
+        private Dictionary<Type, Dictionary<string, Action<object, object>>> twoArgMethods = 
+            new Dictionary<Type, Dictionary<string, Action<object, object>>>();
+
 
         public ReflectionOptimizer() { }
 
@@ -265,6 +283,46 @@ namespace DVM4T.Reflection
         public PropertyInfo GetPropertyInfo<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda)
         {
             return GetPropertyInfo<TSource, TProperty>(propertyLambda);
+        }
+
+        public Action<object, object> BuildAddMethod<TCollection>()
+        {
+            return BuildAddMethod(typeof(TCollection));
+        }
+        public Action<object, object> BuildAddMethod(Type collectionType)
+        {
+            //Stuff for lists
+            string methodName = "Add";
+            Action<object, object> result = null;
+            Dictionary<string, Action<object, object>> typeMethods;
+            if (!twoArgMethods.TryGetValue(collectionType, out typeMethods))
+            {
+                typeMethods = new Dictionary<string,Action<object,object>>();
+                twoArgMethods.Add(collectionType, typeMethods);
+            }
+            if (!typeMethods.TryGetValue(methodName, out result))
+            {
+                Type genericType = collectionType.GetGenericArguments()[0];
+                if (genericType != null
+                    && typeof(ICollection<>).MakeGenericType(genericType).IsAssignableFrom(collectionType)) //It has a generic type param and it implements ICollection<T>
+                {
+                    //Equivalent to:
+                    /*delegate (object c, object a)
+                    {
+                        ((CollectionType)c).Add((GenericType)a);
+                    }*/
+                    var collection = Expression.Parameter(typeof(object), "c");
+                    var itemToAdd = Expression.Parameter(typeof(object), "a");
+                    MethodInfo addMethod = collectionType.GetMethod(methodName);
+                    var addCall = Expression.Call(
+                                        Expression.Convert(collection, collectionType), addMethod,
+                                        Expression.Convert(itemToAdd, genericType));
+                    result = Expression.Lambda<Action<object, object>>(addCall, collection, itemToAdd).Compile();
+                    typeMethods.Add(methodName, result); //cache the result so we don't need to repeat this process
+                }
+                else throw new ArgumentException("The type must implement ICollection<" + genericType.Name + ">", "collectionType");
+            }
+            return result;
         }
     }
 }

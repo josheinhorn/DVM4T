@@ -24,6 +24,13 @@ namespace DVM4T.Attributes
         /// <remarks>Primarily used for debugging purposes. This property is used to throw an accurate exception at run time if
         /// the property return type does not match with the expected type.</remarks>
         public abstract Type ExpectedReturnType { get; }
+
+
+        public Core.Binding.IModelMapping ComplexTypeMapping
+        {
+            get;
+            set;
+        }
     }
 
     /// <summary>
@@ -34,7 +41,7 @@ namespace DVM4T.Attributes
     /// </remarks>
     public abstract class FieldAttributeBase : ModelPropertyAttributeBase, IFieldAttribute
     {
-        protected readonly string fieldName;
+        protected string fieldName;
         protected bool allowMultipleValues = false;
         protected bool inlineEditable = false;
         protected bool mandatory = false; //probably don't need this one
@@ -98,7 +105,14 @@ namespace DVM4T.Attributes
         /// <summary>
         /// The Tridion schema field name for this property
         /// </summary>
-        public string FieldName { get { return fieldName; } }
+        public string FieldName
+        {
+            get { return fieldName; }
+            set
+            {
+                fieldName = value;
+            }
+        }
         /// <summary>
         /// Is a multi value field.
         /// </summary>
@@ -511,6 +525,12 @@ namespace DVM4T.Attributes
 
         public abstract Type ExpectedReturnType { get; }
 
+        public Core.Binding.IModelMapping ComplexTypeMapping
+        {
+            get;
+            set;
+        }
+
         public object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null)
         {
             //Completely redundant code from FieldAttributeBase! need to reconcile all of this and relate these new
@@ -551,23 +571,22 @@ namespace DVM4T.Attributes
             }
             return result;
         }
+
+
+       
     }
 
-    public abstract class NestedModelFieldAttributeBase<T> : FieldBase, INestedModelAttribute<T> where T : class
+    public abstract class NestedModelFieldAttributeBase<T> : FieldBase where T : class
     {
-        public NestedModelFieldAttributeBase(string fieldName, IModelMapping<T> mapping) : base(fieldName)
+        public NestedModelFieldAttributeBase(string fieldName, DVM4T.Core.Binding.IModelMapping mapping)
+            : base(fieldName)
         {
-            ModelMapping = mapping;
-        }
-        public IModelMapping<T> ModelMapping
-        {
-            get;
-            private set;
+            ComplexTypeMapping = mapping;
         }
 
         public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
         {
-            
+
             object fieldValue = null;
             var values = GetValues(field);
             if (values != null && values.Length > 0)
@@ -576,8 +595,8 @@ namespace DVM4T.Attributes
                 {
                     //Property must implement IList<IEmbeddedSchemaViewModel> -- use ViewModelList<T>
                     //IList<IViewModel> list = (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType); //Dependency!! Get this out
-                    var propValue = factory.ModelResolver.ResolveModel(propertyType); //hidden dependency!! get this out
-                  
+                    var propValue = factory.ModelResolver.ResolveModel(propertyType);
+
                     IList<object> objList = null;
                     objList = (IList<object>)propValue; //will throw InvalidCastException if Property doesn't implement this
 
@@ -604,7 +623,7 @@ namespace DVM4T.Attributes
 
         public override Type ExpectedReturnType
         {
-            get { return AllowMultipleValues ? typeof(IList<T>) : typeof(T); }
+            get { return AllowMultipleValues ? typeof(ICollection<T>) : typeof(T); }
         }
     }
 }

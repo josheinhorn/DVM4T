@@ -9,7 +9,7 @@ using DVM4T.Contracts;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DVM4T.Testing.Models
+namespace DVM4T.Testing.ModelsOld
 {
     [ViewModel("ContentContainer", false, ViewModelKeys = new string[] { "TitleOnly" })]
     public class TitleViewModel : ViewModelBase
@@ -76,13 +76,13 @@ namespace DVM4T.Testing.Models
         public string Title { get; set; }
 
         [LinkedComponentField("content", LinkedComponentTypes = new Type[] { typeof(GeneralContentViewModel) }, AllowMultipleValues = true)]
-        public List<GeneralContentViewModel> ContentList { get; set; }
+        public ViewModelList<GeneralContentViewModel> ContentList { get; set; }
 
         [LinkedComponentField("content", LinkedComponentTypes = new Type[] { typeof(TitleViewModel) })]
         public TitleViewModel OtherContent { get; set; }
 
         [EmbeddedSchemaField("links", typeof(EmbeddedLinkViewModel), AllowMultipleValues = true)]
-        public List<EmbeddedLinkViewModel> Links { get; set; }
+        public ViewModelList<EmbeddedLinkViewModel> Links { get; set; }
 
         [LinkedComponentField("image", LinkedComponentTypes = new Type[] { typeof(Image) })]
         public Image Image { get; set; }
@@ -135,7 +135,7 @@ namespace DVM4T.Testing.Models
     public class Homepage : ViewModelBase
     {
         [PresentationsByView("Carousel")]
-        public List<GeneralContentViewModel> Carousels { get; set; }
+        public ViewModelList<GeneralContentViewModel> Carousels { get; set; }
 
         [TextField("javascript", IsMetadata = true)]
         public String Javascript { get; set; }

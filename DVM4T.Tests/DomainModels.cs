@@ -28,7 +28,7 @@ namespace DVM4T.Testing.DomainModels
 
         public Color BackgroundColor { get; set; }
 
-        public ListAdapter<StateType> State { get; set; }
+        public List<StateType> State { get; set; }
     }
 
     public class ListAdapter<T> : List<object>, IEnumerable<T>
@@ -52,9 +52,9 @@ namespace DVM4T.Testing.DomainModels
     {
         public string Title { get; set; }
 
-        public ListAdapter<GeneralContentViewModel> ContentList { get; set; }
+        public List<GeneralContentViewModel> ContentList { get; set; }
 
-        public ListAdapter<EmbeddedLinkViewModel> Links { get; set; }
+        public List<EmbeddedLinkViewModel> Links { get; set; }
 
         public Image Image { get; set; }
 
@@ -87,7 +87,7 @@ namespace DVM4T.Testing.DomainModels
 
     public class Homepage
     {
-        public ListAdapter<GeneralContentViewModel> Carousels { get; set; }
+        public List<GeneralContentViewModel> Carousels { get; set; }
 
         public String Javascript { get; set; }
     }
