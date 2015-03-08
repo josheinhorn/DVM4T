@@ -481,47 +481,14 @@ namespace DVM4T.Attributes
         {
             IEnumerable fieldValue = null;
             var values = GetRawValues(field);
-            if (values != null && values.Length > 0)
+            if (values != null)
             {
-                //if (AllowMultipleValues)
-                //{
-                //    if (ComplexTypeMapping == null && ReturnRawData)
-                //        fieldValue = values;
-                //    else
-                //    {
-                        //Add support for Arrays using Type.GetElementType
-
-                        //Code for re-design to return IEnumerable
-                        if (ComplexTypeMapping == null && ReturnRawData)
-                            fieldValue = values;
-                        else
-                            fieldValue = values.Select(value => BuildModel(factory, BuildModelData(value, field, template)))
-                            .Where(value => value != null);
-
-                        //var collection = (IEnumerable)factory.ModelResolver.ResolveInstance(property.PropertyType);
-                        //var add = property.AddToCollection; //factory.ModelResolver.ReflectionHelper.BuildAddMethod(propertyType); //Must be ICollection<>
-                        //foreach (var value in values)
-                        //{
-                        //    var data = BuildModelData(value, field, template);
-                        //    var model = BuildModel(factory, data);
-                        //    if (model != null)
-                        //    {
-                        //        add(collection, model); //Will throw InvalidCastException if the model can't be be cast into the Generic type of the Collection
-                        //    }
-                        //}
-                        //fieldValue = collection;
-                //    }
-                //}
-                //else
-                //{
-                //    if (ReturnRawData)
-                //        fieldValue = values[0];
-                //    else
-                //    {
-                //        var data = BuildModelData(values[0], field, template);
-                //        fieldValue = BuildModel(factory, data);
-                //    }
-                //}
+                if (ComplexTypeMapping == null && ReturnRawData)
+                    fieldValue = values;
+                else
+                    fieldValue = values.Cast<object>()
+                        .Select(value => BuildModel(factory, BuildModelData(value, field, template)))
+                    .Where(value => value != null);
             }
             return fieldValue;
         }
@@ -541,7 +508,7 @@ namespace DVM4T.Attributes
             return result;
         }
 
-        public abstract object[] GetRawValues(IFieldData field);
+        public abstract IEnumerable GetRawValues(IFieldData field);
 
         protected abstract IViewModelData BuildModelData(object value, IFieldData field, ITemplateData template);
         protected abstract Type GetModelType(IViewModelData data, IViewModelFactory factory);

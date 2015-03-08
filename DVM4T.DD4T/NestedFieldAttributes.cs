@@ -12,6 +12,7 @@ using DVM4T.Core;
 using DVM4T.Exceptions;
 using DD4T.ContentModel;
 using System.Reflection;
+using System.Collections;
 
 namespace DVM4T.DD4T.Attributes
 {
@@ -26,9 +27,9 @@ namespace DVM4T.DD4T.Attributes
         //    EmbeddedModelType = embeddedModelType;
         //}
 
-        public override object[] GetRawValues(IFieldData field)
+        public override IEnumerable GetRawValues(IFieldData field)
         {
-            return field.Values.Cast<Dynamic.IFieldSet>().ToArray();
+            return field.Values.Cast<Dynamic.IFieldSet>();
         }
 
         public Type EmbeddedModelType
@@ -84,10 +85,10 @@ namespace DVM4T.DD4T.Attributes
         //    LinkedComponentTypes = linkedComponentTypes;
         //}
 
-        public override object[] GetRawValues(IFieldData field)
+        public override IEnumerable GetRawValues(IFieldData field)
         {
-            return field.Values.Cast<Dynamic.IComponent>().ToArray();
-            //return linkedComps.Select(x => Dependencies.DataFactory.GetModelData(x)).ToArray();
+            return field.Values.Cast<Dynamic.IComponent>();
+            //return linkedComps.Select(x => Dependencies.DataFactory.GetModelData(x));
         }
         public Type[] LinkedComponentTypes //Is there anyway to enforce the types passed to this?
         {
@@ -133,9 +134,9 @@ namespace DVM4T.DD4T.Attributes
         //public KeywordFieldAttribute(string fieldName)
         //    : base(fieldName)
         //{ }
-        public override object[] GetRawValues(IFieldData field)
+        public override IEnumerable GetRawValues(IFieldData field)
         {
-            return field.Values.Cast<Dynamic.IKeyword>().ToArray();
+            return field.Values.Cast<Dynamic.IKeyword>();
         }
         public Type KeywordType { get; set; }
         protected override IViewModelData BuildModelData(object value, IFieldData field, ITemplateData template)

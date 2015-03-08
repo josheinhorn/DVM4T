@@ -318,17 +318,18 @@ namespace DVM4T.Reflection
         }
         public Action<object, object> BuildAddMethod(Type collectionType)
         {
-            //Stuff for lists
+            //Depends on caller to cache results
+
             string methodName = "Add";
             Action<object, object> result = null;
-            Dictionary<string, Action<object, object>> typeMethods;
-            if (!twoArgMethods.TryGetValue(collectionType, out typeMethods))
-            {
-                typeMethods = new Dictionary<string, Action<object, object>>();
-                twoArgMethods.Add(collectionType, typeMethods);
-            }
-            if (!typeMethods.TryGetValue(methodName, out result))
-            {
+            //Dictionary<string, Action<object, object>> typeMethods;
+            //if (!twoArgMethods.TryGetValue(collectionType, out typeMethods))
+            //{
+            //    typeMethods = new Dictionary<string, Action<object, object>>();
+            //    twoArgMethods.Add(collectionType, typeMethods);
+            //}
+            //if (!typeMethods.TryGetValue(methodName, out result))
+            //{
                 Type genericType;
                 if (IsGenericCollection(collectionType, out genericType)) //It has a generic type param and it implements ICollection<T>
                 {
@@ -344,12 +345,12 @@ namespace DVM4T.Reflection
                                         Expression.Convert(collection, collectionType), addMethod,
                                         Expression.Convert(itemToAdd, genericType));
                     result = Expression.Lambda<Action<object, object>>(addCall, collection, itemToAdd).Compile();
-                    typeMethods.Add(methodName, result); //cache the result so we don't need to repeat this process
+                    //typeMethods.Add(methodName, result); //cache the result so we don't need to repeat this process
                 }
                 else if (genericType != null)
                     throw new ArgumentException("The type (" + collectionType.Name + ") must implement ICollection<" + genericType.Name + ">", "collectionType");
                 else throw new ArgumentException("The type (" + collectionType.Name + ") must implement ICollection<>", "collectionType");
-            }
+            //}
             return result;
         }
 
