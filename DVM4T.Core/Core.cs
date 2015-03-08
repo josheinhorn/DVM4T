@@ -12,6 +12,7 @@ using DVM4T.Core;
 using System.Web.Configuration;
 using System.Linq.Expressions;
 using DVM4T.Core.Binding;
+using System.Collections;
 
 namespace DVM4T.Core
 {
@@ -153,6 +154,7 @@ namespace DVM4T.Core
         /// </summary>
         public Type PropertyType { get; set; }
         public Type ModelType { get; set; }
+        public bool IsEnumerable { get; set; }
         public bool IsCollection { get; set; }
         public Action<object, object> AddToCollection
         {
@@ -164,6 +166,7 @@ namespace DVM4T.Core
             get;
             set;
         }
+        public Func<IEnumerable, Array> ToArray { get; set; }
     }
 
     #region Old View Model Data Basic Implementations

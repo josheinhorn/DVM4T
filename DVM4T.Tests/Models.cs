@@ -73,7 +73,7 @@ namespace DVM4T.Testing.Models
     public class ContentContainerViewModel : ViewModelBase
     {
         [TextField(FieldName = "title", InlineEditable = true)]
-        public string Title { get; set; }
+        public string[] Title { get; set; }
 
         [LinkedComponentField(FieldName = "content", LinkedComponentTypes = new Type[] { typeof(GeneralContentViewModel) }, AllowMultipleValues = true)]
         public List<GeneralContentViewModel> ContentList { get; set; }

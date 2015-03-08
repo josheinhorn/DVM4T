@@ -73,7 +73,19 @@ namespace DVM4T.Core
             if (model != null && data != null && property.PropertyAttribute != null)
             {
                 var propertyValue = GetPropertyValue(property,property.PropertyAttribute.GetPropertyValues(data, property, this));
-                if (propertyValue != null) property.Set(model, propertyValue);
+                if (propertyValue != null)
+                {
+                    try
+                    {
+                        property.Set(model, propertyValue);
+                    }
+                    catch (Exception e)
+                    {
+                        if (e is TargetException || e is InvalidCastException)
+                            throw new PropertyTypeMismatchException(property, property.PropertyAttribute, propertyValue);
+                        else throw e;
+                    }
+                }
             }
         }
 
@@ -172,14 +184,22 @@ namespace DVM4T.Core
                 }
             }
         }
-
+        private Array ConvertToTypedArray(object[] objArray, Type arrayType)
+        {
+            var arr = Array.CreateInstance(arrayType, objArray.Length);
+            Array.Copy(objArray, arr, objArray.Length);
+            return arr;
+        }
         private object GetPropertyValue(IModelProperty prop, IEnumerable values)
         {
             object result = null;
-            if (prop.IsArray)
+            if (prop.IsEnumerable)
             {
                 result = values;
-                //Figure out how to create an array of the correct type
+            }
+            else if (prop.IsArray)
+            {
+                result = prop.ToArray(values);
             }
             else if (prop.IsCollection)
             {

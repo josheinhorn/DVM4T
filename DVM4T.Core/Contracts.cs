@@ -616,9 +616,11 @@ namespace DVM4T.Contracts
         /// <param name="collectionType">Type of collection. Must implement ICollection&lt;&gt;</param>
         /// <returns>Delegate function that takes two parameters: the collection and the item to add to it.</returns>
         Action<object, object> BuildAddMethod(Type collectionType);
-
+        
         bool IsGenericCollection(Type type, out Type genericType);
         bool IsArray(Type type, out Type elementType);
+        bool IsEnumerable(Type type);
+        Func<IEnumerable, Array> BuildToArray(Type elementType);
     }
     /// <summary>
     /// A simple representation of a Model Property
@@ -646,9 +648,11 @@ namespace DVM4T.Contracts
         /// </summary>
         Type PropertyType { get; }
         Type ModelType { get; }
+        bool IsEnumerable { get; }
         bool IsCollection { get; }
         bool IsArray { get; }
         Action<object, object> AddToCollection { get; }
+        Func<IEnumerable, Array> ToArray { get; }
     }
   
     /// <summary>

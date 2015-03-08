@@ -2,6 +2,7 @@
 using DVM4T.Contracts;
 using DVM4T.Core;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -129,16 +130,21 @@ namespace DVM4T.Reflection
             Type elementType;
             bool isArray = false;
             bool isCollection = false;
+            bool isEnumerable = false;
             Action<object, object> addToCollection = null;
-            if (isArray = helper.IsArray(modelType, out elementType))
+            Func<IEnumerable, Array> toArray = null;
+            if (isArray = helper.IsArray(modelType, out elementType)) //Array is ICollection<> and IEnumerable
             {
                 modelType = elementType;
+                toArray = helper.BuildToArray(elementType);
             }
-            else if (isCollection = helper.IsGenericCollection(modelType, out elementType))
+            else if (isCollection = helper.IsGenericCollection(modelType, out elementType)) //ICollection<> is IEnumerable
             {
                 addToCollection = helper.BuildAddMethod(modelType);
                 modelType = elementType;
             }
+            else isEnumerable = helper.IsEnumerable(propertyInfo.PropertyType); //Fallback to plain IEnumerable
+
             return new ModelProperty
             {
                 Name = propertyInfo.Name,
@@ -146,10 +152,12 @@ namespace DVM4T.Reflection
                 Set = helper.BuildSetter(propertyInfo),
                 Get = helper.BuildGetter(propertyInfo),
                 PropertyType = propertyInfo.PropertyType,
+                IsEnumerable = isEnumerable,
                 IsCollection = isCollection,
                 IsArray = isArray,
                 ModelType = modelType,
-                AddToCollection = addToCollection
+                AddToCollection = addToCollection,
+                ToArray = toArray
             };
         }
 
@@ -345,11 +353,10 @@ namespace DVM4T.Reflection
             return result;
         }
 
-        public bool IsMultiValue(Type type)
+        public bool IsEnumerable(Type type)
         {
-            Type temp;
-            return IsGenericCollection(type, out temp)  //It has a generic type param and it implements ICollection<T>
-                || IsArray(type, out temp); //It's an array
+            //It's IEnumerable but NOT a string (which is an enumerable of chars)
+            return typeof(IEnumerable).IsAssignableFrom(type) && !typeof(string).IsAssignableFrom(type);
         }
 
         public bool IsArray(Type type, out Type elementType)
@@ -372,5 +379,15 @@ namespace DVM4T.Reflection
             return (genericType != null
                 && typeof(ICollection<>).MakeGenericType(genericType).IsAssignableFrom(type));
         }
+       
+        public Func<IEnumerable, Array> BuildToArray(Type elementType)
+        {
+            //This method doesn't cache the result, assumes the caller will take care of that
+            var param = Expression.Parameter(typeof(IEnumerable), "source");
+            var cast = Expression.Call(typeof(Enumerable), "Cast", new[] { elementType }, param);
+            var toArray = Expression.Call(typeof(Enumerable), "ToArray", new[] { elementType }, cast);
+            return Expression.Lambda<Func<IEnumerable, Array>>(toArray, param).Compile();    
+        }
     }
+
 }
