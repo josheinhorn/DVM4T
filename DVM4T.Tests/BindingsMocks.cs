@@ -16,25 +16,23 @@ namespace DVM4T.Tests
 
         static Bindings()
         {
-            Container = new BindingContainer(ViewModelDefaults.TypeResolver);
-            Container.Load(new TestModule(ViewModelDefaults.TypeResolver, ViewModelDefaults.ReflectionCache));
+            Container = new BindingContainer(ViewModelDefaults.ModelResolver, ViewModelDefaults.ReflectionCache,
+                new TestModule());
         }
     }
     public class TestModule : BindingModuleBase
     {
-        public TestModule(ITypeResolver resolver, IReflectionHelper helper) : base(resolver, helper)
-        {
-        }
         public override void Load()
         {
-            BindModel<ContentContainerViewModel>()
+            var containerBinding = BindModel<ContentContainerViewModel>();
+            containerBinding
                 .FromProperty(m => m.Title)
                 .ToAttribute<TextFieldAttribute>()
                 .With(attr =>
                 {
                     attr.FieldName = "title";
                 });
-            BindModel<ContentContainerViewModel>()
+            containerBinding
                 .FromProperty(m => m.ViewName)
                 .ToAttribute<TextFieldAttribute>()
                 .With(attr =>
@@ -42,7 +40,7 @@ namespace DVM4T.Tests
                     attr.FieldName = "view";
                     attr.IsTemplateMetadata = true;
                 });
-            BindModel<ContentContainerViewModel>()
+            containerBinding
                 .FromProperty(m => m.ContentList)
                 .ToAttribute<LinkedComponentFieldAttribute>()
                 .With(attr =>
@@ -50,6 +48,7 @@ namespace DVM4T.Tests
                     attr.FieldName = "content";
                     attr.AllowMultipleValues = true;
                 });
+
             BindModel<GeneralContentViewModel>()
                 .FromProperty(m => m.Title)
                 .ToAttribute<TextFieldAttribute>()

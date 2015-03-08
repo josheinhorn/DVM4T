@@ -17,7 +17,7 @@ namespace DVM4T.Attributes
     /// </summary>
     public abstract class ModelPropertyAttributeBase : Attribute, IPropertyAttribute
     {
-        public abstract object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null);
+        public abstract IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory = null);
         /// <summary>
         /// When overriden in a derived class, this property returns the expected return type of the View Model property.
         /// </summary>
@@ -41,22 +41,19 @@ namespace DVM4T.Attributes
     /// </remarks>
     public abstract class FieldAttributeBase : ModelPropertyAttributeBase, IFieldAttribute
     {
-        protected string fieldName;
         protected bool allowMultipleValues = false;
         protected bool inlineEditable = false;
         protected bool mandatory = false; //probably don't need this one
         protected bool isMetadata = false;
         /// <summary>
-        /// Base Constructor
+        /// Creates a new Field Attribute
         /// </summary>
-        /// <param name="fieldName">The Tridion schema field name for this property</param>
-        public FieldAttributeBase(string fieldName)
+        public FieldAttributeBase()
+        { }
+        
+        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory = null)
         {
-            this.fieldName = fieldName;
-        }
-        public override object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null)
-        {
-            object result = null;
+            IEnumerable result = null;
             if (modelData != null)
             {
                 //need null checks on Template
@@ -78,19 +75,21 @@ namespace DVM4T.Attributes
                 {
                     fields = modelData.Metadata;
                 }
-                //var fields = IsTemplateMetadata && modelData.Template != null ? modelData.Template.Metadata
-                //    : IsMetadata ? modelData.Metadata
-                //    : modelData is IContentViewModelData ? (modelData as IContentViewModelData).ContentData
-                //    : modelData.Metadata; //If it isn't content data, just use Metadata no matter what
 
+
+                if (String.IsNullOrEmpty(FieldName)) FieldName = GetFieldName(property.Name); //Convention over configuration by default -- Field name = Property name
                 if (fields != null && fields.ContainsKey(FieldName))
                 {
                     var template = modelData is ITemplatedViewModelData ? (modelData as ITemplatedViewModelData).Template
                         : null;
-                    result = this.GetFieldValue(fields[FieldName], propertyType, template, factory);
+                    result = this.GetFieldValues(fields[FieldName], property, template, factory);
                 }
             }
             return result;
+        }
+        private string GetFieldName(string propertyName)
+        {
+            return propertyName.Substring(0, 1).ToLowerInvariant() + propertyName.Substring(1); //lowercase the first letter
         }
         /// <summary>
         /// When overriden in a derived class, this method should return the value of the View Model property from a Field object
@@ -100,18 +99,15 @@ namespace DVM4T.Attributes
         /// <param name="template">The Component Template to use</param>
         /// <param name="factory">The View Model Builder</param>
         /// <returns></returns>
-        public abstract object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null);
+        public abstract IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template,IViewModelFactory factory = null);
 
         /// <summary>
         /// The Tridion schema field name for this property
         /// </summary>
         public string FieldName
         {
-            get { return fieldName; }
-            set
-            {
-                fieldName = value;
-            }
+            get;
+            set;
         }
         /// <summary>
         /// Is a multi value field.
@@ -169,9 +165,9 @@ namespace DVM4T.Attributes
     /// </summary>
     public abstract class ComponentAttributeBase : ModelPropertyAttributeBase, IComponentAttribute
     {
-        public override object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null)
+        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory = null)
         {
-            object result = null;
+            IEnumerable result = null;
             if (modelData != null)
             {
                 if (modelData is IComponentPresentationData)
@@ -179,13 +175,13 @@ namespace DVM4T.Attributes
                     var cpData = modelData as IComponentPresentationData;
                     if (cpData != null)
                     {
-                        result = GetPropertyValue(cpData.Component, propertyType,
+                        result = GetPropertyValues(cpData.Component, property,
                             cpData.Template, factory);
                     }
                 }
                 else if (modelData is IComponentData) //Not all components come with Templates
                 {
-                    result = GetPropertyValue(modelData as IComponentData, propertyType, null, factory);
+                    result = GetPropertyValues(modelData as IComponentData, property, null, factory);
                 }
             }
             return result;
@@ -198,7 +194,7 @@ namespace DVM4T.Attributes
         /// <param name="template">Component Template</param>
         /// <param name="factory">View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract object GetPropertyValue(IComponentData component, Type propertyType, ITemplateData template, IViewModelFactory factory = null);
+        public abstract IEnumerable GetPropertyValues(IComponentData component, IModelProperty property, ITemplateData template, IViewModelFactory factory = null);
     }
 
     /// <summary>
@@ -213,16 +209,16 @@ namespace DVM4T.Attributes
         /// <param name="propertyType">Actual return type for the Property</param>
         /// <param name="factory">View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract object GetPropertyValue(ITemplateData template, Type propertyType, IViewModelFactory factory = null);
+        public abstract object GetPropertyValues(ITemplateData template, Type propertyType, IViewModelFactory factory = null);
 
-        public override object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null)
+        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory = null)
         {
-            object result = null;
+            IEnumerable result = null;
             if (modelData is IContentPresentationData
                 && (modelData as IContentPresentationData).Template is ITemplateData)
             {
                 var templateData = (modelData as IContentPresentationData).Template as ITemplateData;
-                result = this.GetPropertyValue(templateData, propertyType, factory);
+                result = this.GetPropertyValues(templateData, property, factory);
             }
             return result;
         }
@@ -240,15 +236,15 @@ namespace DVM4T.Attributes
         /// <param name="propertyType">Actual return type for the Property</param>
         /// <param name="factory">View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract object GetPropertyValue(IPageData page, Type propertyType, IViewModelFactory factory = null);
+        public abstract object GetPropertyValues(IPageData page, Type propertyType, IViewModelFactory factory = null);
 
-        public override object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null)
+        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory = null)
         {
-            object result = null;
+            IEnumerable result = null;
             if (modelData is IPageData)
             {
                 var pageModel = (modelData as IPageData);
-                result = this.GetPropertyValue(pageModel, propertyType, factory);
+                result = this.GetPropertyValues(pageModel, property, factory);
             }
             return result;
         }
@@ -268,15 +264,15 @@ namespace DVM4T.Attributes
         /// <param name="propertyType">Actual return type of the Property</param>
         /// <param name="factory">A View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, Type propertyType, IViewModelFactory factory = null);
+        public abstract IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, IModelProperty property, IViewModelFactory factory = null);
 
-        public override object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null)
+        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory = null)
         {
-            object result = null;
+            IEnumerable result = null;
             if (modelData is IPageData)
             {
                 var cpModels = (modelData as IPageData).ComponentPresentations;
-                result = GetPresentationValues(cpModels, propertyType, factory);
+                result = GetPresentationValues(cpModels, property, factory);
             }
             return result;
         }
@@ -479,151 +475,86 @@ namespace DVM4T.Attributes
         }
     }
 
-    public abstract class FieldBase : IFieldAttribute
+    public abstract class NestedModelFieldAttributeBase : FieldAttributeBase
     {
-        public FieldBase(string fieldName)
+        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template,IViewModelFactory factory = null)
         {
-            FieldName = fieldName;
-        }
-        public abstract object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory builder = null);
-
-        public string FieldName
-        {
-            get;
-            private set;
-        }
-
-        public bool AllowMultipleValues
-        {
-            get;
-            set;
-        }
-
-        public bool InlineEditable
-        {
-            get;
-            set;
-        }
-
-        public bool Mandatory
-        {
-            get;
-            set;
-        }
-
-        public bool IsMetadata
-        {
-            get;
-            set;
-        }
-
-        public bool IsTemplateMetadata
-        {
-            get;
-            set;
-        }
-
-        public abstract Type ExpectedReturnType { get; }
-
-        public Core.Binding.IModelMapping ComplexTypeMapping
-        {
-            get;
-            set;
-        }
-
-        public object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory factory = null)
-        {
-            //Completely redundant code from FieldAttributeBase! need to reconcile all of this and relate these new
-            //mapping attributes to the custom attributes
-            object result = null;
-            if (modelData != null)
+            IEnumerable fieldValue = null;
+            var values = GetRawValues(field);
+            if (values != null && values.Length > 0)
             {
-                //need null checks on Template
-                IFieldsData fields = null;
-                if (IsTemplateMetadata && modelData is ITemplatedViewModelData)
-                {
-                    var templateData = modelData as ITemplatedViewModelData;
-                    fields = templateData.Template != null ? templateData.Template.Metadata : null;
-                }
-                else if (IsMetadata)
-                {
-                    fields = modelData.Metadata;
-                }
-                else if (modelData is IContentPresentationData)
-                {
-                    fields = (modelData as IContentPresentationData).Content;
-                }
-                else
-                {
-                    fields = modelData.Metadata;
-                }
-                //var fields = IsTemplateMetadata && modelData.Template != null ? modelData.Template.Metadata
-                //    : IsMetadata ? modelData.Metadata
-                //    : modelData is IContentViewModelData ? (modelData as IContentViewModelData).ContentData
-                //    : modelData.Metadata; //If it isn't content data, just use Metadata no matter what
+                //if (AllowMultipleValues)
+                //{
+                //    if (ComplexTypeMapping == null && ReturnRawData)
+                //        fieldValue = values;
+                //    else
+                //    {
+                        //Add support for Arrays using Type.GetElementType
 
-                if (fields != null && fields.ContainsKey(FieldName))
-                {
-                    var template = modelData is ITemplatedViewModelData ? (modelData as ITemplatedViewModelData).Template
-                        : null;
-                    result = this.GetFieldValue(fields[FieldName], propertyType, template, factory);
-                }
+                        //Code for re-design to return IEnumerable
+                        if (ComplexTypeMapping == null && ReturnRawData)
+                            fieldValue = values;
+                        else
+                            fieldValue = values.Select(value => BuildModel(factory, BuildModelData(value, field, template)))
+                            .Where(value => value != null);
+
+                        //var collection = (IEnumerable)factory.ModelResolver.ResolveInstance(property.PropertyType);
+                        //var add = property.AddToCollection; //factory.ModelResolver.ReflectionHelper.BuildAddMethod(propertyType); //Must be ICollection<>
+                        //foreach (var value in values)
+                        //{
+                        //    var data = BuildModelData(value, field, template);
+                        //    var model = BuildModel(factory, data);
+                        //    if (model != null)
+                        //    {
+                        //        add(collection, model); //Will throw InvalidCastException if the model can't be be cast into the Generic type of the Collection
+                        //    }
+                        //}
+                        //fieldValue = collection;
+                //    }
+                //}
+                //else
+                //{
+                //    if (ReturnRawData)
+                //        fieldValue = values[0];
+                //    else
+                //    {
+                //        var data = BuildModelData(values[0], field, template);
+                //        fieldValue = BuildModel(factory, data);
+                //    }
+                //}
+            }
+            return fieldValue;
+        }
+
+        protected virtual object BuildModel(IViewModelFactory factory, IViewModelData data)
+        {
+            object result = null;
+            if (ComplexTypeMapping != null)
+            {
+                result = factory.BuildMappedModel(data, ComplexTypeMapping);
+            }
+            else
+            {
+                var modelType = GetModelType(data, factory);
+                result = modelType != null ? factory.BuildViewModel(modelType, data) : null;
             }
             return result;
         }
 
+        public abstract object[] GetRawValues(IFieldData field);
 
-       
-    }
-
-    public abstract class NestedModelFieldAttributeBase<T> : FieldBase where T : class
-    {
-        public NestedModelFieldAttributeBase(string fieldName, DVM4T.Core.Binding.IModelMapping mapping)
-            : base(fieldName)
-        {
-            ComplexTypeMapping = mapping;
-        }
-
-        public override object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory factory = null)
-        {
-
-            object fieldValue = null;
-            var values = GetValues(field);
-            if (values != null && values.Length > 0)
-            {
-                if (AllowMultipleValues)
-                {
-                    //Property must implement IList<IEmbeddedSchemaViewModel> -- use ViewModelList<T>
-                    //IList<IViewModel> list = (IList<IViewModel>)ViewModelDefaults.ReflectionCache.CreateInstance(propertyType); //Dependency!! Get this out
-                    var propValue = factory.ModelResolver.ResolveModel(propertyType);
-
-                    IList<object> objList = null;
-                    objList = (IList<object>)propValue; //will throw InvalidCastException if Property doesn't implement this
-
-                    foreach (var value in values)
-                    {
-                        var model = BuildModel(factory, value, field, template);
-                        if (model != null)
-                        {
-                            objList.Add(model);
-                        }
-                    }
-                    fieldValue = objList;
-                }
-                else
-                {
-                    fieldValue = BuildModel(factory, values[0], field, template);
-                }
-            }
-            return fieldValue;
-        }
-        public abstract object[] GetValues(IFieldData field);
-
-        public abstract object BuildModel(IViewModelFactory factory, object value, IFieldData field, ITemplateData template);
+        protected abstract IViewModelData BuildModelData(object value, IFieldData field, ITemplateData template);
+        protected abstract Type GetModelType(IViewModelData data, IViewModelFactory factory);
+        protected abstract bool ReturnRawData { get; }
 
         public override Type ExpectedReturnType
         {
-            get { return AllowMultipleValues ? typeof(ICollection<T>) : typeof(T); }
+            get
+            {
+                if (ComplexTypeMapping != null)
+                    return AllowMultipleValues ? typeof(ICollection<>) : typeof(object);
+                else return AllowMultipleValues ? typeof(ICollection<IViewModel>) : typeof(IViewModel);
+            }
         }
     }
 }

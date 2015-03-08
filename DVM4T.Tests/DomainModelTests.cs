@@ -16,13 +16,11 @@ namespace DVM4T.Tests
     [TestClass]
     public class DomainModelTests
     {
-        private IModelMapping contentContainerMapping;
         private IComponentPresentation contentContainerCp;
         private IComponentPresentationData contentContainerModelData;
         [TestInitialize]
         public void Init()
         {
-            contentContainerMapping = ViewModelDefaults.CreateModelMapping<ContentContainerViewModel>();
             contentContainerCp = new DVM4T.Testing.Tests().GetContentContainerCp();
             contentContainerModelData = Dependencies.DataFactory.GetModelData(contentContainerCp);
         }
@@ -30,28 +28,24 @@ namespace DVM4T.Tests
         public void TestTextFieldMapping()
         {
             //contentContainerMapping.AddMapping(x => x.Title, new TextFieldAttribute("title"));
-            var model = ViewModelDefaults.Factory.BuildMappedModel<ContentContainerViewModel>(contentContainerModelData, contentContainerMapping);
+            var container = new BindingContainer(ViewModelDefaults.ModelResolver, ViewModelDefaults.ReflectionCache,
+                new TestModule());
+            var mapping = container.GetMapping<ContentContainerViewModel>();
+            var model = DefaultMappedModelFactory.Instance.BuildMappedModel<ContentContainerViewModel>(contentContainerModelData, mapping);
             Assert.IsNotNull(model.Title);
         }
 
         [TestMethod]
         public void TestNestedComponentMapping()
         {
-            //var contentMapping = ViewModelDefaults.CreateModelMapping<GeneralContentViewModel>();
-
-            //contentMapping.AddMapping(x => x.Title, new TextFieldAttribute("title"));
-            var container = new BindingContainer(ViewModelDefaults.TypeResolver);
-            container.Load(new TestModule(ViewModelDefaults.TypeResolver, ViewModelDefaults.ReflectionCache));
-            var mapping = container.GetMapping<ContentContainerViewModel>();
-            //colorMapping.AddMapping(x => x.RgbValue, new TextFieldAttribute("rgbValue"));
-            //contentMapping.AddMapping(x => x.BackgroundColor, new KeywordModelAttribute<Color>("backgroundColor", colorMapping));
-            //contentContainerMapping.AddMapping(x => x.ContentList,
-            //    new LinkedModelAttribute<GeneralContentViewModel>("content", contentMapping)
-            //    {
-            //        AllowMultipleValues = true
-            //    });
-
-            var model = ViewModelDefaults.Factory.BuildMappedModel<ContentContainerViewModel>(contentContainerModelData, mapping);
+            var container = new BindingContainer(ViewModelDefaults.ModelResolver, ViewModelDefaults.ReflectionCache,
+                new TestModule());
+            ContentContainerViewModel model = null;
+            for (int i = 0; i < 1000; i++)
+            {
+                var mapping = container.GetMapping<ContentContainerViewModel>();
+                model = DefaultMappedModelFactory.Instance.BuildMappedModel<ContentContainerViewModel>(contentContainerModelData, mapping);
+            }
             Assert.IsNotNull(model.ContentList);
         }
     }

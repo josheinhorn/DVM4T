@@ -28,7 +28,7 @@ namespace DVM4T.Core
         private static readonly IViewModelResolver resolver = new DefaultViewModelResolver(reflectionHelper);
         //private static readonly IViewModelBuilder viewModelBuilder = new ViewModelBuilder(keyProvider, resolver);
         private static readonly IViewModelFactory factory = new ViewModelFactory(keyProvider, resolver);
-        private static readonly ITypeResolver typeResolver = new DefaultResolver(reflectionHelper);
+        //private static readonly ITypeResolver typeResolver = new DefaultResolver(reflectionHelper);
         /// <summary>
         /// Default View Model Builder. 
         /// <remarks>
@@ -70,7 +70,7 @@ namespace DVM4T.Core
         {
             return new DefaultModelMapping(resolver, reflectionHelper, typeof(T));
         }
-        public static ITypeResolver TypeResolver { get { return typeResolver; } }
+        //public static ITypeResolver TypeResolver { get { return typeResolver; } }
 
     }
 
@@ -111,32 +111,7 @@ namespace DVM4T.Core
         }
     }
 
-    public class DefaultModelMapping : IModelMapping
-    {
-        private readonly IList<IModelProperty> propertyList = new List<IModelProperty>();
-        private readonly IViewModelResolver resolver;
-        private readonly IReflectionHelper helper;
-        public DefaultModelMapping(IViewModelResolver resolver, IReflectionHelper helper, Type modelType)
-        {
-            if (helper == null) throw new ArgumentNullException("helper");
-            if (resolver == null) throw new ArgumentNullException("resolver");
-            if (modelType == null) throw new ArgumentNullException("modelType");
-            this.helper = helper;
-            this.resolver = resolver;
-            this.ModelType = modelType;
-        }
-
-        public Type ModelType
-        {
-            get;
-            private set;
-        }
-
-        IList<IModelProperty> IModelMapping.ModelProperties
-        {
-            get { return propertyList; }
-        }
-    }
+   
 
     /// <summary>
     /// Implementation of View Model Key Provider that uses the Web Config app settings 
@@ -177,6 +152,18 @@ namespace DVM4T.Core
         /// The return Type of the Property
         /// </summary>
         public Type PropertyType { get; set; }
+        public Type ModelType { get; set; }
+        public bool IsCollection { get; set; }
+        public Action<object, object> AddToCollection
+        {
+            get;
+            set;
+        }
+        public bool IsArray
+        {
+            get;
+            set;
+        }
     }
 
     #region Old View Model Data Basic Implementations

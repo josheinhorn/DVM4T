@@ -81,9 +81,13 @@ namespace DVM4T.Reflection
             //Using explicit cast (IViewModel) will result in InvalidCastException if Type doesn't implement IViewModel
             return (IViewModel)helper.CreateInstance(type);
         }
-        public object ResolveModel(Type type)
+        public object ResolveInstance(Type type)
         {
             return helper.CreateInstance(type);
+        }
+        public T ResolveInstance<T>(params object[] ctorArgs)
+        {
+            return (T)ResolveInstance(typeof(T));
         }
         public IModelProperty GetModelProperty(PropertyInfo propertyInfo)
         {
@@ -102,13 +106,13 @@ namespace DVM4T.Reflection
                     result = FindOrBuildModelProperty(allModelProperties, propertyInfo);
                 }
             }
-            
+
             return result;
         }
 
         public IModelProperty GetModelProperty<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda)
         {
-            return GetModelProperty<TSource,TProperty>(propertyLambda);
+            return GetModelProperty<TSource, TProperty>(propertyLambda);
         }
 
         public IModelProperty GetModelProperty<TSource, TProperty>(Expression<Func<TSource, TProperty>> propertyLambda)
@@ -121,13 +125,31 @@ namespace DVM4T.Reflection
         {
             if (propertyInfo == null) throw new ArgumentNullException("propertyInfo");
             //if (attribute == null) throw new ArgumentNullException("attribute");
+            var modelType = propertyInfo.PropertyType;
+            Type elementType;
+            bool isArray = false;
+            bool isCollection = false;
+            Action<object, object> addToCollection = null;
+            if (isArray = helper.IsArray(modelType, out elementType))
+            {
+                modelType = elementType;
+            }
+            else if (isCollection = helper.IsGenericCollection(modelType, out elementType))
+            {
+                addToCollection = helper.BuildAddMethod(modelType);
+                modelType = elementType;
+            }
             return new ModelProperty
             {
                 Name = propertyInfo.Name,
                 PropertyAttribute = attribute,
                 Set = helper.BuildSetter(propertyInfo),
                 Get = helper.BuildGetter(propertyInfo),
-                PropertyType = propertyInfo.PropertyType
+                PropertyType = propertyInfo.PropertyType,
+                IsCollection = isCollection,
+                IsArray = isArray,
+                ModelType = modelType,
+                AddToCollection = addToCollection
             };
         }
 
@@ -138,10 +160,7 @@ namespace DVM4T.Reflection
 
         public IReflectionHelper ReflectionHelper { get { return helper; } }
 
-        public T ResolveModel<T>(params object[] ctorArgs)
-        {
-            return (T)ResolveModel(typeof(T));
-        }
+
         #endregion
 
         #region Private methods
@@ -157,7 +176,7 @@ namespace DVM4T.Reflection
             }
             return result;
         }
-        
+
         /// <summary>
         /// Builds a new Model Property object. Uses Reflection (GetCustomAttributes)
         /// </summary>
@@ -177,7 +196,7 @@ namespace DVM4T.Reflection
         #endregion
 
 
-        
+
     }
 
     public class ReflectionOptimizer : IReflectionHelper
@@ -186,7 +205,7 @@ namespace DVM4T.Reflection
         private Dictionary<Type, Func<object>> constructors = new Dictionary<Type, Func<object>>();
         //private Dictionary<Type, ViewModelAttribute> viewModelAttributes = new Dictionary<Type, ViewModelAttribute>();
         private Dictionary<Type, IModelAttribute> modelAttributes = new Dictionary<Type, IModelAttribute>();
-        private Dictionary<Type, Dictionary<string, Action<object, object>>> twoArgMethods = 
+        private Dictionary<Type, Dictionary<string, Action<object, object>>> twoArgMethods =
             new Dictionary<Type, Dictionary<string, Action<object, object>>>();
 
 
@@ -297,14 +316,13 @@ namespace DVM4T.Reflection
             Dictionary<string, Action<object, object>> typeMethods;
             if (!twoArgMethods.TryGetValue(collectionType, out typeMethods))
             {
-                typeMethods = new Dictionary<string,Action<object,object>>();
+                typeMethods = new Dictionary<string, Action<object, object>>();
                 twoArgMethods.Add(collectionType, typeMethods);
             }
             if (!typeMethods.TryGetValue(methodName, out result))
             {
-                Type genericType = collectionType.GetGenericArguments()[0];
-                if (genericType != null
-                    && typeof(ICollection<>).MakeGenericType(genericType).IsAssignableFrom(collectionType)) //It has a generic type param and it implements ICollection<T>
+                Type genericType;
+                if (IsGenericCollection(collectionType, out genericType)) //It has a generic type param and it implements ICollection<T>
                 {
                     //Equivalent to:
                     /*delegate (object c, object a)
@@ -320,9 +338,39 @@ namespace DVM4T.Reflection
                     result = Expression.Lambda<Action<object, object>>(addCall, collection, itemToAdd).Compile();
                     typeMethods.Add(methodName, result); //cache the result so we don't need to repeat this process
                 }
-                else throw new ArgumentException("The type must implement ICollection<" + genericType.Name + ">", "collectionType");
+                else if (genericType != null)
+                    throw new ArgumentException("The type (" + collectionType.Name + ") must implement ICollection<" + genericType.Name + ">", "collectionType");
+                else throw new ArgumentException("The type (" + collectionType.Name + ") must implement ICollection<>", "collectionType");
             }
             return result;
+        }
+
+        public bool IsMultiValue(Type type)
+        {
+            Type temp;
+            return IsGenericCollection(type, out temp)  //It has a generic type param and it implements ICollection<T>
+                || IsArray(type, out temp); //It's an array
+        }
+
+        public bool IsArray(Type type, out Type elementType)
+        {
+            bool result = false;
+            if (typeof(Array).IsAssignableFrom(type))
+            {
+                result = true;
+                elementType = type.GetElementType();
+            }
+            else elementType = null;
+            return result;
+        }
+
+        public bool IsGenericCollection(Type type, out Type genericType)
+        {
+            //This actually returns true for an array
+            var generics = type.GetGenericArguments();
+            genericType = generics.Length > 0 ? generics[0] : null;
+            return (genericType != null
+                && typeof(ICollection<>).MakeGenericType(genericType).IsAssignableFrom(type));
         }
     }
 }

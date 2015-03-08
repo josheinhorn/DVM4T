@@ -108,6 +108,7 @@
     <Compile Include="Attributes.cs" />
     <Compile Include="Factory.cs" />
     <Compile Include="Helper.cs" />
+    <Compile Include="NestedFieldAttributes.cs" />
     <Compile Include="Tridion.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="XPM\XpmExtensions.cs" />

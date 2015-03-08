@@ -16,16 +16,25 @@ namespace DVM4T.Core.Binding
      //           attr.IsMetadata = false;
      //           attr.InlineEditable = true;
      //       });
+
+    public interface IMappedModelFactory
+    {
+        //void AddModelMapping<T>(IModelMapping<T> mapping); //Doesn't seem possible to store a collection of different generics without making the whole Factory generic
+        //T BuildMappedModel<T>(IViewModelData modelData) where T : class, new();
+        T BuildMappedModel<T>(T model, IViewModelData modelData, IModelMapping mapping); //where T : class;
+        T BuildMappedModel<T>(IViewModelData modelData, IModelMapping mapping); //where T : class;
+        object BuildMappedModel(IViewModelData modelData, IModelMapping mapping);
+    }
     public interface IModelMapping
     {
         Type ModelType { get; }
         IList<IModelProperty> ModelProperties { get; }
     }
-    public interface ITypeResolver
-    {
-        T ResolveInstance<T>(params object[] ctorArgs);
-        IModelProperty ResolveModelProperty(PropertyInfo propertyInfo, IPropertyAttribute attribute); //This method makes no sense here
-    }
+    //public interface ITypeResolver
+    //{
+    //    T ResolveInstance<T>(params object[] ctorArgs);
+    //    IModelProperty GetModelProperty(PropertyInfo propertyInfo, IPropertyAttribute attribute); //This method makes no sense here
+    //}
     public interface IPropertyMapping
     {
         PropertyInfo Property { get; }
@@ -51,13 +60,12 @@ namespace DVM4T.Core.Binding
     {
         IModelMapping GetMapping<T>(); // where T : class;
         IModelMapping GetMapping(Type type);
-        void Load(IBindingModule module);
     }
     public interface IBindingModule //Responsible for loading bindings and turning them into useful model mapping
     {
         IModelBinding<T> BindModel<T>();
         void Load();
-        void OnLoad(IBindingContainer container);
+        void OnLoad(IViewModelResolver resolver, IReflectionHelper helper);
         IDictionary<Type, IList<IPropertyMapping>> ModelMappings { get; }
         //void AddBinding(); //Not supposed to pass binding -- what should be passed?
     }

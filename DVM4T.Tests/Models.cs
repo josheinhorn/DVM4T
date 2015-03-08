@@ -14,7 +14,7 @@ namespace DVM4T.Testing.Models
     [ViewModel("ContentContainer", false, ViewModelKeys = new string[] { "TitleOnly" })]
     public class TitleViewModel : ViewModelBase
     {
-        [TextField("title")]
+        [TextField(FieldName = "title")]
         public string Title { get; set; }
 
         [ComponentTitle]
@@ -24,29 +24,29 @@ namespace DVM4T.Testing.Models
     [ViewModel("GeneralContent", true, ViewModelKeys = new string[] { "BasicGeneralContent", "Test" })]
     public class GeneralContentViewModel : ViewModelBase
     {
-        [TextField("title")]
+        [TextField(FieldName = "title")]
         public string Title { get; set; }
 
-        [TextField("sutTitle", InlineEditable = true)]
+        [TextField(FieldName = "sutTitle", InlineEditable = true)]
         public string SubTitle { get; set; }
 
-        [RichTextField("body", InlineEditable = true)]
+        [RichTextField(FieldName = "body", InlineEditable = true)]
         public MvcHtmlString Body { get; set; }
 
-        [KeywordKeyField("showOnTop", IsBooleanValue = true)]
+        [KeywordKeyField(FieldName = "showOnTop", IsBooleanValue = true)]
         public bool ShowOnTop { get; set; }
 
-        [NumberField("someNumber")]
+        [NumberField(FieldName = "someNumber")]
         public double NumberFieldExample { get; set; }
 
-        [TextField("view", IsTemplateMetadata = true)]
+        [TextField(FieldName = "view", IsTemplateMetadata = true)]
         public string ViewName { get; set; }
 
-        [KeywordField("backgroundColor", KeywordType = typeof(Color))]
+        [KeywordField(FieldName = "backgroundColor", KeywordType = typeof(Color))]
         public Color BackgroundColor { get; set; }
 
-        [TextEnumField("state", typeof(StateType), AllowMultipleValues = true)]
-        public ListAdapter<StateType> State { get; set; }
+        //[TextEnumField(FieldName = "state", AllowMultipleValues = true)]
+        //public List<StateType> State { get; set; }
     }
 
     public class ListAdapter<T> : List<object>, IEnumerable<T> 
@@ -66,67 +66,67 @@ namespace DVM4T.Testing.Models
         [Multimedia]
         public IMultimediaData Multimedia { get; set; }
 
-        [TextField("alt", IsMetadata = true)]
+        [TextField(FieldName = "alt", IsMetadata = true)]
         public string AltText { get; set; }
     }
     [ViewModel("ContentContainer", true, ViewModelKeys = new string[] { "Test" })]
     public class ContentContainerViewModel : ViewModelBase
     {
-        [TextField("title", InlineEditable = true)]
+        [TextField(FieldName = "title", InlineEditable = true)]
         public string Title { get; set; }
 
-        [LinkedComponentField("content", LinkedComponentTypes = new Type[] { typeof(GeneralContentViewModel) }, AllowMultipleValues = true)]
+        [LinkedComponentField(FieldName = "content", LinkedComponentTypes = new Type[] { typeof(GeneralContentViewModel) }, AllowMultipleValues = true)]
         public List<GeneralContentViewModel> ContentList { get; set; }
 
-        [LinkedComponentField("content", LinkedComponentTypes = new Type[] { typeof(TitleViewModel) })]
+        [LinkedComponentField(FieldName = "content", LinkedComponentTypes = new Type[] { typeof(TitleViewModel) })]
         public TitleViewModel OtherContent { get; set; }
 
-        [EmbeddedSchemaField("links", typeof(EmbeddedLinkViewModel), AllowMultipleValues = true)]
+        [EmbeddedSchemaField(FieldName = "links", EmbeddedModelType = typeof(EmbeddedLinkViewModel), AllowMultipleValues = true)]
         public List<EmbeddedLinkViewModel> Links { get; set; }
 
-        [LinkedComponentField("image", LinkedComponentTypes = new Type[] { typeof(Image) })]
+        [LinkedComponentField(FieldName = "image", LinkedComponentTypes = new Type[] { typeof(Image) })]
         public Image Image { get; set; }
 
-        [TextField("view", IsTemplateMetadata = true)]
+        [TextField(FieldName = "view", IsTemplateMetadata = true)]
         public string ViewName { get; set; }
     }
 
     [ViewModel("EmbeddedLink", true)]
     public class EmbeddedLinkViewModel : ViewModelBase
     {
-        [TextField("linkText")]
+        [TextField(FieldName = "linkText")]
         public string LinkText { get; set; }
 
-        [LinkedComponentField("internalLink")]
+        [LinkedComponentField(FieldName = "internalLink")]
         public IComponent InternalLink { get; set; }
 
         //Requires a LinkProvider to work
-        //[ResolvedUrlField("internalLink")]
+        //[ResolvedUrlField(FieldName = "internalLink")]
         //public string ResolvedInternalLink { get; set; }
 
-        [TextField("externalLink")]
+        [TextField(FieldName = "externalLink")]
         public string ExternalLink { get; set; }
 
-        [KeywordKeyField("openInNewWindow", AllowMultipleValues = false)]
+        [KeywordKeyField(FieldName = "openInNewWindow", AllowMultipleValues = false)]
         public string Target { get; set; }
     }
 
     [ViewModel("GeneralContent", false, ViewModelKeys = new string[] { "Broken" })]
     public class BrokenViewModel : ViewModelBase
     {
-        [TextField("title")]
+        [TextField(FieldName = "title")]
         public double BrokenTitle { get; set; }
 
-        [TextField("sutTitle", InlineEditable = true)]
+        [TextField(FieldName = "sutTitle", InlineEditable = true)]
         public string SubTitle { get; set; }
 
-        [RichTextField("body", InlineEditable = true)]
+        [RichTextField(FieldName = "body", InlineEditable = true)]
         public MvcHtmlString Body { get; set; }
 
-        [KeywordKeyField("showOnTop", IsBooleanValue = true)]
+        [KeywordKeyField(FieldName = "showOnTop", IsBooleanValue = true)]
         public bool ShowOnTop { get; set; }
 
-        [NumberField("someNumber")]
+        [NumberField(FieldName = "someNumber")]
         public double NumberFieldExample { get; set; }
 
     }
@@ -137,7 +137,7 @@ namespace DVM4T.Testing.Models
         [PresentationsByView("Carousel")]
         public List<GeneralContentViewModel> Carousels { get; set; }
 
-        [TextField("javascript", IsMetadata = true)]
+        [TextField(FieldName = "javascript", IsMetadata = true)]
         public String Javascript { get; set; }
     }
 
@@ -147,10 +147,10 @@ namespace DVM4T.Testing.Models
         [KeywordData]
         public IKeywordData Keyword { get; set; }
 
-        [TextField("rgbValue", IsMetadata = true)]
+        [TextField(FieldName = "rgbValue", IsMetadata = true)]
         public string RgbValue { get; set; }
 
-        [NumberField("decimalValue", IsMetadata = true)]
+        [NumberField(FieldName = "decimalValue", IsMetadata = true)]
         public double NumericValue { get; set; }
     }
 

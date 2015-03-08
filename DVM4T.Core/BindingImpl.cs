@@ -9,17 +9,56 @@ using System.Text;
 
 namespace DVM4T.Core.Binding
 {
+
+    public class DefaultMappedModelFactory : IMappedModelFactory
+    {
+        private static readonly IMappedModelFactory instance = new DefaultMappedModelFactory(ViewModelDefaults.Factory);
+        //Optional singleton
+        public static IMappedModelFactory Instance { get { return instance; } }
+
+        protected IViewModelFactory factory;
+        public DefaultMappedModelFactory(IViewModelFactory factory)
+        {
+            this.factory = factory;
+        }
+        public virtual object BuildMappedModel(IViewModelData modelData, IModelMapping mapping)
+        {
+            var model = factory.ModelResolver.ResolveInstance(mapping.ModelType);
+            return BuildMappedModel(model, modelData, mapping);
+        }
+
+        public virtual T BuildMappedModel<T>(IViewModelData modelData, IModelMapping mapping) //where T: class
+        {
+            T model = (T)factory.ModelResolver.ResolveInstance(typeof(T));
+            return BuildMappedModel<T>(model, modelData, mapping);
+        }
+
+        public virtual T BuildMappedModel<T>(T model, IViewModelData modelData, IModelMapping mapping) //where T : class
+        {
+            foreach (var property in mapping.ModelProperties)
+            {
+                factory.SetPropertyValue(model, modelData, property);
+            }
+            return model;
+        }
+    }
+
     public class BindingContainer : IBindingContainer
     {
         private readonly IDictionary<Type, IModelMapping> modelMappings =
             new Dictionary<Type, IModelMapping>();
         private readonly IDictionary<Type, List<IPropertyMapping>> propertyMappingLists =
             new Dictionary<Type, List<IPropertyMapping>>();
-        private readonly ITypeResolver resolver;
+        private readonly IViewModelResolver resolver;
 
-        public BindingContainer(ITypeResolver resolver)
+        public BindingContainer(IViewModelResolver resolver, IReflectionHelper helper, params IBindingModule[] modules)
         {
             this.resolver = resolver;
+            foreach (var module in modules)
+            {
+                module.OnLoad(resolver, helper);
+                Load(module);
+            }
         }
 
         public IModelMapping GetMapping<T>()
@@ -49,12 +88,12 @@ namespace DVM4T.Core.Binding
                 var modelProperties = propertyMappings.Select(mapping =>
                 {
                     mapping.GetMapping(mapping.PropertyAttribute, this);    //GetMapping is called when the mapping is first requested, assuming all Binding Modules have been loaded up
-                    return resolver.ResolveModelProperty(mapping.Property, mapping.PropertyAttribute);
+                    return resolver.GetModelProperty(mapping.Property, mapping.PropertyAttribute);
                 }).ToList();
                 //foreach (var mapping in propertyMappings)
                 //{
                 //    mapping.GetMapping(mapping.PropertyAttribute, this);
-                //    modelProperties.Add(resolver.ResolveModelProperty(mapping.Property, mapping.PropertyAttribute));
+                //    modelProperties.Add(resolver.GetModelProperty(mapping.Property, mapping.PropertyAttribute));
                 //}
                 result = new ModelMapping(type, modelProperties);
                 modelMappings.Add(type, result); //The first time it's asked for, it's loaded into the dictionary permanently and can't change
@@ -62,7 +101,7 @@ namespace DVM4T.Core.Binding
             return result;
         }
 
-        public void Load(IBindingModule module)
+        protected virtual void Load(IBindingModule module)
         {
             if (module == null) throw new ArgumentNullException("module");
             module.Load();
@@ -82,16 +121,9 @@ namespace DVM4T.Core.Binding
     }
     public abstract class BindingModuleBase : IBindingModule
     {
-        private readonly ITypeResolver resolver;
-        private readonly IReflectionHelper helper;
-        public BindingModuleBase(ITypeResolver resolver, IReflectionHelper helper)
-        {
-            if (resolver == null) throw new ArgumentNullException("resolver");
-            if (helper == null) throw new ArgumentNullException("helper");
-            this.resolver = resolver;
-            this.helper = helper;
-            ModelMappings = new Dictionary<Type, IList<IPropertyMapping>>();
-        }
+        private IViewModelResolver resolver;
+        private IReflectionHelper helper;
+   
         public virtual IModelBinding<T> BindModel<T>()
         {
             return new ModelBinding<T>(this, resolver, helper);
@@ -99,9 +131,13 @@ namespace DVM4T.Core.Binding
 
         public abstract void Load();
 
-        public void OnLoad(IBindingContainer container)
+        public void OnLoad(IViewModelResolver resolver, IReflectionHelper helper)
         {
-            //Anything?
+            if (resolver == null) throw new ArgumentNullException("resolver");
+            if (helper == null) throw new ArgumentNullException("helper");
+            this.resolver = resolver;
+            this.helper = helper;
+            ModelMappings = new Dictionary<Type, IList<IPropertyMapping>>();
         }
 
         public IDictionary<Type, IList<IPropertyMapping>> ModelMappings
@@ -114,9 +150,9 @@ namespace DVM4T.Core.Binding
     public class ModelBinding<TModel> : IModelBinding<TModel>// where TModel : class
     {
         protected readonly IBindingModule module;
-        protected readonly ITypeResolver resolver;
+        protected readonly IViewModelResolver resolver;
         protected readonly IReflectionHelper helper;
-        public ModelBinding(IBindingModule module, ITypeResolver resolver, IReflectionHelper helper)
+        public ModelBinding(IBindingModule module, IViewModelResolver resolver, IReflectionHelper helper)
         {
             if (module == null) throw new ArgumentNullException("module");
             if (resolver == null) throw new ArgumentNullException("resolver");
@@ -136,9 +172,9 @@ namespace DVM4T.Core.Binding
     {
         protected readonly IBindingModule module;
         protected readonly PropertyInfo propInfo;
-        protected readonly ITypeResolver resolver;
+        protected readonly IViewModelResolver resolver;
         protected readonly Type modelType;
-        public PropertyBinding(PropertyInfo propInfo, IBindingModule module, ITypeResolver resolver)
+        public PropertyBinding(PropertyInfo propInfo, IBindingModule module, IViewModelResolver resolver)
         {
             if (propInfo == null) throw new ArgumentNullException("propInfo");
             if (module == null) throw new ArgumentNullException("module");
@@ -277,31 +313,69 @@ namespace DVM4T.Core.Binding
         //}
     }
 
-    public class DefaultResolver : ITypeResolver
+    //public class DefaultResolver : ITypeResolver
+    //{
+    //    private readonly IReflectionHelper helper;
+    //    public DefaultResolver(IReflectionHelper helper)
+    //    {
+    //        this.helper = helper;
+    //    }
+
+    //    public T ResolveInstance<T>(params object[] ctorArgs)
+    //    {
+    //        return (T)helper.CreateInstance(typeof(T)); //This will bomb if it expected ctor args or if it has no constructor
+    //    }
+
+    //    public IModelProperty GetModelProperty(PropertyInfo propertyInfo, IPropertyAttribute attribute)
+    //    {
+    //        if (propertyInfo == null) throw new ArgumentNullException("propertyInfo");
+    //        //if (attribute == null) throw new ArgumentNullException("attribute");
+    //        var generics = propertyInfo.PropertyType.GetGenericArguments();
+    //        bool isMultiValue = false;
+    //        if (generics.Length > 0)
+    //        {
+    //            var genericType = generics[0];
+    //            if (typeof(ICollection<>).MakeGenericType(genericType).IsAssignableFrom(propertyInfo.PropertyType))
+    //            {
+    //                isMultiValue = true;
+    //            }
+    //        }
+    //        return new ModelProperty
+    //        {
+    //            Name = propertyInfo.Name,
+    //            PropertyAttribute = attribute,
+    //            Set = helper.BuildSetter(propertyInfo),
+    //            Get = helper.BuildGetter(propertyInfo),
+    //            PropertyType = propertyInfo.PropertyType,
+    //            IsMultiValue = isMultiValue
+    //        };
+    //    }
+    //}
+
+    public class DefaultModelMapping : IModelMapping
     {
+        private readonly IList<IModelProperty> propertyList = new List<IModelProperty>();
+        private readonly IViewModelResolver resolver;
         private readonly IReflectionHelper helper;
-        public DefaultResolver(IReflectionHelper helper)
+        public DefaultModelMapping(IViewModelResolver resolver, IReflectionHelper helper, Type modelType)
         {
+            if (helper == null) throw new ArgumentNullException("helper");
+            if (resolver == null) throw new ArgumentNullException("resolver");
+            if (modelType == null) throw new ArgumentNullException("modelType");
             this.helper = helper;
+            this.resolver = resolver;
+            this.ModelType = modelType;
         }
 
-        public T ResolveInstance<T>(params object[] ctorArgs)
+        public Type ModelType
         {
-            return (T)helper.CreateInstance(typeof(T)); //This will bomb if it expected ctor args or if it has no constructor
+            get;
+            private set;
         }
 
-        public IModelProperty ResolveModelProperty(PropertyInfo propertyInfo, IPropertyAttribute attribute)
+        IList<IModelProperty> IModelMapping.ModelProperties
         {
-            if (propertyInfo == null) throw new ArgumentNullException("propertyInfo");
-            //if (attribute == null) throw new ArgumentNullException("attribute");
-            return new ModelProperty
-            {
-                Name = propertyInfo.Name,
-                PropertyAttribute = attribute,
-                Set = helper.BuildSetter(propertyInfo),
-                Get = helper.BuildGetter(propertyInfo),
-                PropertyType = propertyInfo.PropertyType
-            };
+            get { return propertyList; }
         }
     }
 }

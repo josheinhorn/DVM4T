@@ -1,7 +1,9 @@
 ﻿using DVM4T.Contracts;
 using DVM4T.Core.Binding;
+//using DVM4T.Core.Binding;
 using DVM4T.Exceptions;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -70,7 +72,8 @@ namespace DVM4T.Core
             if (property == null) throw new ArgumentNullException("property");
             if (model != null && data != null && property.PropertyAttribute != null)
             {
-                property.Set(model, property.PropertyAttribute.GetPropertyValue(data, property.PropertyType, this));
+                var propertyValue = GetPropertyValue(property,property.PropertyAttribute.GetPropertyValues(data, property, this));
+                if (propertyValue != null) property.Set(model, propertyValue);
             }
         }
 
@@ -114,19 +117,21 @@ namespace DVM4T.Core
             return (T)BuildViewModel(typeof(T), modelData);
         }
 
-        public object BuildMappedModel(IViewModelData modelData, IModelMapping mapping)
+        public IViewModelResolver ModelResolver { get { return resolver; } }
+
+        public virtual object BuildMappedModel(IViewModelData modelData, IModelMapping mapping)
         {
-            var model = resolver.ResolveModel(mapping.ModelType);
+            var model = resolver.ResolveInstance(mapping.ModelType);
             return BuildMappedModel(model, modelData, mapping);
         }
 
-        public T BuildMappedModel<T>(IViewModelData modelData, IModelMapping mapping) //where T: class
+        public virtual T BuildMappedModel<T>(IViewModelData modelData, IModelMapping mapping) //where T: class
         {
-            T model = (T)resolver.ResolveModel(typeof(T));
+            T model = (T)resolver.ResolveInstance(typeof(T));
             return BuildMappedModel<T>(model, modelData, mapping);
         }
 
-        public T BuildMappedModel<T>(T model, IViewModelData modelData, IModelMapping mapping) //where T : class
+        public virtual T BuildMappedModel<T>(T model, IViewModelData modelData, IModelMapping mapping) //where T : class
         {
             foreach (var property in mapping.ModelProperties)
             {
@@ -134,8 +139,6 @@ namespace DVM4T.Core
             }
             return model;
         }
-
-        public IViewModelResolver ModelResolver { get { return resolver; } }
         #region Private methods
 
 
@@ -144,28 +147,54 @@ namespace DVM4T.Core
             //PropertyInfo[] props = type.GetProperties();
             var props = resolver.GetModelProperties(type);
             IPropertyAttribute propAttribute;
-            object value = null;
+            object propertyValue = null;
             foreach (var prop in props)
             {
                 propAttribute = prop.PropertyAttribute;//prop.GetCustomAttributes(typeof(FieldAttributeBase), true).FirstOrDefault() as FieldAttributeBase;
                 if (propAttribute != null) //It has a FieldAttribute
                 {
-                    value = propAttribute.GetPropertyValue(viewModel.ModelData, prop.PropertyType, this); //delegate all the real work to the Property Attribute object itself. Allows for custom attribute types to easily be added
-                    if (value != null)
+                    //value = propAttribute.GetPropertyValues(viewModel.ModelData, prop, this); //delegate all the real work to the Property Attribute object itself. Allows for custom attribute types to easily be added
+                    var values = propAttribute.GetPropertyValues(viewModel.ModelData, prop, this); //TODO: switch GetPropertyValue to return IEnumerable
+                    if (values != null)
                     {
+                        propertyValue = GetPropertyValue(prop, values);
                         try
                         {
-                            prop.Set(viewModel, value);
+                            prop.Set(viewModel, propertyValue);
                         }
                         catch (Exception e)
                         {
                             if (e is TargetException || e is InvalidCastException)
-                                throw new PropertyTypeMismatchException(prop, propAttribute, value);
+                                throw new PropertyTypeMismatchException(prop, propAttribute, propertyValue);
                             else throw e;
                         }
                     }
                 }
             }
+        }
+
+        private object GetPropertyValue(IModelProperty prop, IEnumerable values)
+        {
+            object result = null;
+            if (prop.IsArray)
+            {
+                result = values;
+                //Figure out how to create an array of the correct type
+            }
+            else if (prop.IsCollection)
+            {
+                var tempValues = (IEnumerable)resolver.ResolveInstance(prop.PropertyType);
+                foreach (var val in values)
+                {
+                    prop.AddToCollection(tempValues, val);
+                }
+                result = tempValues;
+            }
+            else //it's a single value, just return the first one (should really only be one thing)
+            {
+                result = values.Cast<object>().FirstOrDefault();
+            }
+            return result;
         }
         private string[] GetViewModelKey(IViewModelData model)
         {

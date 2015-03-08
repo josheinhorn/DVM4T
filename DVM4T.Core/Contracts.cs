@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -242,9 +243,8 @@ namespace DVM4T.Contracts
 
         IModelProperty GetModelProperty(PropertyInfo propertyInfo, IPropertyAttribute attribute);
         IModelProperty GetModelProperty<TSource, TProperty>(Expression<Func<TSource, TProperty>> propertyLambda, IPropertyAttribute attribute);
-        object ResolveModel(Type type);
-        T ResolveModel<T>(params object[] ctorArgs);
-
+        object ResolveInstance(Type type);
+        T ResolveInstance<T>(params object[] ctorArgs);
         IReflectionHelper ReflectionHelper { get; }
     }
 
@@ -324,6 +324,10 @@ namespace DVM4T.Contracts
         /// <returns>View Model</returns>
         T BuildViewModel<T>(IViewModelData modelData) where T : IViewModel;
         
+       
+        /*Anyway to move these to separate Binding library? Appears not because IPropertyAttribute is dependent on IModelMapping and all 
+         * GetPropertyValues are only passed a IViewModelFactory so there's no other way to access the Mapped Model methods
+        */
         //void AddModelMapping<T>(IModelMapping<T> mapping); //Doesn't seem possible to store a collection of different generics without making the whole Factory generic
         //T BuildMappedModel<T>(IViewModelData modelData) where T : class, new();
 
@@ -334,16 +338,6 @@ namespace DVM4T.Contracts
         IViewModelResolver ModelResolver { get; }
     }
     
-    public interface IModelMapping<TModel> where TModel : class //Should it be constrained to classes?
-    {
-        //Constructor should take IViewModelResolver
-
-        //Consider implementing a Factory for Model Mappings or just letting people instantiate their own? Would rely on
-        //people to implement their own singleton or caching
-        void AddMapping<TProp>(Expression<Func<TModel, TProp>> propertyLambda, IPropertyAttribute attribute);  //mappings.AddMapping(x => x.PropertyName, new PropertyAttribute(...));
-        IModelProperty[] ModelProperties { get; }
-    }
-
     [Obsolete("Use IViewModelFactory instead")]
     public interface IViewModelBuilder
     {
@@ -610,8 +604,21 @@ namespace DVM4T.Contracts
         /// <returns>Property Info</returns>
         PropertyInfo GetPropertyInfo<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda);
 
-        Action<object, object> BuildAddMethod<TCollection>();        
+        /// <summary>
+        /// Builds a delegate from the Add method of a collection. The input Type must implement ICollection&lt;&gt;
+        /// </summary>
+        /// <typeparam name="TCollection">Type of collection. Must implement ICollection&lt;&gt;</param>
+        /// <returns>Delegate function that takes two parameters: the collection and the item to add to it.</returns>
+        Action<object, object> BuildAddMethod<TCollection>();    
+        /// <summary>
+        /// Builds a delegate from the Add method of a collection. The input Type must implement ICollection&lt;&gt;
+        /// </summary>
+        /// <param name="collectionType">Type of collection. Must implement ICollection&lt;&gt;</param>
+        /// <returns>Delegate function that takes two parameters: the collection and the item to add to it.</returns>
         Action<object, object> BuildAddMethod(Type collectionType);
+
+        bool IsGenericCollection(Type type, out Type genericType);
+        bool IsArray(Type type, out Type elementType);
     }
     /// <summary>
     /// A simple representation of a Model Property
@@ -638,6 +645,10 @@ namespace DVM4T.Contracts
         /// The return Type of the Property
         /// </summary>
         Type PropertyType { get; }
+        Type ModelType { get; }
+        bool IsCollection { get; }
+        bool IsArray { get; }
+        Action<object, object> AddToCollection { get; }
     }
   
     /// <summary>
@@ -656,11 +667,12 @@ namespace DVM4T.Contracts
         /// <param name="propertyType">Actual return type of the Property</param>
         /// <param name="builder">A View Model Builder</param>
         /// <returns>Property value</returns>
-        object GetPropertyValue(IViewModelData modelData, Type propertyType, IViewModelFactory builder = null);
+        IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory builder = null); //Strongly consider offloading some of the work to IModelProperty -- e.g. IsMultiValue, AddToCollection, etc.
         /// <summary>
-        /// Optional mapping if the Property is a Complex Type
+        /// Optional mapping if the Property is a Complex Type. This should only set by a Binding Module.
         /// </summary>
-        IModelMapping ComplexTypeMapping { get; set; }
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        IModelMapping ComplexTypeMapping { get; set; } //Anyway to get this dependency on the Binding namespace out?
     }
     /// <summary>
     /// An attribute for a Property representing a Field
@@ -675,7 +687,7 @@ namespace DVM4T.Contracts
         /// <param name="template">A Template for context</param>
         /// <param name="builder">A View Model builder</param>
         /// <returns>Property value</returns>
-        object GetFieldValue(IFieldData field, Type propertyType, ITemplateData template, IViewModelFactory builder = null);
+        IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template,IViewModelFactory builder = null);
         /// <summary>
         /// Schema XML name of the Field
         /// </summary>
@@ -683,23 +695,23 @@ namespace DVM4T.Contracts
         /// <summary>
         /// If true, this Field is multi-value
         /// </summary>
-        bool AllowMultipleValues { get; set; }
+        bool AllowMultipleValues { get; }
         /// <summary>
         /// Inline Editable - for semantic purposes only
         /// </summary>
-        bool InlineEditable { get; set; }
+        bool InlineEditable { get; }
         /// <summary>
         /// Is Mandatory - for semantic purposes only
         /// </summary>
-        bool Mandatory { get; set; }
+        bool Mandatory { get; }
         /// <summary>
         /// True if this is a Metadata Field of the Model
         /// </summary>
-        bool IsMetadata { get; set; }
+        bool IsMetadata { get; }
         /// <summary>
         /// True if this is a Metadata Field of the Template of the Model
         /// </summary>
-        bool IsTemplateMetadata { get; set; }
+        bool IsTemplateMetadata { get; }
     }
 
     //TODO: Use these interfaces in the builder
@@ -717,7 +729,7 @@ namespace DVM4T.Contracts
         /// 
         /// <param name="builder">A View Model builder</param>
         /// <returns>The Property value</returns>
-        object GetPropertyValue(IComponentData component, Type propertyType, ITemplateData template, IViewModelFactory builder = null);
+        IEnumerable GetPropertyValues(IComponentData component, IModelProperty property, ITemplateData template, IViewModelFactory builder = null);
     }
     /// <summary>
     /// An Attribtue for a Property representing some part of a Component Template
@@ -731,7 +743,7 @@ namespace DVM4T.Contracts
         /// <param name="propertyType">The actual return type of this Property</param>
         /// <param name="builder">A View Model builder</param>
         /// <returns>The Property value</returns>
-        object GetPropertyValue(ITemplateData template, Type propertyType, IViewModelFactory builder = null);
+        object GetPropertyValues(ITemplateData template, Type propertyType, IViewModelFactory builder = null);
     }
     /// <summary>
     /// An Attribute for a Property representing some part of a Page
@@ -745,11 +757,7 @@ namespace DVM4T.Contracts
         /// <param name="propertyType">The actual return type of this Property</param>
         /// <param name="builder">A View Model builder</param>
         /// <returns>The Property value</returns>
-        object GetPropertyValue(IPageData page, Type propertyType, IViewModelFactory builder = null);
-    }
-    public interface INestedModelAttribute<T> : IPropertyAttribute where T : class
-    {
-        IModelMapping<T> ModelMapping { get; }
+        object GetPropertyValues(IPageData page, Type propertyType, IViewModelFactory builder = null);
     }
 
     /// <summary>
@@ -761,10 +769,6 @@ namespace DVM4T.Contracts
         /// View Model Keys - a set of identifying values for this Model
         /// </summary>
         string[] ViewModelKeys { get; set; }
-        
-        //[Obsolete("Use IsMatch(IViewModelData, string) instead")]
-        //bool IsMatch(IViewModelData data, IViewModelKeyProvider provider);
-
         /// <summary>
         /// Checks if this Model is a match for a specific View Model Data
         /// </summary>
