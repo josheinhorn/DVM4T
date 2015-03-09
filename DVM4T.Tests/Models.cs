@@ -27,7 +27,7 @@ namespace DVM4T.Testing.Models
         [TextField(FieldName = "title")]
         public string Title { get; set; }
 
-        [TextField(FieldName = "sutTitle", InlineEditable = true)]
+        [TextField] //Field name ("subTitle") is inferred based on Property name
         public string SubTitle { get; set; }
 
         [RichTextField(FieldName = "body", InlineEditable = true)]
@@ -117,7 +117,7 @@ namespace DVM4T.Testing.Models
         [TextField(FieldName = "title")]
         public double BrokenTitle { get; set; }
 
-        [TextField(FieldName = "sutTitle", InlineEditable = true)]
+        [TextField] //FieldName = "subTitle", 
         public string SubTitle { get; set; }
 
         [RichTextField(FieldName = "body", InlineEditable = true)]
@@ -134,7 +134,7 @@ namespace DVM4T.Testing.Models
     [PageViewModel(new string[] { "Homepage" })]
     public class Homepage : ViewModelBase
     {
-        [PresentationsByView("Carousel")]
+        [PresentationsByView(ViewPrefix = "Carousel")]
         public List<GeneralContentViewModel> Carousels { get; set; }
 
         [TextField(FieldName = "javascript", IsMetadata = true)]

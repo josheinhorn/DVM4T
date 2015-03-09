@@ -193,6 +193,14 @@ namespace DVM4T.Testing
                         }
                     },
                     {
+                        "subTitle",
+                        new Dynamic.Field
+                        {
+                            FieldType = Dynamic.FieldType.Text,
+                            Values = new List<string> { "I'm a sub title"}
+                        }
+                    },
+                    {
                         "body",
                         new Dynamic.Field
                         {

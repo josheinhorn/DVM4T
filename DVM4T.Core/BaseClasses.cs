@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using DVM4T.Contracts;
+using System.ComponentModel;
 
 namespace DVM4T.Base
 {
@@ -12,6 +13,7 @@ namespace DVM4T.Base
     /// </summary>
     public abstract class ViewModelBase : IViewModel
     {
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public IViewModelData ModelData
         {
             get;

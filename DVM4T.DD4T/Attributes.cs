@@ -23,7 +23,7 @@ namespace DVM4T.DD4T.Attributes
     public class ResolvedUrlFieldAttribute : FieldAttributeBase
     {
         //public ResolvedUrlFieldAttribute(string fieldName) : base(fieldName) { }
-        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory = null)
+        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory)
         {
             return field.Values.Cast<Dynamic.IComponent>()
                 .Select(x => x.GetResolvedUrl());
@@ -41,7 +41,7 @@ namespace DVM4T.DD4T.Attributes
     public class MultimediaFieldAttribute : FieldAttributeBase
     {
         //public MultimediaFieldAttribute(string fieldName) : base(fieldName) { }
-        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory = null)
+        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory)
         {
             return field.Values.Cast<Dynamic.IComponent>().Select(x => x.Multimedia);
         }
@@ -56,8 +56,7 @@ namespace DVM4T.DD4T.Attributes
     /// </summary>
     public class TextFieldAttribute : FieldAttributeBase, ICanBeBoolean
     {
-        //public TextFieldAttribute(string fieldName) : base(fieldName) { }
-        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory = null)
+        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory)
         {
             IEnumerable fieldValue = null;
             var values = field.Values.Cast<string>();
@@ -88,7 +87,7 @@ namespace DVM4T.DD4T.Attributes
     public class RichTextFieldAttribute : FieldAttributeBase
     {
         //public RichTextFieldAttribute(string fieldName) : base(fieldName) { }
-        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory = null)
+        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory)
         {
             return field.Values.Cast<string>()
                 .Select(v => v.ResolveRichText()); //Hidden dependency on DD4T implementation
@@ -105,7 +104,7 @@ namespace DVM4T.DD4T.Attributes
     public class NumberFieldAttribute : FieldAttributeBase
     {
         //public NumberFieldAttribute(string fieldName) : base(fieldName) { }
-        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory = null)
+        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory)
         {
             return field.Values.Cast<double>();
         }
@@ -122,7 +121,7 @@ namespace DVM4T.DD4T.Attributes
     public class DateFieldAttribute : FieldAttributeBase
     {
         //public DateFieldAttribute(string fieldName) : base(fieldName) { }
-        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory = null)
+        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory)
         {
             return field.Values.Cast<DateTime>();
         }
@@ -142,7 +141,7 @@ namespace DVM4T.DD4T.Attributes
         /// </summary>
         /// <param name="fieldName">Tridion schema field name</param>
         //public KeywordKeyFieldAttribute(string fieldName) : base(fieldName) { }
-        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory = null)
+        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory)
         {
             IEnumerable value = null;
             var values = field.Values.Cast<Dynamic.IKeyword>();
@@ -172,7 +171,7 @@ namespace DVM4T.DD4T.Attributes
     public class NumericKeywordKeyFieldAttribute : FieldAttributeBase
     {
         //public NumericKeywordKeyFieldAttribute(string fieldName) : base(fieldName) { }
-        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory = null)
+        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory)
         {
             return field.Values.Cast<Dynamic.IKeyword>()
                 .Select(k => { double i; double.TryParse(k.Key, out i); return i; });
@@ -191,7 +190,7 @@ namespace DVM4T.DD4T.Attributes
     /// </summary>
     public class MultimediaUrlAttribute : ComponentAttributeBase
     {
-        public override IEnumerable GetPropertyValues(IComponentData component, IModelProperty property, ITemplateData template, IViewModelFactory factory = null)
+        public override IEnumerable GetPropertyValues(IComponentData component, IModelProperty property, ITemplateData template, IViewModelFactory factory)
         {
             IEnumerable result = null;
             if (component != null && component.MultimediaData != null)
@@ -211,7 +210,7 @@ namespace DVM4T.DD4T.Attributes
     /// </summary>
     public class MultimediaAttribute : ComponentAttributeBase
     {
-        public override IEnumerable GetPropertyValues(IComponentData component, IModelProperty property, ITemplateData template, IViewModelFactory factory = null)
+        public override IEnumerable GetPropertyValues(IComponentData component, IModelProperty property, ITemplateData template, IViewModelFactory factory)
         {
             IMultimediaData result = null;
             if (component != null && component.MultimediaData != null)
@@ -231,7 +230,7 @@ namespace DVM4T.DD4T.Attributes
     /// </summary>
     public class ComponentTitleAttribute : ComponentAttributeBase
     {
-        public override IEnumerable GetPropertyValues(IComponentData component, IModelProperty property, ITemplateData template, IViewModelFactory factory = null)
+        public override IEnumerable GetPropertyValues(IComponentData component, IModelProperty property, ITemplateData template, IViewModelFactory factory)
         {
             return component == null ? null : new string[] { component.Title };
         }
@@ -247,7 +246,7 @@ namespace DVM4T.DD4T.Attributes
     {
         //Example of using the BaseData object
 
-        public override IEnumerable GetPropertyValues(IComponentData component, IModelProperty property, ITemplateData template, IViewModelFactory factory = null)
+        public override IEnumerable GetPropertyValues(IComponentData component, IModelProperty property, ITemplateData template, IViewModelFactory factory)
         {
             Dynamic.IMultimedia[] result = null;
             if (component != null && component.MultimediaData != null)
@@ -268,41 +267,60 @@ namespace DVM4T.DD4T.Attributes
     /// <remarks>Use with ViewModelList</remarks>
     public class PresentationsByViewAttribute : ComponentPresentationsAttributeBase
     {
-        public override System.Collections.IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, IModelProperty property, IViewModelFactory factory = null)
+        public override System.Collections.IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, IModelProperty property, IViewModelFactory factory)
         {
-            //TODO: Re-write this entire Attribute
-
-            var result = factory.ModelResolver.ResolveInstance(property.PropertyType);
-            var add = property.AddToCollection; //factory.ModelResolver.ReflectionHelper.BuildAddMethod(propertyType);
-
-            string view = null;
-            foreach (var cp in cps)
-            {
-                if (cp.Template != null && cp.Template.Metadata != null && cp.Template.Metadata.ContainsKey("view"))
-                {
-                    view = cp.Template.Metadata["view"].Values.Cast<string>().FirstOrDefault(); //DD4T Convention for view name
-                    if (view != null && view.StartsWith(ViewPrefix))
+            return cps.Where(cp =>
                     {
-                        //result.Add(factory.BuildViewModel((cp)));
-                        object model = null;
-                        if (ComplexTypeMapping != null)
+                        bool result = false;
+                        if (cp.Template != null && cp.Template.Metadata != null
+                            && cp.Template.Metadata.ContainsKey("view"))
                         {
-                            model = factory.BuildMappedModel(cp, ComplexTypeMapping);
+                            var view = cp.Template.Metadata["view"].Values.Cast<string>().FirstOrDefault();
+                            if (view != null && view.StartsWith(ViewPrefix))
+                            {
+                                result = true;
+                            }
                         }
-                        else model = factory.BuildViewModel((cp));
-                        add(result, model);
-                    }
-                }
-            }
-            return (System.Collections.IEnumerable)result;
-        }
-        private readonly string viewStartsWith;
-        public PresentationsByViewAttribute(string viewStartsWith)
-        {
-            this.viewStartsWith = viewStartsWith;
-        }
+                        return result;
+                    })
+                    .Select(cp =>
+                        {
+                            object model = null;
+                            if (ComplexTypeMapping != null)
+                            {
+                                model = factory.BuildMappedModel(cp, ComplexTypeMapping);
+                            }
+                            else model = factory.BuildViewModel((cp));
+                            return model;
+                        });
 
-        public string ViewPrefix { get { return viewStartsWith; } }
+            //TODO: Re-write this entire Attribute
+            //var result = factory.ModelResolver.ResolveInstance(property.PropertyType);
+            //var add = property.AddToCollection; //factory.ModelResolver.ReflectionHelper.BuildAddMethod(propertyType);
+
+            //string view = null;
+            //foreach (var cp in cps)
+            //{
+            //    if (cp.Template != null && cp.Template.Metadata != null && cp.Template.Metadata.ContainsKey("view"))
+            //    {
+            //        view = cp.Template.Metadata["view"].Values.Cast<string>().FirstOrDefault(); //DD4T Convention for view name
+            //        if (view != null && view.StartsWith(ViewPrefix))
+            //        {
+            //            //result.Add(factory.BuildViewModel((cp)));
+            //            object model = null;
+            //            if (ComplexTypeMapping != null)
+            //            {
+            //                model = factory.BuildMappedModel(cp, ComplexTypeMapping);
+            //            }
+            //            else model = factory.BuildViewModel((cp));
+            //            add(result, model);
+            //        }
+            //    }
+            //}
+            //return (System.Collections.IEnumerable)result;
+        }
+       
+        public string ViewPrefix { get; set; }
         public override Type ExpectedReturnType
         {
             get { return typeof(IList<IViewModel>); }
@@ -313,7 +331,7 @@ namespace DVM4T.DD4T.Attributes
 
     public class KeywordDataAttribute : ModelPropertyAttributeBase
     {
-        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory = null)
+        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory)
         {
             IEnumerable result = null;
             if (modelData != null && modelData is IKeywordData)
@@ -333,21 +351,18 @@ namespace DVM4T.DD4T.Attributes
     /// Text field that is parsed into an Enum. Currently NOT optimized - relies heavily on reflection methods.
     /// Use sparingly - this is more or less a Proof of Concept.
     /// </summary>
-    /// <remarks>
-    /// Requires Property to be a concrete type with a parameterless constructor that implements IList&lt;object&gt;
-    /// </remarks>
     [Obsolete("This is a proof of concept and is not optimized for performance.")]
     public class TextEnumFieldAttribute : FieldAttributeBase
     {
-        private Type genericType;
         private object genericHelper;
         private MethodInfo safeParse; //GARBAGE
         private Type genericHelperType;
   
-        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory = null)
+        public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory)
         {
+            genericHelperType = typeof(GenericEnumHelper<>).MakeGenericType(property.ModelType);
             genericHelper = factory.ModelResolver.ResolveInstance(
-                typeof(GenericEnumHelper<>).MakeGenericType(property.ModelType));
+                genericHelperType);
             safeParse = genericHelperType.GetMethod("SafeParse"); //GARBAGE: Needs reflection optimization
             return field.Values.Cast<string>()
                 .Select(value => safeParse.Invoke(genericHelper, new object[] { value })); //Bad -- uses method info invoke every time

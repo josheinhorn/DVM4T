@@ -20,7 +20,7 @@ namespace Mocking.DVM4T.Testing.MockModels
         [TextField("title")]
         public string Title { get; set; }
 
-        [TextField("sutTitle", InlineEditable = true)]
+        [TextField("subTitle", InlineEditable = true)]
         public string SubTitle { get; set; }
 
         [RichTextField("body", InlineEditable = true)]

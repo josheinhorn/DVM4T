@@ -17,7 +17,7 @@ namespace DVM4T.Attributes
     /// </summary>
     public abstract class ModelPropertyAttributeBase : Attribute, IPropertyAttribute
     {
-        public abstract IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory = null);
+        public abstract IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory);
         /// <summary>
         /// When overriden in a derived class, this property returns the expected return type of the View Model property.
         /// </summary>
@@ -51,7 +51,7 @@ namespace DVM4T.Attributes
         public FieldAttributeBase()
         { }
         
-        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory = null)
+        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory)
         {
             IEnumerable result = null;
             if (modelData != null)
@@ -102,7 +102,8 @@ namespace DVM4T.Attributes
         public abstract IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template,IViewModelFactory factory = null);
 
         /// <summary>
-        /// The Tridion schema field name for this property
+        /// The Tridion schema field name for this property. If not used, the property name with pascal casing is used
+        /// e.g. public string SubTitle {get;set;} will use field name "subTitle" if this value is not specified.
         /// </summary>
         public string FieldName
         {
@@ -110,7 +111,8 @@ namespace DVM4T.Attributes
             set;
         }
         /// <summary>
-        /// Is a multi value field.
+        /// Semantic only - Is a multi value field. Actualy determination of multi versus single value is done by
+        /// inspection the Type of the property.
         /// </summary>
         public bool AllowMultipleValues
         {
@@ -121,7 +123,7 @@ namespace DVM4T.Attributes
             set { allowMultipleValues = value; }
         }
         /// <summary>
-        /// Is inline editable. For semantic use only.
+        /// Semantic only - Is inline editable.
         /// </summary>
         public bool InlineEditable
         {
@@ -156,7 +158,9 @@ namespace DVM4T.Attributes
             get { return isMetadata; }
             set { isMetadata = value; }
         }
-
+        /// <summary>
+        /// Is a template metadata field (if template exists in the context of the property).
+        /// </summary>
         public bool IsTemplateMetadata { get; set; }
 
     }
@@ -165,7 +169,7 @@ namespace DVM4T.Attributes
     /// </summary>
     public abstract class ComponentAttributeBase : ModelPropertyAttributeBase, IComponentAttribute
     {
-        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory = null)
+        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory)
         {
             IEnumerable result = null;
             if (modelData != null)
@@ -194,7 +198,7 @@ namespace DVM4T.Attributes
         /// <param name="template">Component Template</param>
         /// <param name="factory">View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract IEnumerable GetPropertyValues(IComponentData component, IModelProperty property, ITemplateData template, IViewModelFactory factory = null);
+        public abstract IEnumerable GetPropertyValues(IComponentData component, IModelProperty property, ITemplateData template, IViewModelFactory factory);
     }
 
     /// <summary>
@@ -209,9 +213,9 @@ namespace DVM4T.Attributes
         /// <param name="propertyType">Actual return type for the Property</param>
         /// <param name="factory">View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract object GetPropertyValues(ITemplateData template, Type propertyType, IViewModelFactory factory = null);
+        public abstract object GetPropertyValues(ITemplateData template, Type propertyType, IViewModelFactory factory);
 
-        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory = null)
+        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory)
         {
             IEnumerable result = null;
             if (modelData is IContentPresentationData
@@ -236,9 +240,9 @@ namespace DVM4T.Attributes
         /// <param name="propertyType">Actual return type for the Property</param>
         /// <param name="factory">View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract object GetPropertyValues(IPageData page, Type propertyType, IViewModelFactory factory = null);
+        public abstract object GetPropertyValues(IPageData page, Type propertyType, IViewModelFactory factory);
 
-        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory = null)
+        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory)
         {
             IEnumerable result = null;
             if (modelData is IPageData)
@@ -264,9 +268,9 @@ namespace DVM4T.Attributes
         /// <param name="propertyType">Actual return type of the Property</param>
         /// <param name="factory">A View Model factory</param>
         /// <returns>The Property value</returns>
-        public abstract IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, IModelProperty property, IViewModelFactory factory = null);
+        public abstract IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, IModelProperty property, IViewModelFactory factory);
 
-        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory = null)
+        public override IEnumerable GetPropertyValues(IViewModelData modelData, IModelProperty property, IViewModelFactory factory)
         {
             IEnumerable result = null;
             if (modelData is IPageData)
@@ -381,13 +385,11 @@ namespace DVM4T.Attributes
             return false;
         }
 
-
         public bool IsMatch(IViewModelData data, IViewModelKeyProvider provider)
         {
             var key = provider.GetViewModelKey(data);
             return IsMatch(data, key);
         }
-
 
         public bool IsMatch(IViewModelData data, string key)
         {
@@ -425,7 +427,6 @@ namespace DVM4T.Attributes
             string key = provider.GetViewModelKey(data);
             return IsMatch(data, key);
         }
-
 
         public bool IsMatch(IViewModelData data, string key)
         {
