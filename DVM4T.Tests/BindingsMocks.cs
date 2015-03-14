@@ -46,7 +46,6 @@ namespace DVM4T.Tests
                 .With(attr =>
                 {
                     attr.FieldName = "content";
-                    attr.AllowMultipleValues = true;
                 });
 
             BindModel<GeneralContentViewModel>()

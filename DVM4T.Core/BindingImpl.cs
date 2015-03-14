@@ -190,32 +190,33 @@ namespace DVM4T.Core.Binding
         {
             TAttribute attribute = (TAttribute)resolver.ResolveInstance<TAttribute>(ctorArguments); //Should we really allow ctor args? This is meant for Domain models that don't have any, but it also removes flexibility to not allow them
             Type mappingType;
-            //REQUIREMENT: Multi-values must implement ICollection<>, not just IEnumerable<> (this lets us use the Add method)
-            if (typeof(TProp).IsAssignableFrom(typeof(ICollection<>))) //watch out for performance here, do this ONCE
-                mappingType = typeof(TProp).GetGenericArguments()[0];
+            Type temp;
+            Type propType = typeof(TProp);
+            //REQUIREMENT: Multi value must be either ICollection<T> or T[] where T is the type for the mapping
+            if (resolver.ReflectionHelper.IsArray(propType, out temp))
+            {
+                mappingType = temp;
+            }
+            else if (resolver.ReflectionHelper.IsGenericCollection(propType, out temp))
+            {
+                mappingType = temp;
+            }
             else
-                mappingType = typeof(TProp);
+                mappingType = propType;
+            
+            ////old: Multi-values must implement ICollection<>, not just IEnumerable<> (this lets us use the Add method)
+            //if (typeof(TProp).IsAssignableFrom(typeof(ICollection<>))) //watch out for performance here, do this ONCE
+            //    mappingType = typeof(TProp).GetGenericArguments()[0];
+            //else
+            //    mappingType = typeof(TProp);
+
             Action<IPropertyAttribute, IBindingContainer> deferredMapping =
                 (IPropertyAttribute attr, IBindingContainer container) => attr.ComplexTypeMapping = container.GetMapping(mappingType);
             IPropertyMapping propMapping = new PropertyMapping(propInfo, attribute, deferredMapping);
             var mapping = GetMapping();
             if (mapping != null) mapping.Add(propMapping);
-            //property = [Add the property info and the IPropertyAttribute here??]
-            //propMappings.PropertyBinding = property;
             return new AttributeBinding<TProp, TAttribute>(propMapping, attribute);
         }
-
-        //public void ToMethod(Func<IBindingContainer, IPropertyAttribute> attributeMethod)
-        //{
-        //    //How to do this? the Func call needs to deferred until later (otherwise what's the point)
-        //    //That means we need to STORE the Func in some kind of Binding and call it later
-        //    var mapping = GetMapping();
-        //    if (mapping != null && mapping.DynamicProperties != null
-        //        && !mapping.DynamicProperties.ContainsKey(propInfo))
-        //    {
-        //        mapping.DynamicProperties.Add(propInfo, attributeMethod);
-        //    }
-        //}
 
         #endregion
         private IList<IPropertyMapping> GetMapping()

@@ -263,7 +263,7 @@ namespace DVM4T.Reflection
             var instance = Expression.Parameter(typeof(object), "i");
             var argument = Expression.Parameter(typeof(object), "a");
             var setterCall = Expression.Call(
-                                Expression.Convert(instance, propertyInfo.DeclaringType), propertyInfo.GetSetMethod(),
+                                Expression.Convert(instance, propertyInfo.DeclaringType), propertyInfo.GetSetMethod(true),
                                 Expression.Convert(argument, propertyInfo.PropertyType));
             return Expression.Lambda<Action<object, object>>(setterCall, instance, argument).Compile();
         }
@@ -277,7 +277,7 @@ namespace DVM4T.Reflection
             ParameterExpression obj = Expression.Parameter(typeof(object), "obj");
             var getterCall = Expression.Convert(
                                 Expression.Call(
-                                    Expression.Convert(obj, propertyInfo.DeclaringType), propertyInfo.GetGetMethod()),
+                                    Expression.Convert(obj, propertyInfo.DeclaringType), propertyInfo.GetGetMethod(true)),
                             typeof(object));
             return Expression.Lambda<Func<object, object>>(getterCall, obj).Compile();
         }

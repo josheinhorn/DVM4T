@@ -11,46 +11,7 @@ using System.Web;
 
 namespace DVM4T.Contracts
 {
-    #region XPathable Data - probably won't use
-    public interface IXPathableNode
-    {
-        IXPathableNode SelectSingleNode(string xpath);
-        IXPathableNode[] SelectNodes(string xpath);
-        string Name { get; }
-        string Value { get; }
-        IAttribute[] Attributes { get; }
-        IXPathableNode ParentNode { get; }
-        IXPathableNode[] GetAllChildNodes(); //necessary?
-        string GetAsXmlString();
-    }
-    //Need to be able to retrieve Attributes via XPath as well
-    public interface IAttribute
-    {
-        string Key { get; set; }
-        string Value { get; set; }
-    }
-
-    public interface IHaveNode
-    {
-        IXPathableNode Node { get; set; }
-    }
-    //Is this interface necessary for this implementation? Seems to be connected to specifically an XML implementation
-    public interface ITridionXPathProvider
-    {
-        string GetFieldXPath(string fieldName, int index);
-
-        //Are any of these necessary?
-        string GetComponentXPath();
-        string GetComponentTemplateXPath();
-        string GetFieldSetXPath(string name); //necessary?
-        string GetSchemaXPath();
-    }
-
-    #endregion
-
     #region Tridion interfaces
-
-
     public interface IHaveData //consider making this generic i.e. IHaveData<T> { T BaseData { get; } } -- would require a lot of refactoring
     {
         object BaseData { get; }
@@ -175,15 +136,11 @@ namespace DVM4T.Contracts
         /// <summary>
         /// The underlying data object that the View Model represents
         /// </summary>
-        //IViewModelFactory Builder { get; } //This isn't actually needed anywhere
+        //IViewModelFactory Builder { get; } //This isn't actually needed anywhere -- should it remane for lazy loading? probably not because there should always be a way to access the factory
         /// <summary>
         /// Metadata for the View Model
         /// </summary>
         IFieldsData Metadata { get; }
-        /// <summary>
-        /// Template for the View Model
-        /// </summary>
-        //ITemplateData Template { get; } //This might present a problem with creating a Model for Keywords . . . there is no template
         /// <summary>
         /// Publication ID of the underlying Tridion item
         /// </summary>
@@ -238,13 +195,38 @@ namespace DVM4T.Contracts
         /// <param name="type">Type to search</param>
         /// <returns>A Model Attribute</returns>
         T GetCustomAttribute<T>(Type type) where T : IModelAttribute;
-        //Possible to do something like this? How to make the parameters generic?
-        //T GetModelData<T>(data parameters) where T : IViewModelData
-
+        /// <summary>
+        /// Gets a model property based on property info and a property attribute
+        /// </summary>
+        /// <param name="propertyInfo">Property</param>
+        /// <param name="attribute">Associated attribute</param>
+        /// <returns>Model property</returns>
         IModelProperty GetModelProperty(PropertyInfo propertyInfo, IPropertyAttribute attribute);
-        IModelProperty GetModelProperty<TSource, TProperty>(Expression<Func<TSource, TProperty>> propertyLambda, IPropertyAttribute attribute);
+        /// <summary>
+        /// Gets a model property based on lambda expression for a property and a property attribute
+        /// </summary>
+        /// <typeparam name="TModel">Model type</typeparam>
+        /// <typeparam name="TProperty">Property type</typeparam>
+        /// <param name="propertyLambda">Lambda expression representing the property</param>
+        /// <param name="attribute">Associated attribute</param>
+        /// <returns>Model property</returns>
+        IModelProperty GetModelProperty<TModel, TProperty>(Expression<Func<TModel, TProperty>> propertyLambda, IPropertyAttribute attribute);
+        /// <summary>
+        /// Resolves a new instance based on the input Type.
+        /// </summary>
+        /// <param name="type">Type to create or use to determine object to return.</param>
+        /// <returns>New instance</returns>
         object ResolveInstance(Type type);
+        /// <summary>
+        /// Resolves a new instance based on the input Type.
+        /// </summary>
+        /// <typeparam name="T">Type to create or use to determine object to return.</typeparam>
+        /// <param name="ctorArgs">Optional constructor arguments</param>
+        /// <returns>New instance</returns>
         T ResolveInstance<T>(params object[] ctorArgs);
+        /// <summary>
+        /// The associate reflection helper
+        /// </summary>
         IReflectionHelper ReflectionHelper { get; }
     }
 
@@ -270,15 +252,18 @@ namespace DVM4T.Contracts
         /// <param name="typesToSearch">Optional array of possible Types to search through</param>
         /// <returns>View Model Type</returns>
         Type FindViewModelByAttribute<T>(IViewModelData data, Type[] typesToSearch = null) where T : IModelAttribute;
-
+        /// <summary>
+        /// Sets the value of a single Model Property
+        /// </summary>
+        /// <param name="model">View Model</param>
+        /// <param name="data">Model data</param>
+        /// <param name="property">Property to set</param>
         void SetPropertyValue(object model, IViewModelData data, IModelProperty property);
         /// <summary>
         /// Sets the value of a single Model Property
         /// </summary>
         /// <param name="model">View Model</param>
         /// <param name="property">Property to set</param>
-        /// <remarks>Intended use case is for lazy loading of individual properties instead of eager loading with BuildViewModel 
-        /// to load all properties</remarks>
         void SetPropertyValue(IViewModel model, IModelProperty property);
         /// <summary>
         /// Sets the value of a single Model Property
@@ -287,8 +272,6 @@ namespace DVM4T.Contracts
         /// <typeparam name="TProperty">Type of Property</typeparam>
         /// <param name="model">View Model</param>
         /// <param name="propertyLambda">Lambda Expression for Property to set</param>
-        /// <remarks>Intended use case is for lazy loading of individual properties instead of eager loading with BuildViewModel 
-        /// to load all properties</remarks>
         void SetPropertyValue<TModel, TProperty>(TModel model, Expression<Func<TModel, TProperty>> propertyLambda) where TModel : IViewModel;
         /// <summary>
         /// Builds a View Model, inferring the Type based on the Model Data.
@@ -323,115 +306,39 @@ namespace DVM4T.Contracts
         /// <param name="modelData">Model Data</param>
         /// <returns>View Model</returns>
         T BuildViewModel<T>(IViewModelData modelData) where T : IViewModel;
-        
-       
         /*Anyway to move these to separate Binding library? Appears not because IPropertyAttribute is dependent on IModelMapping and all 
          * GetPropertyValues are only passed a IViewModelFactory so there's no other way to access the Mapped Model methods
         */
-        //void AddModelMapping<T>(IModelMapping<T> mapping); //Doesn't seem possible to store a collection of different generics without making the whole Factory generic
-        //T BuildMappedModel<T>(IViewModelData modelData) where T : class, new();
-
+        /// <summary>
+        /// Builds a model using a specific mapping
+        /// </summary>
+        /// <typeparam name="T">Model Type</typeparam>
+        /// <param name="model">Model to populate</param>
+        /// <param name="modelData">Model Data</param>
+        /// <param name="mapping">Model Mapping</param>
+        /// <returns>Fully built model</returns>
         T BuildMappedModel<T>(T model, IViewModelData modelData, IModelMapping mapping); //where T : class;
+        /// <summary>
+        /// Builds a new model using a specific mapping
+        /// </summary>
+        /// <typeparam name="T">Model Type</typeparam>
+        /// <param name="modelData">Model Data</param>
+        /// <param name="mapping">Model Mapping</param>
+        /// <returns>New model</returns>
         T BuildMappedModel<T>(IViewModelData modelData, IModelMapping mapping); //where T : class;
+        /// <summary>
+        /// Builds a new model using a specific mapping
+        /// </summary>
+        /// <param name="modelData">Model data</param>
+        /// <param name="mapping">Model mapping</param>
+        /// <returns>New model</returns>
         object BuildMappedModel(IViewModelData modelData, IModelMapping mapping);
-
+        /// <summary>
+        /// The associate model resolver for this instance
+        /// </summary>
         IViewModelResolver ModelResolver { get; }
     }
     
-    [Obsolete("Use IViewModelFactory instead")]
-    public interface IViewModelBuilder
-    {
-        /// <summary>
-        /// Finds a View Model with the specified Type using the input Data
-        /// </summary>
-        /// <typeparam name="T">Type of View Model Attribute</typeparam>
-        /// <param name="data">View Model Data to search for</param>
-        /// <param name="typesToSearch">Optional array of possible Types to search through</param>
-        /// <returns></returns>
-        Type FindViewModelByAttribute<T>(IViewModelData data, Type[] typesToSearch = null) where T : IModelAttribute;
-        /// <summary>
-        /// Builds a View Model from previously loaded Assemblies using the input Component Presentation. This method infers the View Model type by comparing
-        /// information from the Component Presentation object to the attributes of the View Model classes.
-        /// </summary>
-        /// <param name="cp">Component Presentation object</param>
-        /// <remarks>
-        /// The LoadViewModels method must be called with the desired View Model Types in order for this to return a valid object.
-        /// </remarks>
-        /// <returns>Component Presentation View Model</returns>
-        IViewModel BuildCPViewModel(IComponentPresentationData componentPresentation); //A way to build view model without passing type -- type is inferred using loaded assemblies
-        /// <summary>
-        /// Builds a View Model from a FieldSet using the schema determine the View Model class to use.
-        /// </summary>
-        /// <param name="embeddedFields">Embedded FieldSet</param>
-        /// <param name="embeddedSchema">Embedded Schema</param>
-        /// <param name="template">Component Template to use for generating XPM Markup for any linked components</param>
-        /// <returns>Embedded Schema View Model</returns>
-        IViewModel BuildEmbeddedViewModel(IFieldsData embeddedFields, ISchemaData embeddedSchemaTitle, ITemplateData template);
-        /// <summary>
-        /// Builds a View Model from a Component Presentation using the type parameter to determine the View Model class to use.
-        /// </summary>
-        /// <param name="type">Type of View Model class to return</param>
-        /// <param name="cp">Component Presentation</param>
-        /// <returns>Component Presentation View Model</returns>
-        IViewModel BuildCPViewModel(Type type, IComponentPresentationData componentPresentation);
-        /// <summary>
-        /// Builds a View Model from a FieldSet using the generic type to determine the View Model class to use.
-        /// </summary>
-        /// <param name="type">Type of View Model class to return</param>
-        /// <param name="embeddedFields">Embedded FieldSet</param>
-        /// <param name="template">Component Template to use for generating XPM Markup for any linked components</param>
-        /// <returns>Embedded Schema View Model</returns>
-        IViewModel BuildEmbeddedViewModel(Type type, IFieldsData embeddedFields, ISchemaData schema, ITemplateData template);
-        /// <summary>
-        /// Builds a View Model from a Component Presentation using the generic type to determine the View Model class to use.
-        /// </summary>
-        /// <typeparam name="T">Type of View Model class to return</typeparam>
-        /// <param name="cp">Component Presentation</param>
-        /// <returns>Component Presentation View Model</returns>
-        T BuildCPViewModel<T>(IComponentPresentationData componentPresentation) where T : class, IViewModel;
-        /// <summary>
-        /// Builds a View Model from a FieldSet using the generic type to determine the View Model class to use.
-        /// </summary>
-        /// <typeparam name="T">Type of View Model class to return</typeparam>
-        /// <param name="embeddedFields">Embedded FieldSet</param>
-        /// <param name="template">Component Template to use for generating XPM Markup for any linked components</param>
-        /// <returns>Embedded Schema View Model</returns>
-        T BuildEmbeddedViewModel<T>(IFieldsData embeddedFields, ISchemaData schema, ITemplateData template) where T : class, IViewModel;
-        /// <summary>
-        /// The View Model Key Provider for this Builder
-        /// </summary>
-        IViewModelKeyProvider ViewModelKeyProvider { get; }
-        /// <summary>
-        /// Builds a View Model for a Page using the input data
-        /// </summary>
-        /// <typeparam name="T">Type of View Model</typeparam>
-        /// <param name="page">Page Data</param>
-        /// <returns>View Model for the Page</returns>
-        T BuildPageViewModel<T>(IPageData page) where T : IViewModel;
-        /// <summary>
-        /// Builds a View Model for a Page using the input data
-        /// </summary>
-        /// <param name="type">Type of View Model</param>
-        /// <param name="page">Page Data</param>
-        /// <returns>View Model for the Page</returns>
-        IViewModel BuildPageViewModel(Type type, IPageData page);
-        /// <summary>
-        /// Builds a View Model for a Page using the input data
-        /// </summary>
-        /// <param name="page">Page Data</param>
-        /// <returns>View Model for the Page</returns>
-        IViewModel BuildPageViewModel(IPageData page);
-        /// <summary>
-        /// Loads all View Model classes from an assembly
-        /// </summary>
-        /// <param name="assembly">The Assembly with the view model Types to load</param>
-        /// <remarks>
-        /// Required for use of builder methods that don't require a Type parameter or generic.
-        /// The Builder will only use Types tagged with the ViewModelAttribute class.
-        /// </remarks>
-        void LoadViewModels(Assembly assembly);
-    }
-
     public interface IXpmMarkupService
     {
         /// <summary>
@@ -603,7 +510,6 @@ namespace DVM4T.Contracts
         /// <param name="propertyLambda">Lambda Expression representing a Property of the source Type</param>
         /// <returns>Property Info</returns>
         PropertyInfo GetPropertyInfo<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda);
-
         /// <summary>
         /// Builds a delegate from the Add method of a collection. The input Type must implement ICollection&lt;&gt;
         /// </summary>
@@ -616,10 +522,32 @@ namespace DVM4T.Contracts
         /// <param name="collectionType">Type of collection. Must implement ICollection&lt;&gt;</param>
         /// <returns>Delegate function that takes two parameters: the collection and the item to add to it.</returns>
         Action<object, object> BuildAddMethod(Type collectionType);
-        
+        /// <summary>
+        /// Determines if a type is a generic collection (ICollection&lt;T&gt;)
+        /// </summary>
+        /// <param name="type">Type to inspect</param>
+        /// <param name="genericType">Returns the Generic type T for ICollection&lt;T&gt;, otherwise it is null</param>
+        /// <returns>True if this is a generic collection</returns>
         bool IsGenericCollection(Type type, out Type genericType);
+        /// <summary>
+        /// Determines if a type is an Array
+        /// </summary>
+        /// <param name="type">Array to inspect</param>
+        /// <param name="elementType">Returns a single element's Type if this is an array, otherwise null.</param>
+        /// <returns>True if this is an Array.</returns>
         bool IsArray(Type type, out Type elementType);
+        /// <summary>
+        /// Determines if a type is an enumerable (IEnumerable)
+        /// </summary>
+        /// <param name="type">Type to inspect</param>
+        /// <returns>True is this is an enumerable</returns>
         bool IsEnumerable(Type type);
+        /// <summary>
+        /// Builds a re-usable function for converting an IEnumerable to an Array.
+        /// </summary>
+        /// <remarks>Useful when the generic type of IEnumerable is unknown at compile time.</remarks>
+        /// <param name="elementType">Single element type of the array</param>
+        /// <returns>Function for converting an IEnumerable to an Array</returns>
         Func<IEnumerable, Array> BuildToArray(Type elementType);
     }
     /// <summary>
@@ -647,11 +575,29 @@ namespace DVM4T.Contracts
         /// The return Type of the Property
         /// </summary>
         Type PropertyType { get; }
+        /// <summary>
+        /// The type of a single model, which is not the same as property type for multi-value properties
+        /// </summary>
         Type ModelType { get; }
+        /// <summary>
+        /// Is this property an enumerable type
+        /// </summary>
         bool IsEnumerable { get; }
+        /// <summary>
+        /// Is this property a Collection
+        /// </summary>
         bool IsCollection { get; }
+        /// <summary>
+        /// Is this property an Array
+        /// </summary>
         bool IsArray { get; }
+        /// <summary>
+        /// Re-usable action delegate for adding individual items to a collection
+        /// </summary>
         Action<object, object> AddToCollection { get; }
+        /// <summary>
+        /// Re-usable action for converting a non-Generic IEnumerable to an Array
+        /// </summary>
         Func<IEnumerable, Array> ToArray { get; }
     }
   
