@@ -264,7 +264,6 @@ namespace DVM4T.DD4T.Attributes
     /// <summary>
     /// Component Presentations filtered by the DD4T CT Metadata "view" field
     /// </summary>
-    /// <remarks>Use with ViewModelList</remarks>
     public class PresentationsByViewAttribute : ComponentPresentationsAttributeBase
     {
         public override System.Collections.IEnumerable GetPresentationValues(IList<IComponentPresentationData> cps, IModelProperty property, IViewModelFactory factory)
@@ -293,31 +292,6 @@ namespace DVM4T.DD4T.Attributes
                             else model = factory.BuildViewModel((cp));
                             return model;
                         });
-
-            //TODO: Re-write this entire Attribute
-            //var result = factory.ModelResolver.ResolveInstance(property.PropertyType);
-            //var add = property.AddToCollection; //factory.ModelResolver.ReflectionHelper.BuildAddMethod(propertyType);
-
-            //string view = null;
-            //foreach (var cp in cps)
-            //{
-            //    if (cp.Template != null && cp.Template.Metadata != null && cp.Template.Metadata.ContainsKey("view"))
-            //    {
-            //        view = cp.Template.Metadata["view"].Values.Cast<string>().FirstOrDefault(); //DD4T Convention for view name
-            //        if (view != null && view.StartsWith(ViewPrefix))
-            //        {
-            //            //result.Add(factory.BuildViewModel((cp)));
-            //            object model = null;
-            //            if (ComplexTypeMapping != null)
-            //            {
-            //                model = factory.BuildMappedModel(cp, ComplexTypeMapping);
-            //            }
-            //            else model = factory.BuildViewModel((cp));
-            //            add(result, model);
-            //        }
-            //    }
-            //}
-            //return (System.Collections.IEnumerable)result;
         }
        
         public string ViewPrefix { get; set; }

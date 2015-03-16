@@ -485,22 +485,26 @@ namespace DVM4T.Testing
         public void TestBuildPageModel()
         {
             string expectedString = autoMocker.Create<string>();
-            var cp = GetCPMockup<MockModels.GeneralContentViewModel, MvcHtmlString>(x => x.Body, new MvcHtmlString(expectedString)) as Dynamic.ComponentPresentation;
-            cp.ComponentTemplate = new Dynamic.ComponentTemplate
+            var comp = GetGeneralContentComponent();
+            var cp = new Dynamic.ComponentPresentation
             {
-                MetadataFields = new Dynamic.FieldSet
+                Component = comp,
+                ComponentTemplate = new Dynamic.ComponentTemplate
                 {
+                    MetadataFields = new Dynamic.FieldSet
                     {
-                        "viewModelKey",
-                        new Dynamic.Field { Values = new List<string> { "BasicGeneralContent"} }
+                        {
+                            "viewModelKey",
+                            new Dynamic.Field { Values = new List<string> { "BasicGeneralContent"} }
+                        },
+                        {
+                            "view",
+                            new Dynamic.Field { Values = new List<string> { "CarouselGeneralContent"} }
+                        }
                     },
-                    {
-                        "view",
-                        new Dynamic.Field { Values = new List<string> { "CarouselGeneralContent"} }
-                    }
-                },
-                Title = "Testing CT",
-                Id = "tcm:1-123-32"
+                    Title = "Testing CT",
+                    Id = "tcm:1-123-32"
+                }
             };
             var page = new Dynamic.Page
             {
