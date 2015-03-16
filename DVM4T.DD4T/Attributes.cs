@@ -348,24 +348,22 @@ namespace DVM4T.DD4T.Attributes
     }
 
     /// <summary>
-    /// Text field that is parsed into an Enum. Currently NOT optimized - relies heavily on reflection methods.
-    /// Use sparingly - this is more or less a Proof of Concept.
+    /// Field that is parsed into an Enum
     /// </summary>
-    [Obsolete("This is a proof of concept and is not optimized for performance.")]
-    public class TextEnumFieldAttribute : FieldAttributeBase
-    {
-        private object genericHelper;
-        private MethodInfo safeParse; //GARBAGE
-        private Type genericHelperType;
-  
+    public class EnumFieldAttribute : FieldAttributeBase
+    {  
         public override IEnumerable GetFieldValues(IFieldData field, IModelProperty property, ITemplateData template, IViewModelFactory factory)
         {
-            genericHelperType = typeof(GenericEnumHelper<>).MakeGenericType(property.ModelType);
-            genericHelper = factory.ModelResolver.ResolveInstance(
-                genericHelperType);
-            safeParse = genericHelperType.GetMethod("SafeParse"); //GARBAGE: Needs reflection optimization
-            return field.Values.Cast<string>()
-                .Select(value => safeParse.Invoke(genericHelper, new object[] { value })); //Bad -- uses method info invoke every time
+            var result = new List<object>();
+            foreach (var value in field.Values)
+            {
+                object parsed;
+                if (EnumTryParse(property.ModelType, value, out parsed))
+                {
+                    result.Add(parsed);
+                }
+            }
+            return result;
         }
 
         public override Type ExpectedReturnType
@@ -373,20 +371,23 @@ namespace DVM4T.DD4T.Attributes
             get { return AllowMultipleValues ? typeof(IList<Enum>) : typeof(Enum); }
         }
 
-        public class GenericEnumHelper<TEnum> where TEnum : struct
+        private bool EnumTryParse(Type enumType, object value, out object parsedEnum)
         {
-            public TEnum SafeParse(object value)
+            bool result = false;
+            parsedEnum = null;
+            if (value != null)
             {
-                if (!typeof(TEnum).IsEnum)
+                try
                 {
-                    throw new ArgumentException("genericType must be an enumerated type");
+                    parsedEnum = Enum.Parse(enumType, value.ToString());
+                    result = true;
                 }
-                TEnum b;
-                Enum.TryParse<TEnum>(value.ToString(), out b);
-                return b;
+                catch (Exception)
+                {
+                    result = false;
+                }
             }
+            return result;
         }
     }
-
-
 }

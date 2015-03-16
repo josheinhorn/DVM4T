@@ -45,8 +45,8 @@ namespace DVM4T.Testing.Models
         [KeywordField(FieldName = "backgroundColor", KeywordType = typeof(Color))]
         public Color BackgroundColor { get; set; }
 
-        //[TextEnumField(FieldName = "state", AllowMultipleValues = true)]
-        //public List<StateType> State { get; set; }
+        [EnumField(FieldName = "state", AllowMultipleValues = true)]
+        public List<StateType> State { get; set; }
     }
 
     public class ListAdapter<T> : List<object>, IEnumerable<T> 

@@ -273,6 +273,14 @@ namespace DVM4T.Testing
                             },
                             FieldType = Dynamic.FieldType.ComponentLink
                         }
+                    },
+                    {
+                        "openInNewWindow",
+                        new Dynamic.Field 
+                        {
+                            Keywords = new List<Dynamic.Keyword> { new Dynamic.Keyword { Key = "_blank", Title = "Open in new window" } },
+                            FieldType = Dynamic.FieldType.Keyword
+                        }
                     }
                 };
             var links = new List<Dynamic.FieldSet>

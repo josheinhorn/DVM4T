@@ -219,7 +219,7 @@ namespace DVM4T.Reflection
 
         public ReflectionOptimizer() { }
 
-        public object CreateInstance(Type objectType)
+        public object CreateInstance(Type objectType) //TODO: Change this method to return the delegate and let the caller cache it as necessary
         {
             Func<object> result = null;
             if (!constructors.TryGetValue(objectType, out result))

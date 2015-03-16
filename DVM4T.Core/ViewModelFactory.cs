@@ -169,9 +169,9 @@ namespace DVM4T.Core
                     var values = propAttribute.GetPropertyValues(viewModel.ModelData, prop, this); //TODO: switch GetPropertyValue to return IEnumerable
                     if (values != null)
                     {
-                        propertyValue = GetPropertyValue(prop, values);
                         try
                         {
+                            propertyValue = GetPropertyValue(prop, values);
                             prop.Set(viewModel, propertyValue);
                         }
                         catch (Exception e)

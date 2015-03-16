@@ -132,7 +132,7 @@
     <Compile Include="MockModels.cs" />
     <Compile Include="Models.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tests.cs" />
+    <Compile Include="IntegrationTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DVM4T.DD4T\DVM4T.DD4T.csproj">
