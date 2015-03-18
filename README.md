@@ -14,7 +14,8 @@ This framework aims to solve the problem of creating Domain Models when using SD
 The first implementation (included here) uses DD4T to map Tridion data to the DVM4T Content Model. There are a large number of custom attributes inheriting from the various Attribute base classes.
 
 Some basic requirements:
-	-Models should be marked with a ViewModelAttribute (
+
+	-Models should be marked with a ViewModelAttribute
 	-Models should have a parameterless default constructor
 	-Property values should have a parameterless default constructor
 	-Property values must have a setter
