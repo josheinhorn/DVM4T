@@ -240,13 +240,31 @@ namespace DVM4T.Reflection
                         ilgen.Emit(OpCodes.Ret);
 
                         // Create new delegate and store it in the dictionary
-                        result = (Func<object>)dynamicMethod
-                            .CreateDelegate(typeof(Func<object>));
+                        try
+                        {
+                            result = (Func<object>)dynamicMethod
+                                .CreateDelegate(typeof(Func<object>));
+                        }
+                        catch (Exception e)
+                        {
+                            throw new TargetException(
+                                String.Format("Failed to create a public parameterless constructor for Type '{0}'." +
+                                "See inner exception for more details", objectType.FullName), e);
+                        }
                         constructors.Add(objectType, result);
                     }
                 }
             }
-            return result.Invoke();
+            try
+            {
+                return result.Invoke();
+            }
+            catch (Exception e)
+            {
+                throw new TargetException(
+                    String.Format("Failed to invoke public parameterless constructor for Type '{0}'." +
+                    "See inner exception for more details", objectType.FullName), e);
+            }
         }
         public T CreateInstance<T>() where T : class, new()
         {
@@ -330,26 +348,31 @@ namespace DVM4T.Reflection
             //}
             //if (!typeMethods.TryGetValue(methodName, out result))
             //{
-                Type genericType;
-                if (IsGenericCollection(collectionType, out genericType)) //It has a generic type param and it implements ICollection<T>
+            Type genericType;
+            if (IsGenericCollection(collectionType, out genericType)) //It has a generic type param and it implements ICollection<T>
+            {
+                //Equivalent to:
+                /*delegate (object c, object a)
                 {
-                    //Equivalent to:
-                    /*delegate (object c, object a)
-                    {
-                        ((CollectionType)c).Add((GenericType)a);
-                    }*/
-                    var collection = Expression.Parameter(typeof(object), "c");
-                    var itemToAdd = Expression.Parameter(typeof(object), "a");
-                    MethodInfo addMethod = collectionType.GetMethod(methodName);
-                    var addCall = Expression.Call(
-                                        Expression.Convert(collection, collectionType), addMethod,
-                                        Expression.Convert(itemToAdd, genericType));
-                    result = Expression.Lambda<Action<object, object>>(addCall, collection, itemToAdd).Compile();
-                    //typeMethods.Add(methodName, result); //cache the result so we don't need to repeat this process
+                    ((CollectionType)c).Add((GenericType)a);
+                }*/
+                var collection = Expression.Parameter(typeof(object), "c");
+                var itemToAdd = Expression.Parameter(typeof(object), "a");
+                MethodInfo addMethod = collectionType.GetMethod(methodName);
+                if (addMethod == null)
+                {
+                    throw new TargetException(String.Format("Cannot get method '{0}' for Type '{1}' -- ensure that this is a concrete implementation."
+                        , methodName, collectionType.FullName));
                 }
-                else if (genericType != null)
-                    throw new ArgumentException("The type (" + collectionType.Name + ") must implement ICollection<" + genericType.Name + ">", "collectionType");
-                else throw new ArgumentException("The type (" + collectionType.Name + ") must implement ICollection<>", "collectionType");
+                var addCall = Expression.Call(
+                                    Expression.Convert(collection, collectionType), addMethod,
+                                    Expression.Convert(itemToAdd, genericType));
+                result = Expression.Lambda<Action<object, object>>(addCall, collection, itemToAdd).Compile();
+                //typeMethods.Add(methodName, result); //cache the result so we don't need to repeat this process
+            }
+            else if (genericType != null)
+                throw new ArgumentException("The type (" + collectionType.Name + ") must implement ICollection<" + genericType.Name + ">", "collectionType");
+            else throw new ArgumentException("The type (" + collectionType.Name + ") must implement ICollection<>", "collectionType");
             //}
             return result;
         }
@@ -380,14 +403,14 @@ namespace DVM4T.Reflection
             return (genericType != null
                 && typeof(ICollection<>).MakeGenericType(genericType).IsAssignableFrom(type));
         }
-       
+
         public Func<IEnumerable, Array> BuildToArray(Type elementType)
         {
             //This method doesn't cache the result, assumes the caller will take care of that
             var param = Expression.Parameter(typeof(IEnumerable), "source");
             var cast = Expression.Call(typeof(Enumerable), "Cast", new[] { elementType }, param);
             var toArray = Expression.Call(typeof(Enumerable), "ToArray", new[] { elementType }, cast);
-            return Expression.Lambda<Func<IEnumerable, Array>>(toArray, param).Compile();    
+            return Expression.Lambda<Func<IEnumerable, Array>>(toArray, param).Compile();
         }
     }
 

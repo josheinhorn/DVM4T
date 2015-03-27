@@ -22,7 +22,7 @@ namespace DVM4T.Testing.Models
     }
 
     [ViewModel("GeneralContent", true, ViewModelKeys = new string[] { "BasicGeneralContent", "Test" })]
-    public class GeneralContentViewModel : ViewModelBase
+    public class GeneralContent : ViewModelBase
     {
         [TextField(FieldName = "title")]
         public string Title { get; set; }
@@ -49,14 +49,6 @@ namespace DVM4T.Testing.Models
         public List<StateType> State { get; set; }
     }
 
-    public class ListAdapter<T> : List<object>, IEnumerable<T> 
-    {
-        public new IEnumerator<T> GetEnumerator()
-        {
-            return this.ToArray().Cast<T>().GetEnumerator();
-        }
-    }
-
     [ViewModel("Image", true)]
     public class Image : ViewModelBase
     {
@@ -70,19 +62,19 @@ namespace DVM4T.Testing.Models
         public string AltText { get; set; }
     }
     [ViewModel("ContentContainer", true, ViewModelKeys = new string[] { "Test" })]
-    public class ContentContainerViewModel : ViewModelBase
+    public class ContentContainer : ViewModelBase
     {
         [TextField(FieldName = "title", InlineEditable = true)]
         public IEnumerable<string> Title { get; set; }
 
-        [LinkedComponentField(FieldName = "content", LinkedComponentTypes = new Type[] { typeof(GeneralContentViewModel) }, AllowMultipleValues = true)]
-        public List<GeneralContentViewModel> ContentList { get; set; }
+        [LinkedComponentField(FieldName = "content", LinkedComponentTypes = new Type[] { typeof(GeneralContent) }, AllowMultipleValues = true)]
+        public List<GeneralContent> ContentList { get; set; }
 
         [LinkedComponentField(FieldName = "content", LinkedComponentTypes = new Type[] { typeof(TitleViewModel) })]
         public TitleViewModel OtherContent { get; set; }
 
-        [EmbeddedSchemaField(FieldName = "links", EmbeddedModelType = typeof(EmbeddedLinkViewModel), AllowMultipleValues = true)]
-        public List<EmbeddedLinkViewModel> Links { get; set; }
+        [EmbeddedSchemaField(FieldName = "links", EmbeddedModelType = typeof(EmbeddedLink), AllowMultipleValues = true)]
+        public List<EmbeddedLink> Links { get; set; }
 
         [LinkedComponentField(FieldName = "image", LinkedComponentTypes = new Type[] { typeof(Image) })]
         public Image Image { get; set; }
@@ -92,7 +84,7 @@ namespace DVM4T.Testing.Models
     }
 
     [ViewModel("EmbeddedLink", true)]
-    public class EmbeddedLinkViewModel : ViewModelBase
+    public class EmbeddedLink : ViewModelBase
     {
         [TextField(FieldName = "linkText")]
         public string LinkText { get; set; }
@@ -131,17 +123,24 @@ namespace DVM4T.Testing.Models
 
     }
 
+    [ViewModel("ContentContainer", false, ViewModelKeys = new string[] { "Constructor Failure" })]
+    public class CtorFailure : ViewModelBase
+    {
+        [LinkedComponentField(FieldName = "image", LinkedComponentTypes = new Type[] { typeof(Image) })]
+        public IList<Image> Image { get; set; } //IList doesn't have a ctor -- should fail
+    }
+
     [PageViewModel(new string[] { "Homepage" })]
     public class Homepage : ViewModelBase
     {
         [PresentationsByView(ViewPrefix = "Carousel")]
-        public List<GeneralContentViewModel> Carousels { get; set; }
+        public List<GeneralContent> Carousels { get; set; }
 
         [TextField(FieldName = "javascript", IsMetadata = true)]
         public String Javascript { get; set; }
     }
 
-    [KeywordViewModel(new string[] {"Colors"})]
+    [KeywordViewModel(new string[] { "Colors" })]
     public class Color : ViewModelBase
     {
         [KeywordData]
@@ -159,7 +158,7 @@ namespace DVM4T.Testing.Models
         VA,
         PA,
         NY,
-        MA, 
+        MA,
         MD,
         DE
     }
