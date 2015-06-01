@@ -184,12 +184,7 @@ namespace DVM4T.Core
                 }
             }
         }
-        private Array ConvertToTypedArray(object[] objArray, Type arrayType)
-        {
-            var arr = Array.CreateInstance(arrayType, objArray.Length);
-            Array.Copy(objArray, arr, objArray.Length);
-            return arr;
-        }
+       
         private object GetPropertyValue(IModelProperty prop, IEnumerable values)
         {
             object result = null;

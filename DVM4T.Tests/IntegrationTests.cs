@@ -444,7 +444,7 @@ namespace DVM4T.Testing
 
         [TestMethod]
         [ExpectedException(typeof(TargetException))]
-        public void Test_CtorNotFound_TargetException()
+        public void Test_AddMethodNotFound_TargetException()
         {
             ViewModelDefaults.Factory.LoadViewModels(typeof(GeneralContent).Assembly);
             var cp = GetContentContainerCp();

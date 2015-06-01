@@ -25,6 +25,9 @@ namespace DVM4T.XPM
         private readonly IViewModelResolver resolver;
         public XpmRenderer(IViewModel model, IXpmMarkupService service, IViewModelResolver resolver)
         {
+            if (model == null) throw new ArgumentNullException("model");
+            if (service == null) throw new ArgumentNullException("service");
+            if (resolver == null) throw new ArgumentNullException("resolver");
             this.model = model;
             if (model.ModelData is IContentPresentationData)
             {
